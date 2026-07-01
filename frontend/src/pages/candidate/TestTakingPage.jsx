@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTestById, useSubmitTest } from '../../hooks/useTests';
+import Modal from '../../components/ui/Modal';
 
 const TestTakingPage = () => {
   const { id } = useParams();
@@ -9,6 +10,7 @@ const TestTakingPage = () => {
   const { mutate: submitTest, isPending } = useSubmitTest();
   
   const [answers, setAnswers] = useState({});
+  const [isSubmitModalOpen, setIsSubmitModalOpen] = useState(false);
 
   if (isLoading) {
     return (
@@ -37,10 +39,10 @@ const TestTakingPage = () => {
   };
 
   const handleSubmit = () => {
-    if (!window.confirm('Are you sure you want to submit your answers? You cannot change them later.')) {
-      return;
-    }
+    setIsSubmitModalOpen(true);
+  };
 
+  const confirmSubmit = () => {
     const payload = Object.entries(answers).map(([answerId, selectedAnswer]) => ({
       answerId,
       selectedAnswer
@@ -48,6 +50,7 @@ const TestTakingPage = () => {
 
     submitTest({ id: test.id, answers: payload }, {
       onSuccess: () => {
+        setIsSubmitModalOpen(false);
         window.scrollTo(0, 0);
       }
     });
@@ -148,6 +151,35 @@ const TestTakingPage = () => {
           </div>
         </div>
       )}
+
+      {/* Submit Confirmation Modal */}
+      <Modal isOpen={isSubmitModalOpen} onClose={() => setIsSubmitModalOpen(false)} title="Confirm Submission" size="md">
+        <div className="p-4">
+          <p className="text-dark mb-4">Are you sure you want to submit your answers? You cannot change them later.</p>
+          <div className="d-flex justify-content-end gap-2">
+            <button 
+              type="button" 
+              className="btn btn-light border" 
+              onClick={() => setIsSubmitModalOpen(false)}
+              disabled={isPending}
+            >
+              Cancel
+            </button>
+            <button 
+              type="button" 
+              className="btn btn-primary" 
+              onClick={confirmSubmit}
+              disabled={isPending}
+            >
+              {isPending ? (
+                <><span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Submitting...</>
+              ) : (
+                'Submit Assessment'
+              )}
+            </button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };

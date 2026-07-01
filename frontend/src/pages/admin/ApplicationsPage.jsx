@@ -72,8 +72,10 @@ const ApplicationsPage = () => {
     switch (status) {
       case 'accepted':
         return <span className="badge bg-success-subtle text-success border border-success-subtle px-2 py-1 rounded">Accepted</span>;
-      case 'next_round':
-        return <span className="badge bg-info-subtle text-info border border-info-subtle px-2 py-1 rounded">Next Round</span>;
+      case 'face_to_face_interview':
+        return <span className="badge bg-purple-subtle text-purple border border-purple-subtle px-2 py-1 rounded" style={{ backgroundColor: '#f3e8ff', color: '#7e22ce', borderColor: '#e9d5ff' }}>Face to Face</span>;
+      case 'aptitude_round':
+        return <span className="badge bg-info-subtle text-info border border-info-subtle px-2 py-1 rounded">Aptitude Round</span>;
       case 'reviewed':
         return <span className="badge bg-primary-subtle text-primary border border-primary-subtle px-2 py-1 rounded">Reviewed</span>;
       case 'rejected':
@@ -195,12 +197,14 @@ const ApplicationsPage = () => {
           <div className="text-center py-5">
             <i className={`bi ${confirmAction === 'rejected' ? 'bi-exclamation-triangle text-danger' : 'bi-check-circle text-success'} display-1 mb-3 d-block`}></i>
             <h4 className="fw-bold mb-3 text-dark">
-              Are you sure you want to {confirmAction === 'rejected' ? 'reject this candidate' : 'proceed this candidate to the next round'}?
+              Are you sure you want to {confirmAction === 'rejected' ? 'reject this candidate' : confirmAction === 'aptitude_round' ? 'proceed this candidate to the aptitude round' : 'proceed this candidate to face to face interview'}?
             </h4>
             <p className="text-muted mb-4">
               {confirmAction === 'rejected' 
                 ? 'This will immediately notify the candidate that they have not been selected.' 
-                : 'This will automatically generate a 10-question assessment test and email the candidate.'}
+                : confirmAction === 'aptitude_round'
+                ? 'This will automatically generate a 10-question assessment test and email the candidate.'
+                : 'This will notify the candidate for a face to face interview.'}
             </p>
             <div className="d-flex justify-content-center gap-3 mt-4">
               <button className="btn btn-light border px-4 py-2 rounded-pill fw-medium" onClick={() => setConfirmAction(null)}>
@@ -235,6 +239,26 @@ const ApplicationsPage = () => {
                 <div className="text-muted small mt-2">Applied on {moment(selectedApplication.applied_at).format('MMM DD, YYYY')}</div>
               </div>
             </div>
+
+            {/* Test Score Section */}
+            {selectedApplication.test?.is_completed && (
+              <div className="mb-4 bg-white border border-primary-subtle rounded p-3 d-flex align-items-center justify-content-between shadow-sm">
+                <div className="d-flex align-items-center gap-3">
+                  <div className="bg-primary-subtle text-primary rounded-circle d-flex align-items-center justify-content-center" style={{width: '48px', height: '48px'}}>
+                    <i className="bi bi-file-earmark-bar-graph fs-4"></i>
+                  </div>
+                  <div>
+                    <h6 className="fw-bold text-dark mb-0">Assessment Test Score</h6>
+                    <p className="text-muted small mb-0">Completed</p>
+                  </div>
+                </div>
+                <div className="text-end">
+                  <div className={`fw-bold fs-4 ${selectedApplication.test.score >= 70 ? 'text-success' : 'text-warning'}`}>
+                    {Number(selectedApplication.test.score).toFixed(0)}%
+                  </div>
+                </div>
+              </div>
+            )}
 
             <h6 className="fw-bold text-dark mb-3">Resume Preview</h6>
             {isFetchingResume ? (
@@ -274,13 +298,31 @@ const ApplicationsPage = () => {
               >
                 Reject Candidate
               </button>
-              <button 
-                className="btn btn-success fw-medium px-4 rounded-pill shadow-sm" 
-                onClick={() => handleStatusUpdateClick('next_round')}
-                disabled={isUpdating || selectedApplication.status === 'next_round' || selectedApplication.status === 'accepted'}
-              >
-                Proceed to Next Round
-              </button>
+              {selectedApplication.status === 'face_to_face_interview' ? (
+                <button 
+                  className="btn btn-success fw-medium px-4 rounded-pill shadow-sm" 
+                  onClick={() => handleStatusUpdateClick('accepted')}
+                  disabled={isUpdating || selectedApplication.status === 'accepted'}
+                >
+                  Accept Candidate
+                </button>
+              ) : selectedApplication.status === 'aptitude_round' ? (
+                <button 
+                  className="btn btn-success fw-medium px-4 rounded-pill shadow-sm" 
+                  onClick={() => handleStatusUpdateClick('face_to_face_interview')}
+                  disabled={isUpdating || !selectedApplication.test?.is_completed}
+                >
+                  Proceed to Face to Face
+                </button>
+              ) : (
+                <button 
+                  className="btn btn-success fw-medium px-4 rounded-pill shadow-sm" 
+                  onClick={() => handleStatusUpdateClick('aptitude_round')}
+                  disabled={isUpdating || selectedApplication.status === 'accepted' || selectedApplication.status === 'rejected' || selectedApplication.status === 'aptitude_round'}
+                >
+                  Proceed to Aptitude Round
+                </button>
+              )}
             </div>
           </div>
         )}

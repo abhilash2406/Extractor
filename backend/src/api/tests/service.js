@@ -83,7 +83,16 @@ export const submitTestAnswersService = async (testId, userId, answers) => {
     
     // Check correctness
     if (selected && answerRecord.question) {
-      if (selected === answerRecord.question.correct_answer) {
+      const q = answerRecord.question;
+      let correctValue = q.correct_answer;
+      
+      // Map 'A', 'B', 'C', 'D' to the actual option text
+      if (['A', 'B', 'C', 'D'].includes(q.correct_answer)) {
+        const optionKey = 'option_' + q.correct_answer.toLowerCase();
+        correctValue = q[optionKey];
+      }
+
+      if (selected === correctValue) {
         answerRecord.is_correct = true;
         correctCount++;
       } else {

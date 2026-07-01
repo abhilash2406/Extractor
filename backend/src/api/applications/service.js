@@ -55,6 +55,11 @@ export const getApplicationsService = async (query) => {
         where: Object.keys(jobWhere).length ? jobWhere : undefined,
         required: Object.keys(jobWhere).length > 0,
       },
+      {
+        model: Test,
+        as: 'test',
+        attributes: ['id', 'score', 'is_completed']
+      }
     ],
     order: [[sortBy, sortOrder]],
     limit,
@@ -235,7 +240,7 @@ export const updateApplicationStatusService = async (id, status) => {
 
   // Check if status is transitioning
   const isNewlyRejected = status === 'rejected' && application.status !== 'rejected';
-  const isNewlyNextRound = status === 'next_round' && application.status !== 'next_round';
+  const isNewlyAptitudeRound = status === 'aptitude_round' && application.status !== 'aptitude_round';
 
   // Execute DB changes in a transaction
   await sequelize.transaction(async (t) => {
@@ -243,7 +248,7 @@ export const updateApplicationStatusService = async (id, status) => {
     application.status = status;
     await application.save({ transaction: t });
 
-    if (isNewlyNextRound && application.candidate?.email) {
+    if (isNewlyAptitudeRound && application.candidate?.email) {
       await generateTestForApplication(application, t);
     }
   });
@@ -253,7 +258,7 @@ export const updateApplicationStatusService = async (id, status) => {
     sendRejectionEmail(application);
   }
   
-  if (isNewlyNextRound && application.candidate?.email) {
+  if (isNewlyAptitudeRound && application.candidate?.email) {
     sendNextRoundEmail(application);
   }
 
