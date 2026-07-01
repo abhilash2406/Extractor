@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Congratulations! Next Round Application</title>
+  <style>
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f4; margin: 0; padding: 20px; color: #333; }
+    .container { max-width: 600px; margin: 0 auto; background-color: #ffffff; padding: 40px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05); }
+    .header { text-align: center; margin-bottom: 30px; }
+    .header h2 { color: #27ae60; margin: 0; }
+    .content { line-height: 1.6; font-size: 16px; color: #555; }
+    .content p { margin-bottom: 20px; }
+    .job-title { font-weight: bold; color: #2c3e50; }
+    .cta-container { text-align: center; margin: 35px 0; }
+    .cta-button { display: inline-block; background-color: #3498db; color: #ffffff; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold; }
+    .footer { text-align: center; margin-top: 40px; font-size: 14px; color: #999; border-top: 1px solid #eee; padding-top: 20px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h2>Congratulations!</h2>
+    </div>
+    <div class="content">
+      <p>Hi <strong><%= candidateName %></strong>,</p>
+      
+      <p>We are thrilled to inform you that you have been selected to proceed to the next round of our hiring process for the <span class="job-title"><%= jobTitle %></span> position!</p>
+      
+      <p>As the next step, we require you to complete a brief technical assessment. We have generated a tailored test for you in your candidate portal. This assessment will help us better understand your skills and approach to problem-solving.</p>
+      
+      <div class="cta-container">
+        <a href="<%= baseurl %>/login" class="cta-button">Log In to Portal</a>
+      </div>
+
+      <p>Please log in as soon as possible, navigate to the <strong>Tests</strong> section in your sidebar, and complete your assigned test.</p>
+      
+      <p>We look forward to seeing your results!</p>
+      
+      <p>Sincerely,<br>
+      <strong>The Hiring Team</strong></p>
+    </div>
+    <div class="footer">
+      <p>&copy; <%= new Date().getFullYear() %> Extractor. All rights reserved.</p>
+    </div>
+  </div>
+</body>
+</html>

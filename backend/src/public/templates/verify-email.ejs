@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Verify Your Email</title>
+  <style>
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f9fafb; margin: 0; padding: 40px 20px; }
+    .container { max-width: 600px; margin: 0 auto; background: #ffffff; padding: 40px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+    .header { text-align: center; padding-bottom: 20px; margin-bottom: 20px; }
+    .header h2 { color: #111827; margin: 0; font-size: 24px; }
+    .content { font-size: 16px; color: #374151; line-height: 1.6; }
+    .btn { display: inline-block; background: #4f46e5; color: #ffffff; text-decoration: none; padding: 14px 28px; border-radius: 6px; font-weight: 600; margin: 24px 0; }
+    .link-box { background: #f3f4f6; padding: 12px; border-radius: 6px; margin: 16px 0; word-break: break-all; font-size: 14px; }
+    .link-box a { color: #4f46e5; text-decoration: none; }
+    .footer { font-size: 13px; color: #9ca3af; text-align: center; margin-top: 40px; border-top: 1px solid #f3f4f6; padding-top: 24px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h2>Welcome to Extractor!</h2>
+    </div>
+    <div class="content">
+      <p>Hi <%= name %>,</p>
+      <p>Thank you for registering. To complete your setup and secure your account, please verify your email address by clicking the button below.</p>
+      
+      <div style="text-align: center;">
+        <a href="<%= frontendUrl %>/verify-email?token=<%= token %>" class="btn">Verify My Email</a>
+      </div>
+      
+      <p>If the button doesn't work, you can copy and paste the following link directly into your browser:</p>
+      
+      <div class="link-box">
+        <a href="<%= frontendUrl %>/verify-email?token=<%= token %>">
+          <%= frontendUrl %>/verify-email?token=<%= token %>
+        </a>
+      </div>
+      
+      <p>For your security, this verification link will expire in <%= expireHours %> hours.</p>
+      <p>If you did not create an account with us, you can safely ignore this email.</p>
+    </div>
+    <div class="footer">
+      &copy; <%= new Date().getFullYear() %> Extractor. All rights reserved.
+    </div>
+  </div>
+</body>
+</html>

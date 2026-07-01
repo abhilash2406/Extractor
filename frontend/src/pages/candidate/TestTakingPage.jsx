@@ -1,0 +1,155 @@
+import React, { useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { useTestById, useSubmitTest } from '../../hooks/useTests';
+
+const TestTakingPage = () => {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const { data: test, isLoading, isError } = useTestById(id);
+  const { mutate: submitTest, isPending } = useSubmitTest();
+  
+  const [answers, setAnswers] = useState({});
+
+  if (isLoading) {
+    return (
+      <div className="text-center py-5">
+        <div className="spinner-border text-primary" role="status"></div>
+        <div className="mt-2 text-muted small">Loading test...</div>
+      </div>
+    );
+  }
+
+  if (isError || !test) {
+    return (
+      <div className="text-center py-5 text-danger">
+        <i className="bi bi-exclamation-circle fs-1 mb-2"></i>
+        <h6>Failed to load test</h6>
+        <button className="btn btn-outline-secondary btn-sm mt-3" onClick={() => navigate('/tests')}>Back to Tests</button>
+      </div>
+    );
+  }
+
+  const handleOptionChange = (answerId, optionValue) => {
+    setAnswers(prev => ({
+      ...prev,
+      [answerId]: optionValue
+    }));
+  };
+
+  const handleSubmit = () => {
+    if (!window.confirm('Are you sure you want to submit your answers? You cannot change them later.')) {
+      return;
+    }
+
+    const payload = Object.entries(answers).map(([answerId, selectedAnswer]) => ({
+      answerId,
+      selectedAnswer
+    }));
+
+    submitTest({ id: test.id, answers: payload }, {
+      onSuccess: () => {
+        window.scrollTo(0, 0);
+      }
+    });
+  };
+
+  const isAllAnswered = test.answers?.length > 0 && Object.keys(answers).length === test.answers.length;
+
+  return (
+    <div className="max-w-4xl mx-auto">
+      <div className="d-flex align-items-center mb-4 gap-3">
+        <button className="btn btn-light rounded-circle p-2 d-flex shadow-sm" onClick={() => navigate('/tests')}>
+          <i className="bi bi-arrow-left fs-5"></i>
+        </button>
+        <div>
+          <h4 className="fw-bold tracking-tight text-dark mb-0">Assessment Test</h4>
+          <p className="text-muted mb-0 small">Answer all questions carefully before submitting.</p>
+        </div>
+      </div>
+
+      {test.is_completed ? (
+        <div className="bg-white p-5 rounded-4 border shadow-sm text-center mb-4">
+          <div className="mb-4">
+            <i className={`bi ${test.score >= 70 ? 'bi-trophy text-warning' : 'bi-info-circle text-info'} display-1`}></i>
+          </div>
+          <h2 className="fw-bold text-dark mb-2">Test Completed</h2>
+          <p className="text-muted mb-4">You have already submitted this assessment.</p>
+          <div className="d-inline-block border rounded-4 p-4 bg-light">
+            <div className="small text-uppercase fw-bold text-muted mb-1">Your Score</div>
+            <div className={`display-4 fw-bold ${test.score >= 70 ? 'text-success' : 'text-danger'}`}>
+              {test.score}%
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="bg-white rounded-4 border shadow-sm overflow-hidden mb-5">
+          <div className="p-4 border-bottom bg-light">
+            <div className="d-flex justify-content-between align-items-center">
+              <span className="fw-bold text-dark">Questions ({test.total_questions})</span>
+              <span className="badge bg-primary rounded-pill px-3 py-2">
+                {Object.keys(answers).length} / {test.total_questions} Answered
+              </span>
+            </div>
+          </div>
+          
+          <div className="p-4 p-md-5">
+            {test.answers?.map((ans, idx) => (
+              <div key={ans.id} className="mb-5 pb-4 border-bottom last-border-0">
+                <h5 className="fw-semibold text-dark mb-4">
+                  <span className="text-primary me-2">{idx + 1}.</span> 
+                  {ans.question?.question}
+                </h5>
+                
+                <div className="d-flex flex-column gap-3 ms-md-4">
+                  {['option_a', 'option_b', 'option_c', 'option_d'].map((optKey) => {
+                    const optValue = ans.question[optKey];
+                    const isSelected = answers[ans.id] === optValue;
+                    return (
+                      <label 
+                        key={optKey} 
+                        className={`p-3 rounded border cursor-pointer d-flex align-items-center gap-3 transition-all ${isSelected ? 'border-primary bg-primary-subtle' : 'border-light bg-light hover-bg-gray'}`}
+                        style={{ cursor: 'pointer' }}
+                      >
+                        <input 
+                          type="radio" 
+                          name={`question_${ans.id}`}
+                          value={optValue}
+                          checked={isSelected}
+                          onChange={() => handleOptionChange(ans.id, optValue)}
+                          className="form-check-input mt-0 cursor-pointer shadow-none border-secondary"
+                          style={{width: '20px', height: '20px'}}
+                        />
+                        <span className={`fw-medium ${isSelected ? 'text-primary' : 'text-dark'}`}>{optValue}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+            
+            <div className="d-flex justify-content-end mt-4">
+              <button 
+                className="btn btn-primary px-5 py-2 rounded-pill fw-bold shadow-sm"
+                onClick={handleSubmit}
+                disabled={isPending || !isAllAnswered}
+              >
+                {isPending ? (
+                  <><span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Submitting...</>
+                ) : (
+                  'Submit Assessment'
+                )}
+              </button>
+            </div>
+            {!isAllAnswered && (
+              <div className="text-end text-danger small mt-2 fw-medium">
+                Please answer all questions before submitting.
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default TestTakingPage;
