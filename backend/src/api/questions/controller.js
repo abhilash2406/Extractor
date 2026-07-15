@@ -4,6 +4,7 @@ import {
   getQuestionByIdService,
   updateQuestionService,
   deleteQuestionService,
+  generateQuestionService,
 } from './service.js';
 
 export const createQuestion = async (req, res, next) => {
@@ -51,5 +52,17 @@ export const deleteQuestion = async (req, res, next) => {
   } catch (e) {
     const status = e.message === 'Question not found' ? 404 : 400;
     return res.status(status).json({ success: false, message: e.message });
+  }
+};
+
+export const generateQuestion = async (req, res, next) => {
+  try {
+    const { topic, difficulty } = req.body;
+    if (!topic || !difficulty) throw new Error('Topic and difficulty are required');
+    
+    const data = await generateQuestionService(topic, difficulty);
+    return res.json({ success: true, data });
+  } catch (e) {
+    return res.status(400).json({ success: false, message: e.message });
   }
 };

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import * as yup from 'yup';
 import { yupResolver } from '@hookform/resolvers/yup';
-import { useQuestions, useCreateQuestion, useUpdateQuestion, useDeleteQuestion } from '../../hooks/useQuestions';
+import { useQuestions, useCreateQuestion, useUpdateQuestion, useDeleteQuestion, useGenerateQuestion } from '../../hooks/useQuestions';
 import Modal from '../../components/ui/Modal';
 
 import * as questionsApi from '../../api/questions.api';
@@ -28,10 +28,29 @@ const QuestionsPage = () => {
   const { mutate: createQuestion, isPending: isCreating } = useCreateQuestion();
   const { mutate: updateQuestion, isPending: isUpdating } = useUpdateQuestion();
   const { mutate: deleteQuestion, isPending: isDeleting } = useDeleteQuestion();
+  const { mutate: generateQuestionWithAI, isPending: isGeneratingQuestion } = useGenerateQuestion();
+  const [aiTopic, setAiTopic] = useState('');
+  const [aiDifficulty, setAiDifficulty] = useState('Medium');
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm({
+  const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm({
     resolver: yupResolver(schema),
   });
+
+  const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
+
+  const handleGenerateQuestion = () => {
+    if (!aiTopic.trim()) {
+      toast.error('Please enter a topic to generate questions.');
+      return;
+    }
+    
+    generateQuestionWithAI({ topic: aiTopic, difficulty: aiDifficulty }, {
+      onSuccess: () => {
+        setIsBulkModalOpen(false);
+        setAiTopic('');
+      }
+    });
+  };
 
   const openModal = async (id = null) => {
     if (id) {
@@ -95,9 +114,14 @@ const QuestionsPage = () => {
     <div>
       <div className="d-flex justify-content-between align-items-center mb-4">
         <h4 className="fw-bold tracking-tight text-dark mb-0">Questions</h4>
-        <button className="btn btn-dark fw-medium shadow-sm" onClick={() => openModal()}>
-          <i className="bi bi-plus-lg me-2"></i>Add Question
-        </button>
+        <div className="d-flex gap-2">
+          <button className="btn btn-outline-primary fw-medium shadow-sm d-flex align-items-center gap-2" onClick={() => setIsBulkModalOpen(true)}>
+            <i className="bi bi-magic"></i>Generate 10 Questions
+          </button>
+          <button className="btn btn-dark fw-medium shadow-sm" onClick={() => openModal()}>
+            <i className="bi bi-plus-lg me-2"></i>Add Question
+          </button>
+        </div>
       </div>
 
       <div className="bg-white rounded-4 shadow-soft border p-4 mb-4">
@@ -188,6 +212,8 @@ const QuestionsPage = () => {
       {/* Add/Edit Question Modal */}
       <Modal isOpen={modalState.isOpen} onClose={closeModal} title={modalState.data ? 'Edit Question' : 'Add New Question'} size="lg">
         <form onSubmit={handleSubmit(onSubmit)}>
+
+
           <div className="mb-3">
             <label className="form-label small fw-semibold text-dark">Question Text</label>
             <textarea 
@@ -253,6 +279,43 @@ const QuestionsPage = () => {
           <button type="button" className="btn btn-danger" onClick={handleDelete} disabled={isDeleting}>
             {isDeleting ? 'Deleting...' : 'Delete'}
           </button>
+        </div>
+      </Modal>
+
+      {/* Bulk Generation Modal */}
+      <Modal isOpen={isBulkModalOpen} onClose={() => setIsBulkModalOpen(false)} title="Generate 10 AI Questions" size="md">
+        <div className="bg-primary-subtle rounded-4 p-4 mb-4 border border-primary-subtle">
+          <p className="text-muted small mb-4">
+            The AI will generate 10 unique, high-quality multiple-choice questions based on your topic and save them directly to the database. This may take up to 20 seconds.
+          </p>
+          <div className="mb-3">
+            <label className="form-label small fw-semibold text-dark mb-1">Topic</label>
+            <input type="text" className="form-control input-stylish bg-white" placeholder="e.g. React Hooks, Node.js Events" value={aiTopic} onChange={(e) => setAiTopic(e.target.value)} disabled={isGeneratingQuestion} />
+          </div>
+          <div className="mb-4">
+            <label className="form-label small fw-semibold text-dark mb-1">Difficulty</label>
+            <select className="form-select input-stylish bg-white" value={aiDifficulty} onChange={(e) => setAiDifficulty(e.target.value)} disabled={isGeneratingQuestion}>
+              <option value="Easy">Easy</option>
+              <option value="Medium">Medium</option>
+              <option value="Hard">Hard</option>
+            </select>
+          </div>
+          <div className="d-flex justify-content-end gap-2">
+            <button type="button" className="btn btn-light border" onClick={() => setIsBulkModalOpen(false)} disabled={isGeneratingQuestion}>Cancel</button>
+            <button type="button" className="btn btn-primary fw-medium shadow-sm d-flex justify-content-center align-items-center gap-2" onClick={handleGenerateQuestion} disabled={isGeneratingQuestion}>
+              {isGeneratingQuestion ? (
+                <>
+                  <span className="spinner-border spinner-border-sm"></span>
+                  <span>Generating (approx 15s)...</span>
+                </>
+              ) : (
+                <>
+                  <i className="bi bi-magic"></i>
+                  <span>Generate 10 Questions</span>
+                </>
+              )}
+            </button>
+          </div>
         </div>
       </Modal>
     </div>

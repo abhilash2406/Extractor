@@ -5,11 +5,14 @@ import {
   getQuestionById,
   updateQuestion,
   deleteQuestion,
+  generateQuestion,
 } from './controller.js';
 import { createQuestionValidate, updateQuestionValidate } from './validator.js';
 import authorizeAdmin from '../../middlewares/authorize-admin.js';
 
 const router = express.Router();
+
+router.post('/generate', authorizeAdmin, generateQuestion);
 
 /**
  * @swagger

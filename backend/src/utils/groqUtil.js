@@ -122,3 +122,62 @@ Format the response beautifully using markdown (like bolding, bullet points). Ke
     throw error;
   }
 };
+
+/**
+ * Generates multiple-choice questions using Groq API.
+ * 
+ * @param {string} topic - The topic for the questions
+ * @param {string} difficulty - The difficulty level (Easy, Medium, Hard)
+ * @returns {Promise<Array>} - Parsed JSON array containing 10 question objects.
+ */
+export const generateQuestionWithGroq = async (topic, difficulty) => {
+  const prompt = `
+You are an expert technical interviewer and educator. Your task is to generate 10 high-quality, professional multiple-choice questions on the given topic.
+
+Topic: ${topic}
+Difficulty: ${difficulty}
+
+Return the questions strictly in JSON format. Do not add any extra text or markdown formatting.
+The JSON schema must be exactly as follows:
+{
+  "questions": [
+    {
+      "question": "String (The question text itself)",
+      "option_a": "String (First possible answer)",
+      "option_b": "String (Second possible answer)",
+      "option_c": "String (Third possible answer)",
+      "option_d": "String (Fourth possible answer)",
+      "correct_answer": "String (Exactly one character: 'A', 'B', 'C', or 'D')"
+    }
+  ]
+}
+
+Ensure you generate exactly 10 questions. Ensure the options are plausible and the correct_answer is accurate. Do not include A, B, C, D in the option text itself (e.g. use "React Router", not "A. React Router").
+  `;
+
+  try {
+    const chatCompletion = await groq.chat.completions.create({
+      messages: [
+        {
+          role: 'user',
+          content: prompt,
+        },
+      ],
+      model: 'llama-3.1-8b-instant',
+      temperature: 0.6,
+      response_format: { type: 'json_object' },
+    });
+
+    const content = chatCompletion.choices[0]?.message?.content;
+    
+    if (content) {
+      const parsed = JSON.parse(content);
+      return parsed.questions || [];
+    }
+    
+    throw new Error('Groq returned an empty response');
+  } catch (error) {
+    console.error('Error generating questions with Groq:', error);
+    throw error;
+  }
+};

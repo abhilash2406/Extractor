@@ -50,3 +50,15 @@ export const useDeleteQuestion = () => {
     onError: (err) => toast.error(err.response?.data?.message || 'Failed to delete question'),
   });
 };
+
+export const useGenerateQuestion = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: questionsApi.generateQuestion,
+    onSuccess: (res) => {
+      qc.invalidateQueries({ queryKey: ['questions'] });
+      toast.success(res.data?.message || 'Questions generated successfully!');
+    },
+    onError: (err) => toast.error(err.response?.data?.message || 'Failed to generate questions'),
+  });
+};

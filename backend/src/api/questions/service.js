@@ -2,7 +2,7 @@ import Question from '../../models/question.js';
 import BadRequest from '../../common/exceptions/badRequest.js';
 import { Op } from 'sequelize';
 import { parsePagination, paginatedResponse } from '../../utils/pagination.js';
-
+import { generateQuestionWithGroq } from '../../utils/groqUtil.js';
 export const createQuestionService = async (data) => {
   return await Question.create(data);
 };
@@ -50,4 +50,14 @@ export const deleteQuestionService = async (id) => {
 
   await question.destroy();
   return { message: 'Question deleted successfully' };
+};
+
+export const generateQuestionService = async (topic, difficulty) => {
+  const questions = await generateQuestionWithGroq(topic, difficulty);
+  if (!questions || questions.length === 0) {
+    throw new BadRequest('Failed to generate questions. Please try again.');
+  }
+  
+  await Question.bulkCreate(questions);
+  return { message: `Successfully generated and saved ${questions.length} questions.` };
 };

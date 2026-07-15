@@ -213,23 +213,7 @@ const JobsPage = () => {
             <input type="text" className={`form-control input-stylish ${errors.title ? 'is-invalid' : ''}`} {...register('title')} />
             {errors.title && <div className="invalid-feedback">{errors.title.message}</div>}
           </div>
-          
-          <div className="mb-3">
-            <div className="d-flex justify-content-between align-items-center mb-2">
-              <label className="form-label small fw-semibold text-dark mb-0">Description</label>
-              <button 
-                type="button" 
-                className="btn btn-sm btn-outline-primary border-0 rounded-pill d-flex align-items-center gap-1 shadow-sm px-3"
-                onClick={handleGenerateDescription}
-                disabled={isGeneratingDesc}
-              >
-                {isGeneratingDesc ? <span className="spinner-border spinner-border-sm me-1" role="status"></span> : <i className="bi bi-magic"></i>}
-                <span className="small fw-bold">Auto-generate with AI</span>
-              </button>
-            </div>
-            <textarea className={`form-control input-stylish ${errors.description ? 'is-invalid' : ''}`} rows="6" {...register('description')} />
-            {errors.description && <div className="invalid-feedback">{errors.description.message}</div>}
-          </div>
+
 
           <div className="row mb-3">
             <div className="col-md-4 mb-3 mb-md-0">
@@ -264,6 +248,23 @@ const JobsPage = () => {
               ))}
               {skillsList.length === 0 && <span className="text-muted small">No skills available. Add some in the Skills tab.</span>}
             </div>
+          </div>
+
+          <div className="mb-4">
+            <div className="d-flex justify-content-between align-items-center mb-2">
+              <label className="form-label small fw-semibold text-dark mb-0">Description</label>
+              <button 
+                type="button" 
+                className="btn btn-sm btn-outline-primary border-0 rounded-pill d-flex align-items-center gap-1 shadow-sm px-3"
+                onClick={handleGenerateDescription}
+                disabled={isGeneratingDesc}
+              >
+                {isGeneratingDesc ? <span className="spinner-border spinner-border-sm me-1" role="status"></span> : <i className="bi bi-magic"></i>}
+                <span className="small fw-bold">Auto-generate with AI</span>
+              </button>
+            </div>
+            <textarea className={`form-control input-stylish ${errors.description ? 'is-invalid' : ''}`} rows="6" {...register('description')} />
+            {errors.description && <div className="invalid-feedback">{errors.description.message}</div>}
           </div>
 
           <div className="d-flex justify-content-end gap-2 border-top pt-3">
