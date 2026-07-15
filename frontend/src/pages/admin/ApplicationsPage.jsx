@@ -575,55 +575,56 @@ const ApplicationsPage = () => {
             </div>
 
             {/* Action Buttons spanning full width at bottom */}
-            <div className="bg-light border rounded-4 p-4 mt-4 d-flex flex-column flex-md-row justify-content-between align-items-center shadow-sm">
-              <div className="mb-3 mb-md-0">
-                <h6 className="fw-bold text-dark mb-1">Process Application</h6>
-                <div className="text-muted small">Select the next stage for this candidate.</div>
-              </div>
-              <div className="d-flex flex-wrap gap-3">
-                <button 
-                  className="btn btn-outline-danger fw-bold px-4 py-2 rounded-pill shadow-sm" 
-                  onClick={() => handleStatusUpdateClick('rejected')}
-                  disabled={isUpdating || activeApp.status === 'rejected'}
-                >
-                  <i className="bi bi-x-circle me-2"></i>Reject
-                </button>
-                {activeApp.status === 'accepted' || activeApp.status === 'rejected' ? null : 
-                activeApp.status === 'face_to_face_interview' ? (
+            {activeApp.status !== 'accepted' && activeApp.status !== 'rejected' && (
+              <div className="bg-light border rounded-4 p-4 mt-4 d-flex flex-column flex-md-row justify-content-between align-items-center shadow-sm">
+                <div className="mb-3 mb-md-0">
+                  <h6 className="fw-bold text-dark mb-1">Process Application</h6>
+                  <div className="text-muted small">Select the next stage for this candidate.</div>
+                </div>
+                <div className="d-flex flex-wrap gap-3">
                   <button 
-                    className="btn btn-success fw-bold px-4 py-2 rounded-pill shadow-sm" 
-                    onClick={() => handleStatusUpdateClick('accepted')}
+                    className="btn btn-outline-danger fw-bold px-4 py-2 rounded-pill shadow-sm" 
+                    onClick={() => handleStatusUpdateClick('rejected')}
                     disabled={isUpdating}
                   >
-                    <i className="bi bi-check-circle me-2"></i>Accept Candidate
+                    <i className="bi bi-x-circle me-2"></i>Reject
                   </button>
-                ) : activeApp.status === 'technical_round' ? (
-                  <button 
-                    className="btn btn-primary fw-bold px-4 py-2 rounded-pill shadow-sm" 
-                    onClick={() => handleStatusUpdateClick('face_to_face_interview')}
-                    disabled={isUpdating || !activeApp.tests?.find(t => t.test_type === 'TECHNICAL')?.is_completed}
-                  >
-                    Proceed to Interview <i className="bi bi-arrow-right-circle ms-2"></i>
-                  </button>
-                ) : activeApp.status === 'aptitude_round' ? (
-                  <button 
-                    className="btn btn-primary fw-bold px-4 py-2 rounded-pill shadow-sm" 
-                    onClick={() => handleStatusUpdateClick('technical_round')}
-                    disabled={isUpdating || !activeApp.tests?.find(t => t.test_type === 'APTITUDE')?.is_completed}
-                  >
-                    Proceed to Technical <i className="bi bi-arrow-right-circle ms-2"></i>
-                  </button>
-                ) : (
-                  <button 
-                    className="btn btn-primary fw-bold px-4 py-2 rounded-pill shadow-sm" 
-                    onClick={() => handleStatusUpdateClick('aptitude_round')}
-                    disabled={isUpdating}
-                  >
-                    Proceed to Aptitude <i className="bi bi-arrow-right-circle ms-2"></i>
-                  </button>
-                )}
+                  {activeApp.status === 'face_to_face_interview' ? (
+                    <button 
+                      className="btn btn-success fw-bold px-4 py-2 rounded-pill shadow-sm" 
+                      onClick={() => handleStatusUpdateClick('accepted')}
+                      disabled={isUpdating}
+                    >
+                      <i className="bi bi-check-circle me-2"></i>Accept Candidate
+                    </button>
+                  ) : activeApp.status === 'technical_round' ? (
+                    <button 
+                      className="btn btn-primary fw-bold px-4 py-2 rounded-pill shadow-sm" 
+                      onClick={() => handleStatusUpdateClick('face_to_face_interview')}
+                      disabled={isUpdating || !activeApp.tests?.find(t => t.test_type === 'TECHNICAL')?.is_completed}
+                    >
+                      Proceed to Interview <i className="bi bi-arrow-right-circle ms-2"></i>
+                    </button>
+                  ) : activeApp.status === 'aptitude_round' ? (
+                    <button 
+                      className="btn btn-primary fw-bold px-4 py-2 rounded-pill shadow-sm" 
+                      onClick={() => handleStatusUpdateClick('technical_round')}
+                      disabled={isUpdating || !activeApp.tests?.find(t => t.test_type === 'APTITUDE')?.is_completed}
+                    >
+                      Proceed to Technical <i className="bi bi-arrow-right-circle ms-2"></i>
+                    </button>
+                  ) : (
+                    <button 
+                      className="btn btn-primary fw-bold px-4 py-2 rounded-pill shadow-sm" 
+                      onClick={() => handleStatusUpdateClick('aptitude_round')}
+                      disabled={isUpdating}
+                    >
+                      Proceed to Aptitude <i className="bi bi-arrow-right-circle ms-2"></i>
+                    </button>
+                  )}
+                </div>
               </div>
-            </div>
+            )}
           </div>
         )}
       </Modal>
