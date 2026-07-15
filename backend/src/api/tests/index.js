@@ -1,5 +1,5 @@
 import express from 'express';
-import { getMyTests, getTestById, submitTestAnswers, getAdminTestById } from './controller.js';
+import { getMyTests, getTestById, submitTestAnswers, getAdminTestById, evaluateTestController } from './controller.js';
 
 const router = express.Router();
 
@@ -88,5 +88,24 @@ router.get('/:id', getTestById);
  *         description: Test submitted successfully and score computed
  */
 router.put('/:id/submit', submitTestAnswers);
+
+/**
+ * @swagger
+ * /api/v1/tests/{id}/evaluate:
+ *   post:
+ *     summary: Evaluate a technical test using AI (for admins)
+ *     tags: [Tests]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     responses:
+ *       200:
+ *         description: Test evaluated successfully and score computed
+ */
+router.post('/:id/evaluate', evaluateTestController);
 
 export default router;

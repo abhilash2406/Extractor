@@ -7,6 +7,11 @@ const Test = sequelize.define('Test', {
     defaultValue: DataTypes.UUIDV4,
     primaryKey: true,
   },
+  test_type: {
+    type: DataTypes.ENUM('APTITUDE', 'TECHNICAL'),
+    defaultValue: 'APTITUDE',
+    allowNull: false,
+  },
   user_id: {
     type: DataTypes.UUID,
     allowNull: false,

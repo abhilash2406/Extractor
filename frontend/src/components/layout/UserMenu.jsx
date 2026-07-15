@@ -121,19 +121,29 @@ const UserMenu = ({ roleLabel = 'User' }) => {
     <>
       <div className="position-relative" ref={dropdownRef}>
         <div 
-          className="d-flex align-items-center justify-content-between p-2 rounded shadow-sm border" 
-          style={{ backgroundColor: '#f8fafc', cursor: 'pointer', transition: 'all 0.2s ease' }}
+          className="d-flex align-items-center justify-content-between p-2 rounded-4 border border-light user-menu-toggle" 
+          style={{ 
+            backgroundColor: 'var(--bs-white)', 
+            cursor: 'pointer', 
+            transition: 'all 0.3s ease',
+            boxShadow: '0 4px 15px rgba(0,0,0,0.04)'
+          }}
           onClick={() => setIsOpen(!isOpen)}
+          onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
+          onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}
         >
-          <div className="d-flex align-items-center flex-grow-1 text-truncate px-2">
+          <div className="d-flex align-items-center flex-grow-1 text-truncate gap-3 px-1">
+            <div className="rounded-circle bg-primary d-flex align-items-center justify-content-center flex-shrink-0 shadow-sm" style={{width: '42px', height: '42px', background: 'linear-gradient(135deg, var(--blue-500) 0%, var(--blue-700) 100%)'}}>
+              <span className="fw-bold text-white fs-5">{user?.name?.charAt(0)?.toUpperCase() || 'U'}</span>
+            </div>
             <div className="text-truncate">
-              <div className="small fw-bold text-dark">{user?.name}</div>
-              <div className="text-muted" style={{fontSize: '0.75rem'}}>{roleLabel}</div>
+              <div className="fw-bold text-dark mb-0 tracking-tight lh-1" style={{fontSize: '0.95rem'}}>{user?.name || 'User'}</div>
+              <div className="text-muted mt-1 fw-medium text-uppercase" style={{fontSize: '0.65rem', letterSpacing: '1px'}}>{roleLabel}</div>
             </div>
           </div>
-          <button className="btn btn-sm btn-light border-0 ms-2">
-            <i className={`bi bi-chevron-${isOpen ? 'up' : 'down'}`}></i>
-          </button>
+          <div className="d-flex align-items-center justify-content-center rounded-circle bg-light ms-2 flex-shrink-0 transition-all" style={{width: '32px', height: '32px'}}>
+            <i className={`bi bi-chevron-${isOpen ? 'up' : 'down'} text-muted`} style={{ fontSize: '0.85rem' }}></i>
+          </div>
         </div>
 
         {isOpen && (

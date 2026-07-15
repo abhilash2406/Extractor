@@ -9,12 +9,33 @@ import * as questionsApi from '../../api/questions.api';
 import toast from 'react-hot-toast';
 
 const schema = yup.object().shape({
+  type: yup.string().required('Type is required').oneOf(['MCQ', 'PROGRAMMING']),
   question: yup.string().required('Question is required'),
-  option_a: yup.string().required('Option A is required'),
-  option_b: yup.string().required('Option B is required'),
-  option_c: yup.string().required('Option C is required'),
-  option_d: yup.string().required('Option D is required'),
-  correct_answer: yup.string().required('Correct answer is required').oneOf(['A', 'B', 'C', 'D']),
+  option_a: yup.string().when('type', {
+    is: 'MCQ',
+    then: (schema) => schema.required('Option A is required'),
+    otherwise: (schema) => schema.nullable().notRequired()
+  }),
+  option_b: yup.string().when('type', {
+    is: 'MCQ',
+    then: (schema) => schema.required('Option B is required'),
+    otherwise: (schema) => schema.nullable().notRequired()
+  }),
+  option_c: yup.string().when('type', {
+    is: 'MCQ',
+    then: (schema) => schema.required('Option C is required'),
+    otherwise: (schema) => schema.nullable().notRequired()
+  }),
+  option_d: yup.string().when('type', {
+    is: 'MCQ',
+    then: (schema) => schema.required('Option D is required'),
+    otherwise: (schema) => schema.nullable().notRequired()
+  }),
+  correct_answer: yup.string().when('type', {
+    is: 'MCQ',
+    then: (schema) => schema.required('Correct answer is required').oneOf(['A', 'B', 'C', 'D']),
+    otherwise: (schema) => schema.nullable().notRequired()
+  }),
 });
 
 const QuestionsPage = () => {
@@ -32,9 +53,15 @@ const QuestionsPage = () => {
   const [aiTopic, setAiTopic] = useState('');
   const [aiDifficulty, setAiDifficulty] = useState('Medium');
 
-  const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm({
+  const { register, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm({
     resolver: yupResolver(schema),
+    defaultValues: {
+      type: 'MCQ',
+      correct_answer: 'A'
+    }
   });
+
+  const selectedType = watch('type');
 
   const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
 
@@ -67,12 +94,13 @@ const QuestionsPage = () => {
         }
 
         reset({
+          type: q.type || 'MCQ',
           question: q.question,
-          option_a: q.option_a,
-          option_b: q.option_b,
-          option_c: q.option_c,
-          option_d: q.option_d,
-          correct_answer: mappedCorrectAnswer,
+          option_a: q.option_a || '',
+          option_b: q.option_b || '',
+          option_c: q.option_c || '',
+          option_d: q.option_d || '',
+          correct_answer: mappedCorrectAnswer || 'A',
         });
         setModalState({ isOpen: true, data: q });
       } catch (err) {
@@ -81,7 +109,7 @@ const QuestionsPage = () => {
         setIsFetchingDetail(false);
       }
     } else {
-      reset({ question: '', option_a: '', option_b: '', option_c: '', option_d: '', correct_answer: 'A' });
+      reset({ type: 'MCQ', question: '', option_a: '', option_b: '', option_c: '', option_d: '', correct_answer: 'A' });
       setModalState({ isOpen: true, data: null });
     }
   };
@@ -92,10 +120,19 @@ const QuestionsPage = () => {
   };
 
   const onSubmit = (data) => {
+    const payload = { ...data };
+    if (payload.type === 'PROGRAMMING') {
+      delete payload.option_a;
+      delete payload.option_b;
+      delete payload.option_c;
+      delete payload.option_d;
+      delete payload.correct_answer;
+    }
+    
     if (modalState.data?.id) {
-      updateQuestion({ id: modalState.data.id, data }, { onSuccess: closeModal });
+      updateQuestion({ id: modalState.data.id, data: payload }, { onSuccess: closeModal });
     } else {
-      createQuestion(data, { onSuccess: closeModal });
+      createQuestion(payload, { onSuccess: closeModal });
     }
   };
 
@@ -148,6 +185,7 @@ const QuestionsPage = () => {
               <thead className="table-light">
                 <tr>
                   <th className="fw-semibold text-muted small text-uppercase">Question</th>
+                  <th className="fw-semibold text-muted small text-uppercase">Type</th>
                   <th className="fw-semibold text-muted small text-uppercase">Correct Option</th>
                   <th className="fw-semibold text-muted small text-uppercase text-end">Actions</th>
                 </tr>
@@ -158,7 +196,18 @@ const QuestionsPage = () => {
                     <td className="fw-medium text-dark">
                       <div className="text-truncate" style={{maxWidth: '400px'}} title={q.question}>{q.question}</div>
                     </td>
-                    <td><span className="badge bg-success-subtle text-success border border-success-subtle">Option {q.correct_answer}</span></td>
+                    <td>
+                      <span className={`badge ${q.type === 'PROGRAMMING' ? 'bg-primary-subtle text-primary border-primary-subtle' : 'bg-secondary-subtle text-secondary border-secondary-subtle'} border`}>
+                        {q.type || 'MCQ'}
+                      </span>
+                    </td>
+                    <td>
+                      {q.type === 'PROGRAMMING' ? (
+                        <span className="text-muted small">Manual Review</span>
+                      ) : (
+                        <span className="badge bg-success-subtle text-success border border-success-subtle">Option {q.correct_answer}</span>
+                      )}
+                    </td>
                     <td className="text-end">
                       <button 
                         className="btn btn-sm btn-light text-primary border-0 me-2" 
@@ -215,52 +264,65 @@ const QuestionsPage = () => {
 
 
           <div className="mb-3">
+            <label className="form-label small fw-semibold text-dark">Question Type</label>
+            <select className={`form-select input-stylish ${errors.type ? 'is-invalid' : ''}`} {...register('type')}>
+              <option value="MCQ">Multiple Choice (MCQ)</option>
+              <option value="PROGRAMMING">Programming</option>
+            </select>
+            {errors.type && <div className="invalid-feedback">{errors.type.message}</div>}
+          </div>
+
+          <div className="mb-3">
             <label className="form-label small fw-semibold text-dark">Question Text</label>
             <textarea 
               className={`form-control input-stylish ${errors.question ? 'is-invalid' : ''}`} 
               rows="3"
-              placeholder="Enter the test question..."
+              placeholder={selectedType === 'PROGRAMMING' ? "Enter the programming problem statement..." : "Enter the test question..."}
               {...register('question')} 
             />
             {errors.question && <div className="invalid-feedback">{errors.question.message}</div>}
           </div>
           
-          <div className="row mb-3">
-            <div className="col-md-6 mb-3 mb-md-0">
-              <label className="form-label small fw-semibold text-dark">Option A</label>
-              <input type="text" className={`form-control input-stylish ${errors.option_a ? 'is-invalid' : ''}`} {...register('option_a')} />
-              {errors.option_a && <div className="invalid-feedback">{errors.option_a.message}</div>}
-            </div>
-            <div className="col-md-6">
-              <label className="form-label small fw-semibold text-dark">Option B</label>
-              <input type="text" className={`form-control input-stylish ${errors.option_b ? 'is-invalid' : ''}`} {...register('option_b')} />
-              {errors.option_b && <div className="invalid-feedback">{errors.option_b.message}</div>}
-            </div>
-          </div>
+          {selectedType === 'MCQ' && (
+            <>
+              <div className="row mb-3">
+                <div className="col-md-6 mb-3 mb-md-0">
+                  <label className="form-label small fw-semibold text-dark">Option A</label>
+                  <input type="text" className={`form-control input-stylish ${errors.option_a ? 'is-invalid' : ''}`} {...register('option_a')} />
+                  {errors.option_a && <div className="invalid-feedback">{errors.option_a.message}</div>}
+                </div>
+                <div className="col-md-6">
+                  <label className="form-label small fw-semibold text-dark">Option B</label>
+                  <input type="text" className={`form-control input-stylish ${errors.option_b ? 'is-invalid' : ''}`} {...register('option_b')} />
+                  {errors.option_b && <div className="invalid-feedback">{errors.option_b.message}</div>}
+                </div>
+              </div>
 
-          <div className="row mb-4">
-            <div className="col-md-6 mb-3 mb-md-0">
-              <label className="form-label small fw-semibold text-dark">Option C</label>
-              <input type="text" className={`form-control input-stylish ${errors.option_c ? 'is-invalid' : ''}`} {...register('option_c')} />
-              {errors.option_c && <div className="invalid-feedback">{errors.option_c.message}</div>}
-            </div>
-            <div className="col-md-6">
-              <label className="form-label small fw-semibold text-dark">Option D</label>
-              <input type="text" className={`form-control input-stylish ${errors.option_d ? 'is-invalid' : ''}`} {...register('option_d')} />
-              {errors.option_d && <div className="invalid-feedback">{errors.option_d.message}</div>}
-            </div>
-          </div>
+              <div className="row mb-4">
+                <div className="col-md-6 mb-3 mb-md-0">
+                  <label className="form-label small fw-semibold text-dark">Option C</label>
+                  <input type="text" className={`form-control input-stylish ${errors.option_c ? 'is-invalid' : ''}`} {...register('option_c')} />
+                  {errors.option_c && <div className="invalid-feedback">{errors.option_c.message}</div>}
+                </div>
+                <div className="col-md-6">
+                  <label className="form-label small fw-semibold text-dark">Option D</label>
+                  <input type="text" className={`form-control input-stylish ${errors.option_d ? 'is-invalid' : ''}`} {...register('option_d')} />
+                  {errors.option_d && <div className="invalid-feedback">{errors.option_d.message}</div>}
+                </div>
+              </div>
 
-          <div className="mb-4">
-            <label className="form-label small fw-semibold text-dark">Correct Answer</label>
-            <select className={`form-select input-stylish ${errors.correct_answer ? 'is-invalid' : ''}`} {...register('correct_answer')}>
-              <option value="A">Option A</option>
-              <option value="B">Option B</option>
-              <option value="C">Option C</option>
-              <option value="D">Option D</option>
-            </select>
-            {errors.correct_answer && <div className="invalid-feedback">{errors.correct_answer.message}</div>}
-          </div>
+              <div className="mb-4">
+                <label className="form-label small fw-semibold text-dark">Correct Answer</label>
+                <select className={`form-select input-stylish ${errors.correct_answer ? 'is-invalid' : ''}`} {...register('correct_answer')}>
+                  <option value="A">Option A</option>
+                  <option value="B">Option B</option>
+                  <option value="C">Option C</option>
+                  <option value="D">Option D</option>
+                </select>
+                {errors.correct_answer && <div className="invalid-feedback">{errors.correct_answer.message}</div>}
+              </div>
+            </>
+          )}
 
           <div className="d-flex justify-content-end gap-2 border-top pt-3">
             <button type="button" className="btn btn-light border" onClick={closeModal}>Cancel</button>

@@ -20,6 +20,6 @@ export const createApplication = (data) => {
   return axiosInstance.post('/applications', data);
 };
 
-export const updateApplicationStatus = (id, status) => {
-  return axiosInstance.put(`/applications/${id}/status`, { status });
+export const updateApplicationStatus = (id, payload) => {
+  return axiosInstance.put(`/applications/${id}/status`, payload);
 };

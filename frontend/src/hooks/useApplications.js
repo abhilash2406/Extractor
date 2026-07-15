@@ -54,7 +54,8 @@ export const useApplyForJob = () => {
 export const useUpdateApplicationStatus = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, status, silent }) => applicationsApi.updateApplicationStatus(id, status),
+    mutationFn: ({ id, status, interview_date, interview_time, silent }) => 
+      applicationsApi.updateApplicationStatus(id, { status, interview_date, interview_time }),
     onSuccess: (data, variables) => {
       qc.invalidateQueries({ queryKey: ['applications'] });
       qc.invalidateQueries({ queryKey: ['application', variables.id] });

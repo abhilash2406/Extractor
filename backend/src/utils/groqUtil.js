@@ -181,3 +181,59 @@ Ensure you generate exactly 10 questions. Ensure the options are plausible and t
     throw error;
   }
 };
+
+/**
+ * Evaluates a candidate's programming test answers using Groq API.
+ * 
+ * @param {Array} answers - Array of objects containing question, language, and selected_answer (code)
+ * @returns {Promise<Object>} - Parsed JSON object containing the overall score.
+ */
+export const evaluateTechnicalTestWithGroq = async (answers) => {
+  const prompt = `
+You are an expert Senior Software Engineer and Technical Interviewer. 
+Your task is to review a candidate's programming test submission, evaluate their code for correctness, efficiency, and edge case handling, and assign an overall score out of 100.
+
+Here are the candidate's answers:
+${answers.map((a, idx) => `
+--- Question ${idx + 1} ---
+Question: ${a.question}
+Language: ${a.language || 'Unknown'}
+Candidate's Code:
+${a.selected_answer || 'No code provided'}
+`).join('\n')}
+
+Based on the code provided, calculate an overall percentage score from 0 to 100 representing the candidate's performance across all questions.
+If no code is provided for a question, it receives 0 points.
+Return the result strictly in JSON format. Do not add any extra text or markdown formatting.
+
+The JSON schema must be exactly as follows:
+{
+  "score": Number (an integer between 0 and 100)
+}
+  `;
+
+  try {
+    const chatCompletion = await groq.chat.completions.create({
+      messages: [
+        {
+          role: 'user',
+          content: prompt,
+        },
+      ],
+      model: 'llama-3.1-8b-instant',
+      temperature: 0.2,
+      response_format: { type: 'json_object' },
+    });
+
+    const content = chatCompletion.choices[0]?.message?.content;
+    
+    if (content) {
+      return JSON.parse(content);
+    }
+    
+    throw new Error('Groq returned an empty response');
+  } catch (error) {
+    console.error('Error evaluating technical test with Groq:', error);
+    throw error;
+  }
+};

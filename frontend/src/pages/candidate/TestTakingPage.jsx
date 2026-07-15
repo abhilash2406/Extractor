@@ -34,7 +34,17 @@ const TestTakingPage = () => {
   const handleOptionChange = (answerId, optionValue) => {
     setAnswers(prev => ({
       ...prev,
-      [answerId]: optionValue
+      [answerId]: { selectedAnswer: optionValue }
+    }));
+  };
+
+  const handleProgrammingChange = (answerId, field, value) => {
+    setAnswers(prev => ({
+      ...prev,
+      [answerId]: {
+        ...prev[answerId],
+        [field]: value
+      }
     }));
   };
 
@@ -43,9 +53,10 @@ const TestTakingPage = () => {
   };
 
   const confirmSubmit = () => {
-    const payload = Object.entries(answers).map(([answerId, selectedAnswer]) => ({
+    const payload = Object.entries(answers).map(([answerId, data]) => ({
       answerId,
-      selectedAnswer
+      selectedAnswer: data.selectedAnswer || data.code || '',
+      language: data.language || null
     }));
 
     submitTest({ id: test.id, answers: payload }, {
@@ -56,7 +67,8 @@ const TestTakingPage = () => {
     });
   };
 
-  const isAllAnswered = test.answers?.length > 0 && Object.keys(answers).length === test.answers.length;
+  const isAllAnswered = test.answers?.length > 0 && Object.keys(answers).length === test.answers.length && 
+    Object.values(answers).every(a => (a.selectedAnswer || (a.code && a.language)));
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -72,17 +84,35 @@ const TestTakingPage = () => {
 
       {test.is_completed ? (
         <div className="bg-white p-5 rounded-4 border shadow-sm text-center mb-4">
-          <div className="mb-4">
-            <i className={`bi ${test.score >= 70 ? 'bi-trophy text-warning' : 'bi-info-circle text-info'} display-1`}></i>
-          </div>
-          <h2 className="fw-bold text-dark mb-2">Test Completed</h2>
-          <p className="text-muted mb-4">You have already submitted this assessment.</p>
-          <div className="d-inline-block border rounded-4 p-4 bg-light">
-            <div className="small text-uppercase fw-bold text-muted mb-1">Your Score</div>
-            <div className={`display-4 fw-bold ${test.score >= 70 ? 'text-success' : 'text-danger'}`}>
-              {test.score}%
-            </div>
-          </div>
+          {test.test_type === 'TECHNICAL' ? (
+            <>
+              <div className="mb-4">
+                <i className="bi bi-hourglass-split text-primary display-1"></i>
+              </div>
+              <h2 className="fw-bold text-dark mb-2">Test Submitted</h2>
+              <p className="text-muted mb-4">Your programming assessment has been submitted successfully.</p>
+              <div className="d-inline-block border border-primary-subtle rounded-4 p-4 bg-primary-subtle">
+                <div className="fw-bold text-primary mb-1">Under Manual Review</div>
+                <div className="small text-dark">
+                  Your code submissions are currently being reviewed by the administration.
+                </div>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="mb-4">
+                <i className={`bi ${test.score >= 70 ? 'bi-trophy text-warning' : 'bi-info-circle text-info'} display-1`}></i>
+              </div>
+              <h2 className="fw-bold text-dark mb-2">Test Completed</h2>
+              <p className="text-muted mb-4">You have already submitted this assessment.</p>
+              <div className="d-inline-block border rounded-4 p-4 bg-light">
+                <div className="small text-uppercase fw-bold text-muted mb-1">Your Score</div>
+                <div className={`display-4 fw-bold ${test.score >= 70 ? 'text-success' : 'text-danger'}`}>
+                  {Number(test.score || 0).toFixed(0)}%
+                </div>
+              </div>
+            </>
+          )}
         </div>
       ) : (
         <div className="bg-white rounded-4 border shadow-sm overflow-hidden mb-5">
@@ -103,30 +133,62 @@ const TestTakingPage = () => {
                   {ans.question?.question}
                 </h5>
                 
-                <div className="d-flex flex-column gap-3 ms-md-4">
-                  {['option_a', 'option_b', 'option_c', 'option_d'].map((optKey) => {
-                    const optValue = ans.question[optKey];
-                    const isSelected = answers[ans.id] === optValue;
-                    return (
-                      <label 
-                        key={optKey} 
-                        className={`p-3 rounded border cursor-pointer d-flex align-items-center gap-3 transition-all ${isSelected ? 'border-primary bg-primary-subtle' : 'border-light bg-light hover-bg-gray'}`}
-                        style={{ cursor: 'pointer' }}
+                {ans.question?.type === 'PROGRAMMING' ? (
+                  <div className="ms-md-4 mt-3">
+                    <div className="mb-3">
+                      <label className="form-label small fw-bold text-dark">Select Language</label>
+                      <select 
+                        className="form-select bg-light border-light shadow-sm"
+                        value={answers[ans.id]?.language || ''}
+                        onChange={(e) => handleProgrammingChange(ans.id, 'language', e.target.value)}
+                        style={{ maxWidth: '200px' }}
                       >
-                        <input 
-                          type="radio" 
-                          name={`question_${ans.id}`}
-                          value={optValue}
-                          checked={isSelected}
-                          onChange={() => handleOptionChange(ans.id, optValue)}
-                          className="form-check-input mt-0 cursor-pointer shadow-none border-secondary"
-                          style={{width: '20px', height: '20px'}}
-                        />
-                        <span className={`fw-medium ${isSelected ? 'text-primary' : 'text-dark'}`}>{optValue}</span>
-                      </label>
-                    );
-                  })}
-                </div>
+                        <option value="" disabled>Choose...</option>
+                        <option value="python">Python</option>
+                        <option value="javascript">JavaScript</option>
+                        <option value="c">C</option>
+                        <option value="cpp">C++</option>
+                        <option value="java">Java</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="form-label small fw-bold text-dark">Write your code here</label>
+                      <textarea
+                        className="form-control bg-light border-light shadow-sm"
+                        rows="12"
+                        placeholder="Write your code..."
+                        value={answers[ans.id]?.code || ''}
+                        onChange={(e) => handleProgrammingChange(ans.id, 'code', e.target.value)}
+                        style={{ fontFamily: 'monospace', resize: 'vertical' }}
+                      ></textarea>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="d-flex flex-column gap-3 ms-md-4 mt-3">
+                    {['option_a', 'option_b', 'option_c', 'option_d'].map((optKey) => {
+                      const optValue = ans.question[optKey];
+                      const isSelected = answers[ans.id]?.selectedAnswer === optValue;
+                      return (
+                        <label 
+                          key={optKey} 
+                          className={`p-3 rounded border cursor-pointer d-flex align-items-center gap-3 transition-all ${isSelected ? 'border-primary bg-primary-subtle' : 'border-light bg-light hover-bg-gray'}`}
+                          style={{ cursor: 'pointer' }}
+                        >
+                          <input 
+                            type="radio" 
+                            name={`question_${ans.id}`}
+                            value={optValue}
+                            checked={isSelected}
+                            onChange={() => handleOptionChange(ans.id, optValue)}
+                            className="form-check-input mt-0 cursor-pointer shadow-none border-secondary"
+                            style={{width: '20px', height: '20px'}}
+                          />
+                          <span className={`fw-medium ${isSelected ? 'text-primary' : 'text-dark'}`}>{optValue}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             ))}
             

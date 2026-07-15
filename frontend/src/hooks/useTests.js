@@ -36,3 +36,19 @@ export const useSubmitTest = () => {
     }
   });
 };
+
+export const useEvaluateTest = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id) => testsApi.evaluateTest(id),
+    onSuccess: (res, variables) => {
+      // Invalidate the applications queries so the new score shows up in the admin dashboard immediately
+      qc.invalidateQueries({ queryKey: ['applications'] });
+      qc.invalidateQueries({ queryKey: ['admin-test', variables] });
+      toast.success('Test evaluated successfully using AI!');
+    },
+    onError: (err) => {
+      toast.error(err.response?.data?.message || 'Failed to evaluate test');
+    }
+  });
+};

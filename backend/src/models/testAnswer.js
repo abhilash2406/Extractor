@@ -24,6 +24,10 @@ const TestAnswer = sequelize.define('TestAnswer', {
     }
   },
   selected_answer: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+  },
+  language: {
     type: DataTypes.STRING,
     allowNull: true,
   },

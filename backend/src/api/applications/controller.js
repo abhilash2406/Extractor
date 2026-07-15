@@ -66,8 +66,8 @@ export const getCurrentResume = async (req, res, next) => {
 export const updateApplicationStatus = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { status } = req.body;
-    const updatedApplication = await updateApplicationStatusService(id, status);
+    const { status, interview_date, interview_time } = req.body;
+    const updatedApplication = await updateApplicationStatusService(id, status, interview_date, interview_time);
     return res.json({ success: true, data: updatedApplication, message: 'Application status updated successfully' });
   } catch (e) {
     return res.status(400).json({ success: false, message: e.message });

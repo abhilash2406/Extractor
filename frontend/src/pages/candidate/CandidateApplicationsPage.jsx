@@ -20,10 +20,18 @@ const CandidateApplicationsPage = () => {
 
   const getStatusBadge = (status) => {
     switch (status) {
-      case 'approved':
-        return <span className="badge bg-success-subtle text-success border border-success-subtle px-3 py-2 rounded-pill fw-medium small"><i className="bi bi-check-circle me-1"></i>Approved</span>;
+      case 'accepted':
+        return <span className="badge bg-success-subtle text-success border border-success-subtle px-3 py-2 rounded-pill fw-medium small"><i className="bi bi-check-circle me-1"></i>Accepted</span>;
       case 'rejected':
         return <span className="badge bg-danger-subtle text-danger border border-danger-subtle px-3 py-2 rounded-pill fw-medium small"><i className="bi bi-x-circle me-1"></i>Rejected</span>;
+      case 'aptitude_round':
+        return <span className="badge bg-info-subtle text-info border border-info-subtle px-3 py-2 rounded-pill fw-medium small"><i className="bi bi-file-earmark-text me-1"></i>Aptitude Round</span>;
+      case 'technical_round':
+        return <span className="badge bg-secondary-subtle text-secondary border border-secondary-subtle px-3 py-2 rounded-pill fw-medium small"><i className="bi bi-code-square me-1"></i>Technical Round</span>;
+      case 'face_to_face_interview':
+        return <span className="badge bg-purple-subtle border px-3 py-2 rounded-pill fw-medium small" style={{ backgroundColor: '#f3e8ff', color: '#7e22ce', borderColor: '#e9d5ff' }}><i className="bi bi-person-video me-1"></i>Interview</span>;
+      case 'reviewed':
+        return <span className="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-2 rounded-pill fw-medium small"><i className="bi bi-eye me-1"></i>Reviewed</span>;
       case 'pending':
       default:
         return <span className="badge bg-warning-subtle text-warning border border-warning-subtle px-3 py-2 rounded-pill fw-medium small"><i className="bi bi-clock me-1"></i>Pending</span>;

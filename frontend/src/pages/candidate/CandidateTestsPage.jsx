@@ -45,6 +45,9 @@ const CandidateTestsPage = () => {
                       <span className="badge bg-warning-subtle text-warning border border-warning-subtle px-2 py-1">Pending</span>
                     )}
                   </div>
+                  <div className="small fw-bold text-uppercase tracking-wider mb-1" style={{ color: test.test_type === 'TECHNICAL' ? '#6f42c1' : '#0d6efd' }}>
+                    {test.test_type === 'TECHNICAL' ? 'Technical Round' : 'Aptitude Round'}
+                  </div>
                   <h5 className="fw-bold text-dark mb-1">
                     {test.application?.job_role?.title || 'Assessment Test'}
                   </h5>
@@ -53,10 +56,18 @@ const CandidateTestsPage = () => {
                   <div className="mt-auto pt-3 border-top d-flex justify-content-between align-items-center">
                     {test.is_completed ? (
                       <>
-                        <div className="fw-bold text-dark">
-                          Score: <span className={test.score >= 70 ? 'text-success' : 'text-danger'}>{test.score}%</span>
-                        </div>
-                        <Link to={`/tests/${test.id}`} className="btn btn-sm btn-outline-secondary rounded-pill fw-medium">View Result</Link>
+                        {test.test_type === 'TECHNICAL' ? (
+                          <div className="fw-bold text-success small w-100 text-center py-1">
+                            <i className="bi bi-check-circle me-1"></i>Submitted for Review
+                          </div>
+                        ) : (
+                          <>
+                            <div className="fw-bold text-dark">
+                              Score: <span className={test.score >= 70 ? 'text-success' : 'text-danger'}>{test.score}%</span>
+                            </div>
+                            <Link to={`/tests/${test.id}`} className="btn btn-sm btn-outline-secondary rounded-pill fw-medium">View Result</Link>
+                          </>
+                        )}
                       </>
                     ) : (
                       <>

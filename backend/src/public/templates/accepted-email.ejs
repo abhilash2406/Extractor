@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Offer of Employment</title>
+  <style>
+    body {
+      font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      line-height: 1.6;
+      color: #333333;
+      background-color: #f8f9fa;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      max-width: 600px;
+      margin: 40px auto;
+      background-color: #ffffff;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+      border: 1px solid #e9ecef;
+    }
+    .header {
+      background: linear-gradient(135deg, #059669 0%, #047857 100%);
+      color: #ffffff;
+      padding: 40px 30px;
+      text-align: center;
+    }
+    .header h1 {
+      margin: 0;
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+    .content {
+      padding: 40px 30px;
+    }
+    .content p {
+      margin-bottom: 20px;
+      font-size: 16px;
+      color: #4a5568;
+    }
+    .highlight-box {
+      background-color: #ecfdf5;
+      border-left: 4px solid #059669;
+      padding: 20px;
+      margin: 30px 0;
+      border-radius: 0 8px 8px 0;
+    }
+    .highlight-box h3 {
+      margin-top: 0;
+      margin-bottom: 10px;
+      color: #047857;
+      font-size: 20px;
+    }
+    .footer {
+      background-color: #f8f9fa;
+      padding: 30px;
+      text-align: center;
+      border-top: 1px solid #e9ecef;
+    }
+    .footer p {
+      margin: 0;
+      font-size: 14px;
+      color: #718096;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Congratulations!</h1>
+    </div>
+    <div class="content">
+      <p>Hi <strong><%= candidateName %></strong>,</p>
+      
+      <p>We are absolutely thrilled to offer you the position of <strong><%= jobTitle %></strong>!</p>
+      
+      <div class="highlight-box">
+        <h3>Welcome to the Team!</h3>
+        <p style="margin-bottom: 0;">Your skills, experience, and energy during the interview process truly stood out to us. We believe you will be a fantastic addition to our company and we are excited to have you on board.</p>
+      </div>
+
+      <p>Our HR team will be reaching out to you shortly with your official offer letter, which will include details about your compensation, benefits, and proposed start date. Please keep an eye on your inbox.</p>
+      
+      <p>If you have any immediate questions in the meantime, please do not hesitate to reply to this email.</p>
+      
+      <p>Once again, congratulations! We can't wait to start working with you.</p>
+      
+      <p>Best regards,<br><strong>The Hiring Team</strong></p>
+    </div>
+    <div class="footer">
+      <p>&copy; <%= new Date().getFullYear() %> ABC Technology. All rights reserved.</p>
+    </div>
+  </div>
+</body>
+</html>

@@ -35,7 +35,7 @@ export const getTestByIdService = async (testId, userId) => {
           {
             model: Question,
             as: 'question',
-            attributes: ['id', 'question', 'option_a', 'option_b', 'option_c', 'option_d'] // EXCLUDE correct_answer!
+            attributes: ['id', 'question', 'type', 'option_a', 'option_b', 'option_c', 'option_d'] // EXCLUDE correct_answer!
           }
         ]
       }
@@ -103,29 +103,41 @@ export const submitTestAnswersService = async (testId, userId, answers) => {
   // Map of submitted answers by test_answer_id
   const submissionMap = {};
   answers.forEach(a => {
-    submissionMap[a.answerId] = a.selectedAnswer;
+    submissionMap[a.answerId] = {
+      selectedAnswer: a.selectedAnswer,
+      language: a.language || null
+    };
   });
 
   for (const answerRecord of test.answers) {
-    const selected = submissionMap[answerRecord.id];
-    answerRecord.selected_answer = selected || null;
+    const submission = submissionMap[answerRecord.id];
+    const selected = submission?.selectedAnswer;
+    const language = submission?.language;
     
-    // Check correctness
+    answerRecord.selected_answer = selected || null;
+    if (language) answerRecord.language = language;
+    
+    // Check correctness for MCQ
     if (selected && answerRecord.question) {
       const q = answerRecord.question;
-      let correctValue = q.correct_answer;
-      
-      // Map 'A', 'B', 'C', 'D' to the actual option text
-      if (['A', 'B', 'C', 'D'].includes(q.correct_answer)) {
-        const optionKey = 'option_' + q.correct_answer.toLowerCase();
-        correctValue = q[optionKey];
-      }
+      if (q.type === 'MCQ') {
+        let correctValue = q.correct_answer;
+        
+        // Map 'A', 'B', 'C', 'D' to the actual option text
+        if (['A', 'B', 'C', 'D'].includes(q.correct_answer)) {
+          const optionKey = 'option_' + q.correct_answer.toLowerCase();
+          correctValue = q[optionKey];
+        }
 
-      if (selected === correctValue) {
-        answerRecord.is_correct = true;
-        correctCount++;
+        if (selected === correctValue) {
+          answerRecord.is_correct = true;
+          correctCount++;
+        } else {
+          answerRecord.is_correct = false;
+        }
       } else {
-        answerRecord.is_correct = false;
+        // Programming question: we don't automatically grade it
+        answerRecord.is_correct = null; 
       }
     } else {
       answerRecord.is_correct = false;
@@ -134,10 +146,61 @@ export const submitTestAnswersService = async (testId, userId, answers) => {
     await answerRecord.save();
   }
 
-  test.score = (correctCount / test.total_questions) * 100;
+  // Calculate score if it's an aptitude test
+  if (test.test_type === 'APTITUDE') {
+    test.score = (correctCount / test.total_questions) * 100;
+  } else {
+    // Technical round has manual scoring or no automatic score
+    test.score = null;
+  }
+  
   test.is_completed = true;
   test.submitted_at = new Date();
   
   await test.save();
   return test;
+};
+
+export const evaluateTechnicalTestService = async (testId) => {
+  const test = await Test.findOne({
+    where: { id: testId },
+    include: [
+      {
+        model: TestAnswer,
+        as: 'answers',
+        include: [{ model: Question, as: 'question' }]
+      }
+    ]
+  });
+
+  if (!test) {
+    throw new Error('Test not found');
+  }
+  
+  if (test.test_type !== 'TECHNICAL') {
+    throw new Error('Only technical tests can be evaluated using AI');
+  }
+
+  if (test.score !== null) {
+    throw new Error('Test has already been evaluated');
+  }
+
+  // Import dynamically to avoid circular dependencies if any, though it should be fine at top level
+  const { evaluateTechnicalTestWithGroq } = await import('../../utils/groqUtil.js');
+
+  const answersToEvaluate = test.answers.map(ans => ({
+    question: ans.question?.question,
+    language: ans.language,
+    selected_answer: ans.selected_answer
+  }));
+
+  const aiResult = await evaluateTechnicalTestWithGroq(answersToEvaluate);
+  
+  if (aiResult && typeof aiResult.score === 'number') {
+    test.score = aiResult.score;
+    await test.save();
+    return test;
+  }
+  
+  throw new Error('Failed to evaluate test');
 };

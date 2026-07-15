@@ -82,8 +82,8 @@ export const getApplicationService = async (id) => {
       },
       {
         model: Test,
-        as: 'test',
-        attributes: ['id', 'score', 'is_completed']
+        as: 'tests',
+        attributes: ['id', 'score', 'is_completed', 'test_type']
       }
     ]
   });
@@ -252,20 +252,75 @@ const sendNextRoundEmail = async (application) => {
   }
 };
 
-const generateTestForApplication = async (application, transaction) => {
+const sendAcceptedEmail = async (application) => {
+  try {
+    await sendEmails({
+      mailOptions: {
+        to: application.candidate.email,
+        subject: `Offer of Employment: ${application.job_role?.title}`
+      },
+      fileName: 'accepted-email.ejs',
+      contentVariables: {
+        candidateName: application.candidate.username,
+        jobTitle: application.job_role?.title || 'the position'
+      }
+    });
+  } catch (err) {
+    console.error('Failed to send accepted email:', err);
+  }
+};
+
+const sendInterviewEmail = async (application, interviewDate, interviewTime) => {
+  try {
+    const formattedDate = new Date(interviewDate).toLocaleDateString('en-US', {
+      weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+    });
+    
+    // Convert 24h to 12h time format for better readability
+    const [hours, minutes] = interviewTime.split(':');
+    const h = parseInt(hours, 10);
+    const ampm = h >= 12 ? 'PM' : 'AM';
+    const formattedTime = `${h % 12 || 12}:${minutes} ${ampm}`;
+
+    await sendEmails({
+      mailOptions: {
+        to: application.candidate.email,
+        subject: `Interview Invitation: Face-to-Face round for ${application.job_role?.title}`
+      },
+      fileName: 'interview-email.ejs',
+      contentVariables: {
+        candidateName: application.candidate.username,
+        jobTitle: application.job_role?.title || 'the position',
+        interviewDate: formattedDate,
+        interviewTime: formattedTime,
+        location: 'Abc Pvt Ltd, 123 Tech Park, Innovation City'
+      }
+    });
+  } catch (err) {
+    console.error('Failed to send interview email:', err);
+  }
+};
+
+const generateTestForApplication = async (application, transaction, testType = 'APTITUDE') => {
+  const isTechnical = testType === 'TECHNICAL';
+  const questionType = isTechnical ? 'PROGRAMMING' : 'MCQ';
+  const limit = isTechnical ? 2 : 10;
+
   const questions = await Question.findAll({
+    where: { type: questionType },
     order: sequelize.random(),
-    limit: 10,
+    limit: limit,
     transaction
   });
 
   if (questions.length === 0) {
-    throw new Error(`Cannot proceed: No questions exist in the database. Please add questions first.`);
+    throw new Error(`Cannot proceed: No ${questionType} questions exist in the database. Please add questions first.`);
   }
 
   const test = await Test.create({
     user_id: application.candidate.id,
     application_id: application.id,
+    test_type: testType,
     total_questions: questions.length,
     score: null,
     is_completed: false
@@ -279,7 +334,7 @@ const generateTestForApplication = async (application, transaction) => {
   await TestAnswer.bulkCreate(testAnswers, { transaction });
 };
 
-export const updateApplicationStatusService = async (id, status) => {
+export const updateApplicationStatusService = async (id, status, interviewDate, interviewTime) => {
   const application = await Application.findByPk(id, {
     include: [
       { model: User, as: 'candidate', attributes: ['id', 'username', 'email'] },
@@ -292,7 +347,10 @@ export const updateApplicationStatusService = async (id, status) => {
 
   // Check if status is transitioning
   const isNewlyRejected = status === 'rejected' && application.status !== 'rejected';
+  const isNewlyAccepted = status === 'accepted' && application.status !== 'accepted';
   const isNewlyAptitudeRound = status === 'aptitude_round' && application.status !== 'aptitude_round';
+  const isNewlyTechnicalRound = status === 'technical_round' && application.status !== 'technical_round';
+  const isNewlyInterview = status === 'face_to_face_interview' && application.status !== 'face_to_face_interview';
 
   // Execute DB changes in a transaction
   await sequelize.transaction(async (t) => {
@@ -301,7 +359,11 @@ export const updateApplicationStatusService = async (id, status) => {
     await application.save({ transaction: t });
 
     if (isNewlyAptitudeRound && application.candidate?.email) {
-      await generateTestForApplication(application, t);
+      await generateTestForApplication(application, t, 'APTITUDE');
+    }
+    
+    if (isNewlyTechnicalRound && application.candidate?.email) {
+      await generateTestForApplication(application, t, 'TECHNICAL');
     }
   });
 
@@ -310,8 +372,16 @@ export const updateApplicationStatusService = async (id, status) => {
     sendRejectionEmail(application);
   }
   
-  if (isNewlyAptitudeRound && application.candidate?.email) {
+  if (isNewlyAccepted && application.candidate?.email) {
+    sendAcceptedEmail(application);
+  }
+  
+  if ((isNewlyAptitudeRound || isNewlyTechnicalRound) && application.candidate?.email) {
     sendNextRoundEmail(application);
+  }
+  
+  if (isNewlyInterview && application.candidate?.email && interviewDate && interviewTime) {
+    sendInterviewEmail(application, interviewDate, interviewTime);
   }
 
   return application;

@@ -55,7 +55,7 @@ const Application = sequelize.define('Application', {
 Application.associate = (models) => {
   Application.belongsTo(models.JobRole, { foreignKey: 'job_role_id', as: 'job_role' });
   Application.belongsTo(models.User, { foreignKey: 'user_id', as: 'candidate' });
-  Application.hasOne(models.Test, { foreignKey: 'application_id', as: 'test' });
+  Application.hasMany(models.Test, { foreignKey: 'application_id', as: 'tests' });
 };
 
 export default Application;

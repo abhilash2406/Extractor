@@ -35,3 +35,12 @@ export const submitTestAnswers = async (req, res, next) => {
     next(error);
   }
 };
+
+export const evaluateTestController = async (req, res, next) => {
+  try {
+    const test = await testService.evaluateTechnicalTestService(req.params.id);
+    res.json({ success: true, message: 'Test evaluated successfully', data: test });
+  } catch (error) {
+    next(error);
+  }
+};
