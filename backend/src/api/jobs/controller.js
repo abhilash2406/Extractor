@@ -4,6 +4,7 @@ import {
   getJobByIdService,
   updateJobService,
   deleteJobService,
+  generateJobDescriptionService,
 } from './service.js';
 
 export const createJob = async (req, res, next) => {
@@ -51,5 +52,14 @@ export const deleteJob = async (req, res, next) => {
   } catch (e) {
     const status = e.message === 'Job not found' ? 404 : 400;
     return res.status(status).json({ success: false, message: e.message });
+  }
+};
+
+export const generateJobDescription = async (req, res, next) => {
+  try {
+    const description = await generateJobDescriptionService(req.body);
+    return res.json({ success: true, data: description });
+  } catch (e) {
+    return res.status(400).json({ success: false, message: e.message });
   }
 };

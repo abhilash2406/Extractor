@@ -5,6 +5,7 @@ import { EntityType } from '../../common/enum/activity-enum.js';
 import BadRequest from '../../common/exceptions/badRequest.js';
 import { Op } from 'sequelize';
 import { parsePagination, paginatedResponse } from '../../utils/pagination.js';
+import { generateJobDescriptionWithGroq } from '../../utils/groqUtil.js';
 
 export const createJobService = async (data) => {
   return await sequelize.transaction(async (t) => {
@@ -97,4 +98,6 @@ export const deleteJobService = async (id) => {
   return { message: 'Job deleted successfully' };
 };
 
-
+export const generateJobDescriptionService = async ({ title, skills, minExperience, minEducation }) => {
+  return await generateJobDescriptionWithGroq(title, skills, minExperience, minEducation);
+};

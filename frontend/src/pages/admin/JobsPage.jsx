@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import * as yup from 'yup';
 import { yupResolver } from '@hookform/resolvers/yup';
-import { useJobs, useCreateJob, useUpdateJob, useDeleteJob } from '../../hooks/useJobs';
+import { useJobs, useCreateJob, useUpdateJob, useDeleteJob, useGenerateJobDescription } from '../../hooks/useJobs';
 import { useSkills } from '../../hooks/useSkills';
 import Modal from '../../components/ui/Modal';
 import moment from 'moment';
@@ -33,6 +33,7 @@ const JobsPage = () => {
   const { mutate: createJob, isPending: isCreating } = useCreateJob();
   const { mutate: updateJob, isPending: isUpdating } = useUpdateJob();
   const { mutate: deleteJob, isPending: isDeleting } = useDeleteJob();
+  const { mutate: generateDescription, isPending: isGeneratingDesc } = useGenerateJobDescription();
 
   const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm({
     resolver: yupResolver(schema),
@@ -40,6 +41,29 @@ const JobsPage = () => {
   });
 
   const selectedSkills = watch('skill_ids') || [];
+
+  const handleGenerateDescription = () => {
+    const title = watch('title');
+    const minExperience = watch('min_experience');
+    const minEducation = watch('min_education');
+    const skillIds = watch('skill_ids') || [];
+    
+    const skills = skillsList.filter(s => skillIds.includes(s.id)).map(s => s.name);
+
+    if (!title && skills.length === 0) {
+      toast.error('Please enter a Job Title or select some skills first.');
+      return;
+    }
+
+    generateDescription(
+      { title, skills, minExperience, minEducation },
+      {
+        onSuccess: (res) => {
+          setValue('description', res.data.data, { shouldValidate: true });
+        }
+      }
+    );
+  };
 
   const openModal = async (id = null) => {
     if (id) {
@@ -191,8 +215,19 @@ const JobsPage = () => {
           </div>
           
           <div className="mb-3">
-            <label className="form-label small fw-semibold text-dark">Description</label>
-            <textarea className={`form-control input-stylish ${errors.description ? 'is-invalid' : ''}`} rows="3" {...register('description')} />
+            <div className="d-flex justify-content-between align-items-center mb-2">
+              <label className="form-label small fw-semibold text-dark mb-0">Description</label>
+              <button 
+                type="button" 
+                className="btn btn-sm btn-outline-primary border-0 rounded-pill d-flex align-items-center gap-1 shadow-sm px-3"
+                onClick={handleGenerateDescription}
+                disabled={isGeneratingDesc}
+              >
+                {isGeneratingDesc ? <span className="spinner-border spinner-border-sm me-1" role="status"></span> : <i className="bi bi-magic"></i>}
+                <span className="small fw-bold">Auto-generate with AI</span>
+              </button>
+            </div>
+            <textarea className={`form-control input-stylish ${errors.description ? 'is-invalid' : ''}`} rows="6" {...register('description')} />
             {errors.description && <div className="invalid-feedback">{errors.description.message}</div>}
           </div>
 

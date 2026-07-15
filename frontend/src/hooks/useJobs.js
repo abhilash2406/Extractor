@@ -50,3 +50,13 @@ export const useDeleteJob = () => {
     onError: (err) => toast.error(err.response?.data?.message || 'Failed to delete job'),
   });
 };
+
+export const useGenerateJobDescription = () => {
+  return useMutation({
+    mutationFn: jobsApi.generateJobDescription,
+    onSuccess: () => {
+      toast.success('Job description generated successfully!');
+    },
+    onError: (err) => toast.error(err.response?.data?.message || 'Failed to generate description'),
+  });
+};

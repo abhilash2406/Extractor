@@ -5,11 +5,14 @@ import {
   getJobById,
   updateJob,
   deleteJob,
+  generateJobDescription,
 } from './controller.js';
 import { createJobValidate, updateJobValidate } from './validator.js';
 import authorizeAdmin from '../../middlewares/authorize-admin.js';
 
 const router = express.Router();
+
+router.post('/generate-description', authorizeAdmin, generateJobDescription);
 
 /**
  * @swagger
