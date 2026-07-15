@@ -1,9 +1,19 @@
-import { getApplicationsService, uploadResumeService, createApplicationService, getMyApplicationsService, getCurrentResumeService, updateApplicationStatusService } from './service.js';
+import { getApplicationsService, getApplicationService, uploadResumeService, createApplicationService, getMyApplicationsService, getCurrentResumeService, updateApplicationStatusService } from './service.js';
 
 export const getApplications = async (req, res, next) => {
   try {
     const result = await getApplicationsService(req.query);
     return res.json({ success: true, ...result });
+  } catch (e) {
+    return res.status(400).json({ success: false, message: e.message });
+  }
+};
+
+export const getApplication = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const application = await getApplicationService(id);
+    return res.json({ success: true, data: application });
   } catch (e) {
     return res.status(400).json({ success: false, message: e.message });
   }

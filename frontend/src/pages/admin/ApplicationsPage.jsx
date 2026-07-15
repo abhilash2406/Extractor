@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useApplications, useUpdateApplicationStatus } from '../../hooks/useApplications';
+import { useApplications, useUpdateApplicationStatus, useApplication } from '../../hooks/useApplications';
 import { useUserResume } from '../../hooks/useUsers';
 import Modal from '../../components/ui/Modal';
 import moment from 'moment';
@@ -8,14 +8,18 @@ const ApplicationsPage = () => {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   
-  const { data: response, isLoading, isError } = useApplications({ page, limit: 10, search });
+  const { data: response, isLoading, isError } = useApplications({ page, limit: 10, search, sortBy: 'updated_at', sortOrder: 'DESC' });
   const { mutate: updateStatus, isPending: isUpdating } = useUpdateApplicationStatus();
   
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedApplication, setSelectedApplication] = useState(null);
   const [confirmAction, setConfirmAction] = useState(null);
+  const [resumeTab, setResumeTab] = useState('parsed');
 
+  const { data: fetchedAppDetails, isFetching: isFetchingAppDetails } = useApplication(selectedApplication?.id);
   const { data: resumeData, refetch: fetchResume, isFetching: isFetchingResume } = useUserResume(selectedApplication?.candidate?.id);
+
+  const activeApp = fetchedAppDetails ? { ...fetchedAppDetails, status: selectedApplication?.status } : selectedApplication;
 
   const applications = response?.data || [];
   const meta = response?.meta || { totalPages: 1, page: 1, totalItems: 0 };
@@ -132,7 +136,9 @@ const ApplicationsPage = () => {
                 <tr>
                   <th className="py-3 px-4 text-secondary small text-uppercase fw-semibold">Candidate</th>
                   <th className="py-3 px-4 text-secondary small text-uppercase fw-semibold">Job Role</th>
+                  <th className="py-3 px-4 text-secondary small text-uppercase fw-semibold">Match</th>
                   <th className="py-3 px-4 text-secondary small text-uppercase fw-semibold">Applied Date</th>
+                  <th className="py-3 px-4 text-secondary small text-uppercase fw-semibold">Last Updated</th>
                   <th className="py-3 px-4 text-secondary small text-uppercase fw-semibold">Status</th>
                   <th className="py-3 px-4 text-secondary small text-uppercase fw-semibold text-end">Action</th>
                 </tr>
@@ -152,7 +158,17 @@ const ApplicationsPage = () => {
                       </div>
                     </td>
                     <td className="py-3 px-4 text-dark fw-medium">{app.job_role?.title}</td>
+                    <td className="py-3 px-4">
+                      {app.match_score !== null ? (
+                        <span className={`badge ${app.match_score >= 80 ? 'bg-success' : app.match_score >= 50 ? 'bg-warning' : 'bg-danger'}`}>
+                          {app.match_score}%
+                        </span>
+                      ) : (
+                        <span className="text-muted small">-</span>
+                      )}
+                    </td>
                     <td className="py-3 px-4 text-muted small">{moment(app.applied_at).format('MMM DD, YYYY')}</td>
+                    <td className="py-3 px-4 text-muted small">{moment(app.updated_at).format('MMM DD, YYYY')}</td>
                     <td className="py-3 px-4">{getStatusBadge(app.status)}</td>
                     <td className="py-3 px-4 text-end">
                       <button 
@@ -223,25 +239,76 @@ const ApplicationsPage = () => {
               </button>
             </div>
           </div>
-        ) : selectedApplication && (
+        ) : activeApp && (
           <div className="p-2">
             <div className="d-flex flex-column flex-md-row justify-content-between align-items-start mb-4 bg-light p-3 rounded border">
               <div>
-                <h5 className="fw-bold text-dark mb-1">{selectedApplication.candidate?.username}</h5>
-                <div className="text-muted small mb-2">{selectedApplication.candidate?.email} {selectedApplication.candidate?.phone && `| ${selectedApplication.candidate.phone}`}</div>
+                <h5 className="fw-bold text-dark mb-1">{activeApp.candidate?.username}</h5>
+                <div className="text-muted small mb-2">
+                  <i className="bi bi-envelope me-1"></i>{activeApp.candidate?.email}
+                </div>
                 <div className="badge bg-primary-subtle text-primary border border-primary-subtle px-2 py-1 rounded">
-                  Applied for: {selectedApplication.job_role?.title}
+                  Applied for: {activeApp.job_role?.title}
                 </div>
               </div>
               <div className="text-md-end mt-3 mt-md-0">
                 <div className="text-muted small mb-1">Status</div>
-                {getStatusBadge(selectedApplication.status)}
-                <div className="text-muted small mt-2">Applied on {moment(selectedApplication.applied_at).format('MMM DD, YYYY')}</div>
+                {getStatusBadge(activeApp.status)}
+                <div className="text-muted small mt-2">Applied on {moment(activeApp.applied_at).format('MMM DD, YYYY')}</div>
               </div>
             </div>
 
+            {/* Match Score Section */}
+            {activeApp.match_score !== null && (
+              <div className="mb-4 bg-white border rounded p-4 shadow-sm">
+                <div className="d-flex align-items-center justify-content-between mb-3 border-bottom pb-3">
+                  <div className="d-flex align-items-center gap-3">
+                    <div className="bg-primary-subtle text-primary rounded-circle d-flex align-items-center justify-content-center" style={{width: '48px', height: '48px'}}>
+                      <i className="bi bi-bullseye fs-4"></i>
+                    </div>
+                    <div>
+                      <h6 className="fw-bold text-dark mb-0">AI Resume Match</h6>
+                      <p className="text-muted small mb-0">Based on required skills</p>
+                    </div>
+                  </div>
+                  <div className="text-end">
+                    <div className={`fw-bold fs-3 ${activeApp.match_score >= 80 ? 'text-success' : activeApp.match_score >= 50 ? 'text-warning' : 'text-danger'}`}>
+                      {activeApp.match_score}%
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="row">
+                  <div className="col-md-6 mb-3 mb-md-0">
+                    <h6 className="small fw-bold text-success mb-2"><i className="bi bi-check-circle me-1"></i> Matched Skills</h6>
+                    <div className="d-flex flex-wrap gap-2">
+                      {activeApp.matched_skills?.length > 0 ? (
+                        activeApp.matched_skills.map((skill, i) => (
+                          <span key={i} className="badge bg-success-subtle text-success border border-success-subtle">{skill}</span>
+                        ))
+                      ) : (
+                        <span className="text-muted small">No matched skills</span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="col-md-6">
+                    <h6 className="small fw-bold text-danger mb-2"><i className="bi bi-x-circle me-1"></i> Missing Skills</h6>
+                    <div className="d-flex flex-wrap gap-2">
+                      {activeApp.missing_skills?.length > 0 ? (
+                        activeApp.missing_skills.map((skill, i) => (
+                          <span key={i} className="badge bg-danger-subtle text-danger border border-danger-subtle">{skill}</span>
+                        ))
+                      ) : (
+                        <span className="text-muted small">No missing skills</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Test Score Section */}
-            {selectedApplication.test?.is_completed && (
+            {activeApp.test?.is_completed && (
               <div className="mb-4 bg-white border border-primary-subtle rounded p-3 d-flex align-items-center justify-content-between shadow-sm">
                 <div className="d-flex align-items-center gap-3">
                   <div className="bg-primary-subtle text-primary rounded-circle d-flex align-items-center justify-content-center" style={{width: '48px', height: '48px'}}>
@@ -253,36 +320,144 @@ const ApplicationsPage = () => {
                   </div>
                 </div>
                 <div className="text-end">
-                  <div className={`fw-bold fs-4 ${selectedApplication.test.score >= 70 ? 'text-success' : 'text-warning'}`}>
-                    {Number(selectedApplication.test.score).toFixed(0)}%
+                  <div className={`fw-bold fs-4 ${activeApp.test.score >= 70 ? 'text-success' : 'text-warning'}`}>
+                    {Number(activeApp.test.score).toFixed(0)}%
                   </div>
                 </div>
               </div>
             )}
 
-            <h6 className="fw-bold text-dark mb-3">Resume Preview</h6>
+            <div className="d-flex justify-content-between align-items-center mb-3">
+              <h6 className="fw-bold text-dark mb-0">Resume Preview</h6>
+              <ul className="nav nav-pills nav-sm">
+                <li className="nav-item">
+                  <button 
+                    className={`nav-link py-1 px-3 rounded-pill ${resumeTab === 'parsed' ? 'active' : ''}`}
+                    onClick={() => setResumeTab('parsed')}
+                    style={resumeTab !== 'parsed' ? { color: '#6c757d' } : {}}
+                  >Candidate Data</button>
+                </li>
+                <li className="nav-item">
+                  <button 
+                    className={`nav-link py-1 px-3 rounded-pill ${resumeTab === 'original' ? 'active' : ''}`}
+                    onClick={() => setResumeTab('original')}
+                    style={resumeTab !== 'original' ? { color: '#6c757d' } : {}}
+                  >View Resume</button>
+                </li>
+              </ul>
+            </div>
             {isFetchingResume ? (
               <div className="text-center py-5 bg-light rounded border mb-4">
                 <div className="spinner-border text-primary spinner-border-sm mb-2" role="status"></div>
                 <div className="text-muted small">Loading secure resume preview...</div>
               </div>
-            ) : typeof resumeData === 'string' ? (
-              <div className="border rounded bg-light overflow-hidden mb-4" style={{ height: '450px' }}>
-                <object
-                  data={resumeData}
-                  type="application/pdf"
-                  width="100%"
-                  height="100%"
-                >
-                  <div className="d-flex flex-column align-items-center justify-content-center h-100 text-muted">
-                    <i className="bi bi-file-earmark-pdf fs-1 mb-2"></i>
-                    <p className="mb-2">Browser preview unavailable</p>
-                    <a href={resumeData} target="_blank" rel="noopener noreferrer" className="btn btn-sm btn-primary rounded-pill">
-                      Download / View PDF
-                    </a>
+            ) : resumeData ? (
+              <>
+                {resumeTab === 'parsed' && (
+                  <div className="border rounded bg-light p-4 mb-4" style={{ height: '450px', overflowY: 'auto' }}>
+                    {resumeData.analysis ? (
+                      <div>
+                        <div className="row mb-3">
+                          <div className="col-md-6">
+                            <span className="text-muted small d-block">Name</span>
+                            <span className="fw-medium">{resumeData.analysis.extracted_name || 'N/A'}</span>
+                          </div>
+                          <div className="col-md-6">
+                            <span className="text-muted small d-block">Email</span>
+                            <span className="fw-medium">{resumeData.analysis.extracted_email || 'N/A'}</span>
+                          </div>
+                        </div>
+                        
+                        {resumeData.analysis.summary && (
+                          <div className="mb-4">
+                            <h6 className="fw-bold text-dark border-bottom pb-2 mb-3">Professional Summary</h6>
+                            <p className="small mb-0 text-dark">{resumeData.analysis.summary}</p>
+                          </div>
+                        )}
+                        
+                        {resumeData.analysis.extracted_skills?.length > 0 && (
+                          <div className="mb-4">
+                            <h6 className="fw-bold text-dark border-bottom pb-2 mb-3">Skills</h6>
+                            <div className="d-flex flex-wrap gap-2">
+                              {resumeData.analysis.extracted_skills.map((skill, i) => (
+                                <span key={i} className="badge bg-secondary-subtle text-secondary border border-secondary-subtle">{skill}</span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        
+                        {resumeData.analysis.experience?.filter(exp => exp.role || exp.company || exp.description)?.length > 0 && (
+                          <div className="mb-4">
+                            <h6 className="fw-bold text-dark border-bottom pb-2 mb-3">Experience</h6>
+                            {resumeData.analysis.experience.filter(exp => exp.role || exp.company || exp.description).map((exp, i) => (
+                              <div key={i} className="mb-3 bg-white p-3 rounded border">
+                                <div className="d-flex justify-content-between align-items-start mb-1">
+                                  {exp.role && <div className="fw-bold text-dark">{exp.role}</div>}
+                                  {exp.duration && <div className="text-muted small">{exp.duration}</div>}
+                                </div>
+                                {exp.company && <div className="text-primary small fw-medium mb-2">{exp.company}</div>}
+                                {exp.description && <p className="small mb-0 text-muted">{exp.description}</p>}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        
+                        {resumeData.analysis.projects?.filter(proj => proj.title || proj.description)?.length > 0 && (
+                          <div className="mb-4">
+                            <h6 className="fw-bold text-dark border-bottom pb-2 mb-3">Projects</h6>
+                            {resumeData.analysis.projects.filter(proj => proj.title || proj.description).map((proj, i) => (
+                              <div key={i} className="mb-3 bg-white p-3 rounded border">
+                                {proj.title && <div className="fw-bold text-dark mb-1">{proj.title}</div>}
+                                {proj.description && <p className="small mb-0 text-muted">{proj.description}</p>}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        
+                        {resumeData.analysis.education?.filter(edu => edu.degree || edu.institution)?.length > 0 && (
+                          <div className="mb-4">
+                            <h6 className="fw-bold text-dark border-bottom pb-2 mb-3">Education</h6>
+                            {resumeData.analysis.education.filter(edu => edu.degree || edu.institution).map((edu, i) => (
+                              <div key={i} className="mb-2 bg-white p-3 rounded border">
+                                {edu.degree && <div className="fw-medium text-dark">{edu.degree}</div>}
+                                {(edu.institution || edu.duration) && (
+                                  <div className="text-muted small">
+                                    {edu.institution}{edu.institution && edu.duration ? ' | ' : ''}{edu.duration}
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                       <div className="text-center py-5 text-muted d-flex flex-column justify-content-center h-100">
+                        <i className="bi bi-robot fs-1 mb-2"></i>
+                        <p className="small mb-0">No parsed data available for this resume yet.</p>
+                      </div>
+                    )}
                   </div>
-                </object>
-              </div>
+                )}
+
+                {resumeTab === 'original' && (
+                  <div className="border rounded bg-light overflow-hidden mb-4" style={{ height: '450px' }}>
+                    <object
+                      data={resumeData.url}
+                      type="application/pdf"
+                      width="100%"
+                      height="100%"
+                    >
+                      <div className="d-flex flex-column align-items-center justify-content-center h-100 text-muted">
+                        <i className="bi bi-file-earmark-pdf fs-1 mb-2"></i>
+                        <p className="mb-2">Browser preview unavailable</p>
+                        <a href={resumeData.url} target="_blank" rel="noopener noreferrer" className="btn btn-sm btn-primary rounded-pill">
+                          Download / View PDF
+                        </a>
+                      </div>
+                    </object>
+                  </div>
+                )}
+              </>
             ) : (
               <div className="text-center py-5 bg-light rounded border mb-4 text-muted">
                 <i className="bi bi-file-earmark-x fs-1 mb-2"></i>
@@ -294,23 +469,24 @@ const ApplicationsPage = () => {
               <button 
                 className="btn btn-outline-danger fw-medium px-4 rounded-pill" 
                 onClick={() => handleStatusUpdateClick('rejected')}
-                disabled={isUpdating || selectedApplication.status === 'rejected'}
+                disabled={isUpdating || activeApp.status === 'rejected'}
               >
                 Reject Candidate
               </button>
-              {selectedApplication.status === 'face_to_face_interview' ? (
+              {activeApp.status === 'accepted' || activeApp.status === 'rejected' ? null : 
+              activeApp.status === 'face_to_face_interview' ? (
                 <button 
                   className="btn btn-success fw-medium px-4 rounded-pill shadow-sm" 
                   onClick={() => handleStatusUpdateClick('accepted')}
-                  disabled={isUpdating || selectedApplication.status === 'accepted'}
+                  disabled={isUpdating}
                 >
                   Accept Candidate
                 </button>
-              ) : selectedApplication.status === 'aptitude_round' ? (
+              ) : activeApp.status === 'aptitude_round' ? (
                 <button 
                   className="btn btn-success fw-medium px-4 rounded-pill shadow-sm" 
                   onClick={() => handleStatusUpdateClick('face_to_face_interview')}
-                  disabled={isUpdating || !selectedApplication.test?.is_completed}
+                  disabled={isUpdating || !activeApp.test?.is_completed}
                 >
                   Proceed to Face to Face
                 </button>
@@ -318,7 +494,7 @@ const ApplicationsPage = () => {
                 <button 
                   className="btn btn-success fw-medium px-4 rounded-pill shadow-sm" 
                   onClick={() => handleStatusUpdateClick('aptitude_round')}
-                  disabled={isUpdating || selectedApplication.status === 'accepted' || selectedApplication.status === 'rejected' || selectedApplication.status === 'aptitude_round'}
+                  disabled={isUpdating}
                 >
                   Proceed to Aptitude Round
                 </button>

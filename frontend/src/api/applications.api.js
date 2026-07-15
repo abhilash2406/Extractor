@@ -2,6 +2,8 @@ import axiosInstance from './axiosInstance';
 
 export const getApplications = (params) => axiosInstance.get('/applications', { params });
 
+export const getApplication = (id) => axiosInstance.get(`/applications/${id}`);
+
 export const getMyApplications = () => axiosInstance.get('/applications/me');
 
 export const getCurrentResume = () => axiosInstance.get('/applications/resume');

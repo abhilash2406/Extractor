@@ -46,6 +46,18 @@ const User = sequelize.define('User', {
     type: DataTypes.STRING,
     allowNull: true,
   },
+  website: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
+  linkedin_url: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
+  github_url: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
   is_verified: {
     type: DataTypes.BOOLEAN,
     defaultValue: false,

@@ -10,10 +10,12 @@ import sequelize from '../../config/sequelize-config.js';
 import { parsePagination, paginatedResponse } from '../../utils/pagination.js';
 import { generateB2PresignedUrl, uploadToB2 } from '../../utils/backblaze.js';
 import Resume from '../../models/resume.js';
+import ResumeAnalysis from '../../models/resumeAnalysis.js';
 import sendEmails from '../../utils/sendEmail.js';
+import { parseResumeAndSave } from '../../utils/resumeParser.js';
 
 export const getApplicationsService = async (query) => {
-  const { page, limit, offset, sortBy, sortOrder, search } = parsePagination(query, 'applied_at');
+  const { page, limit, offset, sortBy, sortOrder, search } = parsePagination(query, 'updated_at');
 
   const where = {};
   const jobWhere = {};
@@ -39,26 +41,21 @@ export const getApplicationsService = async (query) => {
 
   const { count, rows } = await Application.findAndCountAll({
     where,
+    attributes: { exclude: ['matched_skills', 'missing_skills'] },
     include: [
       {
         model: User,
         as: 'candidate',
-        attributes: ['id', 'username', 'email', 'phone'],
+        attributes: ['id', 'username', 'email'],
         where: Object.keys(userWhere).length ? userWhere : undefined,
         required: !!search,
       },
       {
         model: JobRole,
         as: 'job_role',
-        attributes: ['id', 'title', 'min_experience'],
-        include: [{ model: Skill, as: 'required_skills', attributes: ['id', 'name'] }],
+        attributes: ['id', 'title'],
         where: Object.keys(jobWhere).length ? jobWhere : undefined,
         required: Object.keys(jobWhere).length > 0,
-      },
-      {
-        model: Test,
-        as: 'test',
-        attributes: ['id', 'score', 'is_completed']
       }
     ],
     order: [[sortBy, sortOrder]],
@@ -70,6 +67,33 @@ export const getApplicationsService = async (query) => {
   return paginatedResponse(rows, count, page, limit);
 };
 
+export const getApplicationService = async (id) => {
+  const application = await Application.findByPk(id, {
+    include: [
+      {
+        model: User,
+        as: 'candidate',
+        attributes: ['id', 'username', 'email', 'phone', 'website', 'linkedin_url', 'github_url'],
+      },
+      {
+        model: JobRole,
+        as: 'job_role',
+        attributes: ['id', 'title', 'min_experience', 'status', 'last_application_date'],
+      },
+      {
+        model: Test,
+        as: 'test',
+        attributes: ['id', 'score', 'is_completed']
+      }
+    ]
+  });
+
+  if (!application) {
+    throw new Error('Application not found');
+  }
+
+  return application;
+};
 
 export const uploadResumeService = async (userId, fileBuffer, mimetype, originalname) => {
   if (!fileBuffer) {
@@ -92,6 +116,9 @@ export const uploadResumeService = async (userId, fileBuffer, mimetype, original
     });
   }
 
+  // Parse resume and extract data asynchronously
+  parseResumeAndSave(fileBuffer, mimetype, resume.id);
+
   // Generate a presigned URL valid for 1 hour for immediate frontend preview
   const presignedUrl = await generateB2PresignedUrl(fileKey);
 
@@ -104,7 +131,9 @@ export const createApplicationService = async (userId, jobRoleId) => {
   }
 
   // Check if job exists
-  const job = await JobRole.findByPk(jobRoleId);
+  const job = await JobRole.findByPk(jobRoleId, {
+    include: [{ model: Skill, as: 'required_skills' }]
+  });
   if (!job) {
     throw new Error('Job Role not found');
   }
@@ -118,11 +147,34 @@ export const createApplicationService = async (userId, jobRoleId) => {
     throw new Error('You have already applied for this job');
   }
 
+  let matched_skills = [];
+  let missing_skills = [];
+  let match_score = null;
+
+  const resume = await Resume.findOne({
+    where: { user_id: userId },
+    include: [{ model: ResumeAnalysis, as: 'analysis' }],
+    order: [['uploaded_at', 'DESC']]
+  });
+
+  if (job.required_skills && job.required_skills.length > 0 && resume && resume.analysis && resume.analysis.extracted_skills) {
+    const candidateSkills = resume.analysis.extracted_skills.map(s => s.toLowerCase());
+
+    matched_skills = job.required_skills.filter(s => 
+      candidateSkills.some(cs => cs.includes(s.name.toLowerCase()) || s.name.toLowerCase().includes(cs))
+    ).map(s => s.name);
+    
+    missing_skills = job.required_skills.filter(s => !matched_skills.includes(s.name)).map(s => s.name);
+    match_score = Math.round((matched_skills.length / job.required_skills.length) * 100);
+  }
+
   const application = await Application.create({
     user_id: userId,
     job_role_id: jobRoleId,
     status: 'pending',
-    // match_score and skills can be processed asynchronously or by a separate worker/service later
+    matched_skills: matched_skills.length > 0 ? matched_skills : null,
+    missing_skills: missing_skills.length > 0 ? missing_skills : null,
+    match_score: match_score,
   });
 
   return application;

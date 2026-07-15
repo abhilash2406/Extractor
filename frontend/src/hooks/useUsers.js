@@ -8,6 +8,13 @@ export const useUsers = (params) =>
     queryFn: () => usersApi.getUsers(params).then((r) => r.data),
   });
 
+export const useUser = (id) =>
+  useQuery({
+    queryKey: ['user', id],
+    queryFn: () => usersApi.getUser(id).then((r) => r.data.data),
+    enabled: !!id,
+  });
+
 export const useUpdateUserStatus = () => {
   const queryClient = useQueryClient();
   return useMutation({

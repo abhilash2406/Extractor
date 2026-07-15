@@ -1,6 +1,6 @@
 import express from 'express';
 import multer from 'multer';
-import { getUsers, updateUserStatus, getUserResume, getProfile, updateProfile } from './controller.js';
+import { getUsers, getUser, updateUserStatus, getUserResume, getProfile, updateProfile } from './controller.js';
 import auth from '../../middlewares/auth.js';
 import authorizeAdmin from '../../middlewares/authorize-admin.js';
 
@@ -47,6 +47,7 @@ router.put('/profile', auth, upload.single('photo'), updateProfile);
 // ... existing swagger docs ...
 
 router.get('/', auth, authorizeAdmin, getUsers);
+router.get('/:id', auth, authorizeAdmin, getUser);
 router.put('/:id/status', auth, authorizeAdmin, updateUserStatus);
 router.get('/:id/resume', auth, authorizeAdmin, getUserResume);
 

@@ -1,6 +1,6 @@
 import express from 'express';
 import multer from 'multer';
-import { getApplications, uploadResume, createApplication, getMyApplications, getCurrentResume, updateApplicationStatus } from './controller.js';
+import { getApplications, getApplication, uploadResume, createApplication, getMyApplications, getCurrentResume, updateApplicationStatus } from './controller.js';
 import auth from '../../middlewares/auth.js';
 import authorizeAdmin from '../../middlewares/authorize-admin.js';
 
@@ -57,7 +57,7 @@ router.get('/resume', auth, getCurrentResume);
  *         description: Search by applicant name or email
  *       - in: query
  *         name: sortBy
- *         schema: { type: string, default: applied_at }
+ *         schema: { type: string, default: updated_at }
  *       - in: query
  *         name: sortOrder
  *         schema: { type: string, enum: [ASC, DESC], default: DESC }
@@ -76,6 +76,27 @@ router.get('/resume', auth, getCurrentResume);
  *         description: Forbidden
  */
 router.get('/', auth, authorizeAdmin, getApplications);
+
+/**
+ * @swagger
+ * /api/v1/applications/{id}:
+ *   get:
+ *     summary: Get a specific application by ID (Admin only)
+ *     tags: [Applications]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     responses:
+ *       200:
+ *         description: Application details
+ *       403:
+ *         description: Forbidden
+ */
+router.get('/:id', auth, authorizeAdmin, getApplication);
 
 /**
  * @swagger

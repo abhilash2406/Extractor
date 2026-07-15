@@ -1,5 +1,6 @@
 import User from '../../models/user.js';
 import Resume from '../../models/resume.js';
+import ResumeAnalysis from '../../models/resumeAnalysis.js';
 import { Op } from 'sequelize';
 import { parsePagination, paginatedResponse } from '../../utils/pagination.js';
 import { UserType } from '../../common/enum/usertype-enum.js';
@@ -22,13 +23,21 @@ export const getUsersService = async (query) => {
 
   const { count, rows } = await User.findAndCountAll({
     where,
-    attributes: { exclude: ['password'] },
+    attributes: ['id', 'username', 'email', 'role', 'status', 'created_at'],
     order: [[sortBy, sortOrder]],
     limit,
     offset,
   });
 
   return paginatedResponse(rows, count, page, limit);
+};
+
+export const getUserService = async (id) => {
+  const user = await User.findByPk(id, {
+    attributes: { exclude: ['password'] }
+  });
+  if (!user) throw new Error('User not found');
+  return user;
 };
 
 export const updateUserStatusService = async (id, status) => {
@@ -48,6 +57,7 @@ import { generateB2PresignedUrl, uploadToB2 } from '../../utils/backblaze.js';
 export const getUserResumeService = async (id) => {
   const resume = await Resume.findOne({
     where: { user_id: id },
+    include: [{ model: ResumeAnalysis, as: 'analysis' }],
     order: [['uploaded_at', 'DESC']]
   });
   
@@ -63,7 +73,10 @@ export const getUserResumeService = async (id) => {
   }
 
   // Generate a fresh presigned URL for the admin to view
-  return await generateB2PresignedUrl(key);
+  return { 
+    url: await generateB2PresignedUrl(key), 
+    analysis: resume.analysis 
+  };
 };
 
 export const getProfileService = async (userId) => {

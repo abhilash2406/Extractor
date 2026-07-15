@@ -1,4 +1,4 @@
-import { getUsersService, updateUserStatusService, getUserResumeService, getProfileService, updateProfileService } from './service.js';
+import { getUsersService, getUserService, updateUserStatusService, getUserResumeService, getProfileService, updateProfileService } from './service.js';
 
 export const getUsers = async (req, res, next) => {
   try {
@@ -9,6 +9,15 @@ export const getUsers = async (req, res, next) => {
   }
 };
 
+export const getUser = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const user = await getUserService(id);
+    return res.json({ success: true, data: user });
+  } catch (e) {
+    return res.status(400).json({ success: false, message: e.message });
+  }
+};
 export const updateUserStatus = async (req, res, next) => {
   try {
     const { id } = req.params;

@@ -8,6 +8,13 @@ export const useApplications = (params) =>
     queryFn: () => applicationsApi.getApplications(params).then((r) => r.data),
   });
 
+export const useApplication = (id) =>
+  useQuery({
+    queryKey: ['application', id],
+    queryFn: () => applicationsApi.getApplication(id).then((r) => r.data.data),
+    enabled: !!id,
+  });
+
 export const useMyApplications = () =>
   useQuery({
     queryKey: ['my-applications'],
@@ -50,6 +57,7 @@ export const useUpdateApplicationStatus = () => {
     mutationFn: ({ id, status, silent }) => applicationsApi.updateApplicationStatus(id, status),
     onSuccess: (data, variables) => {
       qc.invalidateQueries({ queryKey: ['applications'] });
+      qc.invalidateQueries({ queryKey: ['application', variables.id] });
       if (!variables.silent) {
         toast.success('Application status updated successfully');
       }

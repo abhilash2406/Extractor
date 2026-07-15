@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useUsers, useUpdateUserStatus, useUserResume } from '../../hooks/useUsers';
+import { useUsers, useUser, useUpdateUserStatus, useUserResume } from '../../hooks/useUsers';
 import Modal from '../../components/ui/Modal';
 import moment from 'moment';
 
@@ -13,6 +13,9 @@ const UsersPage = () => {
 
   const { data: response, isLoading } = useUsers({ page, limit: 10, search });
   const { mutate: updateStatus, isPending: isUpdating } = useUpdateUserStatus();
+  
+  // Fetch detailed user data for the modal
+  const { data: detailedUser, isLoading: isDetailedUserLoading } = useUser(viewUser?.id);
   
   // Use query for resume fetching, enabled only when showResume is true
   const { data: resumeUrl, isLoading: isResumeLoading, isError: isResumeError, refetch: fetchResume } = useUserResume(viewUser?.id);
@@ -141,38 +144,56 @@ const UsersPage = () => {
 
       {/* View User Modal */}
       <Modal isOpen={!!viewUser} onClose={() => setViewUser(null)} title="User Details" size={showResume ? "lg" : "md"}>
-        {viewUser && (
+        {isDetailedUserLoading ? (
+          <div className="text-center py-5">
+            <div className="spinner-border text-primary"></div>
+            <div className="mt-2 text-muted small">Loading user details...</div>
+          </div>
+        ) : detailedUser ? (
           <div className="d-flex flex-column gap-3">
             <div className="d-flex align-items-center mb-3">
               <div className="bg-primary-subtle text-primary rounded-circle d-flex align-items-center justify-content-center me-3" style={{ width: '64px', height: '64px' }}>
                 <i className="bi bi-person fs-1"></i>
               </div>
               <div>
-                <h5 className="mb-0 fw-bold">{viewUser.username}</h5>
-                <p className="text-muted mb-0">{viewUser.email}</p>
+                <h5 className="mb-0 fw-bold">{detailedUser.username}</h5>
+                <p className="text-muted mb-0">{detailedUser.email}</p>
               </div>
             </div>
             
             <div className="row g-3">
               <div className="col-6">
                 <label className="small text-muted fw-semibold text-uppercase">Role</label>
-                <div className="fw-medium text-capitalize">{viewUser.role.toLowerCase()}</div>
+                <div className="fw-medium text-capitalize">{detailedUser.role.toLowerCase()}</div>
               </div>
               <div className="col-6">
                 <label className="small text-muted fw-semibold text-uppercase">Status</label>
-                <div className="fw-medium text-capitalize">{viewUser.status.toLowerCase()}</div>
+                <div className="fw-medium text-capitalize">{detailedUser.status.toLowerCase()}</div>
               </div>
               <div className="col-6">
                 <label className="small text-muted fw-semibold text-uppercase">Phone</label>
-                <div className="fw-medium">{viewUser.phone || '-'}</div>
+                <div className="fw-medium">{detailedUser.phone || '-'}</div>
               </div>
               <div className="col-6">
                 <label className="small text-muted fw-semibold text-uppercase">Verified</label>
-                <div className="fw-medium">{viewUser.is_verified ? 'Yes' : 'No'}</div>
+                <div className="fw-medium">{detailedUser.is_verified ? 'Yes' : 'No'}</div>
               </div>
-              <div className="col-12">
+              
+              {/* Extra parsed details */}
+              {(detailedUser.website || detailedUser.linkedin_url || detailedUser.github_url) && (
+                <div className="col-12 mt-3">
+                  <label className="small text-muted fw-semibold text-uppercase d-block mb-2">Social / Links</label>
+                  <div className="d-flex flex-wrap gap-2">
+                    {detailedUser.website && <a href={detailedUser.website} target="_blank" rel="noreferrer" className="badge bg-info-subtle text-info border border-info-subtle text-decoration-none px-2 py-1"><i className="bi bi-globe me-1"></i>Website</a>}
+                    {detailedUser.linkedin_url && <a href={detailedUser.linkedin_url} target="_blank" rel="noreferrer" className="badge bg-primary-subtle text-primary border border-primary-subtle text-decoration-none px-2 py-1"><i className="bi bi-linkedin me-1"></i>LinkedIn</a>}
+                    {detailedUser.github_url && <a href={detailedUser.github_url} target="_blank" rel="noreferrer" className="badge bg-dark-subtle text-dark border border-dark-subtle text-decoration-none px-2 py-1"><i className="bi bi-github me-1"></i>GitHub</a>}
+                  </div>
+                </div>
+              )}
+
+              <div className="col-12 mt-3">
                 <label className="small text-muted fw-semibold text-uppercase">Joined Date</label>
-                <div className="fw-medium">{moment(viewUser.createdAt || viewUser.created_at).format('MMMM DD, YYYY [at] hh:mm A')}</div>
+                <div className="fw-medium">{moment(detailedUser.createdAt || detailedUser.created_at).format('MMMM DD, YYYY [at] hh:mm A')}</div>
               </div>
             </div>
 
@@ -193,10 +214,10 @@ const UsersPage = () => {
                 </div>
               ) : (
                 <div className="border rounded-3 overflow-hidden bg-light" style={{ height: '500px' }}>
-                  <object data={resumeUrl} type="application/pdf" width="100%" height="100%">
+                  <object data={resumeUrl?.url || resumeUrl} type="application/pdf" width="100%" height="100%">
                     <div className="p-4 text-center">
                       <p className="text-muted mb-2">Your browser cannot display PDFs directly.</p>
-                      <a href={resumeUrl} target="_blank" rel="noreferrer" className="btn btn-outline-primary btn-sm">
+                      <a href={resumeUrl?.url || resumeUrl} target="_blank" rel="noreferrer" className="btn btn-outline-primary btn-sm">
                         Download PDF
                       </a>
                     </div>
@@ -205,7 +226,7 @@ const UsersPage = () => {
               )}
             </div>
           </div>
-        )}
+        ) : null}
         <div className="d-flex justify-content-end mt-4 pt-3 border-top">
           <button type="button" className="btn btn-light border" onClick={() => setViewUser(null)}>Close</button>
         </div>
