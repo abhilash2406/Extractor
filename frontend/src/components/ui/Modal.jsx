@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { createPortal } from 'react-dom';
 
-const Modal = ({ isOpen, onClose, title, children, size = 'md', hideHeader = false }) => {
+const Modal = ({ isOpen, onClose, title, children, size = 'md', hideHeader = false, dialogStyle = {} }) => {
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
@@ -24,7 +24,7 @@ const Modal = ({ isOpen, onClose, title, children, size = 'md', hideHeader = fal
         style={{ zIndex: 1050 }}
         onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
       >
-        <div className={`modal-dialog modal-dialog-centered modal-${size}`}>
+        <div className={`modal-dialog modal-dialog-centered modal-${size}`} style={dialogStyle}>
           <div className="modal-content border-0 shadow-lg rounded-4 overflow-hidden fade-in-up" style={{ animationDuration: '0.3s' }}>
             {!hideHeader && (
               <div className="modal-header border-bottom-0 pb-0">

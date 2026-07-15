@@ -239,7 +239,7 @@ const ApplicationsPage = () => {
         )}
       </div>
 
-      <Modal isOpen={isModalOpen} onClose={() => { setIsModalOpen(false); setConfirmAction(null); }} title={confirmAction ? "Confirm Action" : "Application Details"} size="xl">
+      <Modal isOpen={isModalOpen} onClose={() => { setIsModalOpen(false); setConfirmAction(null); }} title={confirmAction ? "Confirm Action" : "Application Details"} size="xl" dialogStyle={{ maxWidth: '95vw' }}>
         {confirmAction ? (
           <div className="text-center py-5">
             <i className={`bi ${confirmAction === 'rejected' ? 'bi-exclamation-triangle text-danger' : 'bi-check-circle text-success'} display-1 mb-3 d-block`}></i>
