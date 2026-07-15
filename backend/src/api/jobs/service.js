@@ -43,6 +43,7 @@ export const getJobsService = async (query = {}) => {
 
   const { count, rows } = await JobRole.findAndCountAll({
     where,
+    attributes: { exclude: ['description'] },
     include: [skillInclude],
     order: [[sortBy, sortOrder]],
     limit,

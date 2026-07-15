@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useApplications, useUpdateApplicationStatus, useApplication } from '../../hooks/useApplications';
 import { useUserResume } from '../../hooks/useUsers';
+import { useAdminTestById } from '../../hooks/useTests';
 import Modal from '../../components/ui/Modal';
 import moment from 'moment';
 
@@ -18,6 +19,9 @@ const ApplicationsPage = () => {
 
   const { data: fetchedAppDetails, isFetching: isFetchingAppDetails } = useApplication(selectedApplication?.id);
   const { data: resumeData, refetch: fetchResume, isFetching: isFetchingResume } = useUserResume(selectedApplication?.candidate?.id);
+
+  const [viewTestId, setViewTestId] = useState(null);
+  const { data: testAnswersData, isFetching: isFetchingTest } = useAdminTestById(viewTestId);
 
   const activeApp = fetchedAppDetails ? { ...fetchedAppDetails, status: selectedApplication?.status } : selectedApplication;
 
@@ -323,6 +327,12 @@ const ApplicationsPage = () => {
                   <div className={`fw-bold fs-4 ${activeApp.test.score >= 70 ? 'text-success' : 'text-warning'}`}>
                     {Number(activeApp.test.score).toFixed(0)}%
                   </div>
+                  <button 
+                    className="btn btn-sm btn-outline-primary mt-2 rounded-pill px-3 fw-medium shadow-sm"
+                    onClick={() => setViewTestId(activeApp.test.id)}
+                  >
+                    View Answers
+                  </button>
                 </div>
               </div>
             )}
@@ -502,6 +512,76 @@ const ApplicationsPage = () => {
             </div>
           </div>
         )}
+      </Modal>
+      {/* Admin Test View Modal */}
+      <Modal isOpen={!!viewTestId} onClose={() => setViewTestId(null)} title="Candidate Test Answers" size="lg">
+        <div className="p-2">
+          {isFetchingTest ? (
+            <div className="text-center py-5">
+              <div className="spinner-border text-primary mb-2" role="status"></div>
+              <div className="text-muted small">Loading test details...</div>
+            </div>
+          ) : testAnswersData ? (
+            <div className="bg-light rounded-4 p-4 border mb-3">
+              <div className="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
+                <h5 className="fw-bold text-dark mb-0">Test Score</h5>
+                <div className={`fs-3 fw-bold ${testAnswersData.score >= 70 ? 'text-success' : 'text-danger'}`}>
+                  {Number(testAnswersData.score).toFixed(0)}%
+                </div>
+              </div>
+              
+              <div className="d-flex flex-column gap-4">
+                {testAnswersData.answers?.map((ans, idx) => (
+                  <div key={ans.id} className="bg-white p-4 rounded shadow-sm border border-light">
+                    <div className="d-flex gap-3 align-items-start">
+                      <div className={`rounded-circle d-flex align-items-center justify-content-center text-white flex-shrink-0 ${ans.is_correct ? 'bg-success' : 'bg-danger'}`} style={{width: '32px', height: '32px'}}>
+                        <i className={`bi ${ans.is_correct ? 'bi-check-lg' : 'bi-x-lg'}`}></i>
+                      </div>
+                      <div className="flex-grow-1">
+                        <h6 className="fw-bold text-dark mb-3">
+                          <span className="text-muted me-2">{idx + 1}.</span>
+                          {ans.question?.question}
+                        </h6>
+                        
+                        <div className="row g-3">
+                          <div className="col-md-6">
+                            <div className="p-3 border rounded bg-light-subtle h-100 position-relative">
+                              <span className="badge bg-secondary position-absolute top-0 start-50 translate-middle">Candidate Answer</span>
+                              <div className={`mt-2 fw-medium ${ans.is_correct ? 'text-success' : 'text-danger'}`}>
+                                {ans.selected_answer || <span className="text-muted fst-italic">No answer selected</span>}
+                              </div>
+                            </div>
+                          </div>
+                          
+                          {!ans.is_correct && (
+                            <div className="col-md-6">
+                              <div className="p-3 border rounded bg-success-subtle border-success-subtle h-100 position-relative">
+                                <span className="badge bg-success position-absolute top-0 start-50 translate-middle">Correct Answer</span>
+                                <div className="mt-2 fw-medium text-success">
+                                  {ans.question && (
+                                    ans.question.correct_answer === 'A' ? ans.question.option_a :
+                                    ans.question.correct_answer === 'B' ? ans.question.option_b :
+                                    ans.question.correct_answer === 'C' ? ans.question.option_c :
+                                    ans.question.option_d
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="text-center py-5 text-muted">
+              <i className="bi bi-exclamation-triangle fs-1 mb-2"></i>
+              <p>Failed to load test answers.</p>
+            </div>
+          )}
+        </div>
       </Modal>
     </div>
   );

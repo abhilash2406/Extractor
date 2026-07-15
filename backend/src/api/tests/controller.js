@@ -18,6 +18,14 @@ export const getTestById = async (req, res, next) => {
   }
 };
 
+export const getAdminTestById = async (req, res, next) => {
+  try {
+    const test = await testService.getAdminTestByIdService(req.params.id);
+    res.json({ success: true, data: test });
+  } catch (error) {
+    next(error);
+  }
+};
 export const submitTestAnswers = async (req, res, next) => {
   try {
     const { answers } = req.body;

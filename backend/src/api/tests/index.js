@@ -1,5 +1,5 @@
 import express from 'express';
-import { getMyTests, getTestById, submitTestAnswers } from './controller.js';
+import { getMyTests, getTestById, submitTestAnswers, getAdminTestById } from './controller.js';
 
 const router = express.Router();
 
@@ -21,6 +21,18 @@ const router = express.Router();
  *         description: List of candidate's tests
  */
 router.get('/me', getMyTests);
+
+/**
+ * @swagger
+ * /api/v1/tests/admin/{id}:
+ *   get:
+ *     summary: Get full test details (for admins)
+ *     tags: [Tests]
+ *     responses:
+ *       200:
+ *         description: Test details with answers and correctness
+ */
+router.get('/admin/:id', getAdminTestById);
 
 /**
  * @swagger

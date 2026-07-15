@@ -94,12 +94,9 @@ const JobListPage = () => {
                         </div>
                       </div>
                       
-                      <h5 className="card-title fw-bold text-dark mb-2 text-truncate">{job.title}</h5>
-                      <p className="card-text text-muted small mb-4 flex-grow-1" style={{ display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                        {job.description}
-                      </p>
+                      <h5 className="card-title fw-bold text-dark mb-3 text-truncate">{job.title}</h5>
 
-                      <div className="mb-4">
+                      <div className="mb-4 flex-grow-1">
                         {job.required_skills?.slice(0, 3).map(skill => (
                           <span key={skill.id} className="badge bg-light text-secondary border me-1 mb-1">
                             {skill.name}

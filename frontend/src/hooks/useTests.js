@@ -15,6 +15,13 @@ export const useTestById = (id) =>
     enabled: !!id
   });
 
+export const useAdminTestById = (id) =>
+  useQuery({
+    queryKey: ['admin-test', id],
+    queryFn: () => testsApi.getAdminTestById(id).then(res => res.data.data),
+    enabled: !!id
+  });
+
 export const useSubmitTest = () => {
   const qc = useQueryClient();
   return useMutation({

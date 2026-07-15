@@ -145,12 +145,9 @@ const JobDetailPage = () => {
               {isAlreadyApplied ? (
                 <>
                   <h5 className="fw-bold text-success mb-3"><i className="bi bi-check-circle-fill me-2"></i>Application Submitted</h5>
-                  <p className="text-muted small mb-4">
+                  <p className="text-muted small mb-0">
                     You have successfully applied for this position. We will review your application and get back to you soon.
                   </p>
-                  <Link to="/applications" className="btn btn-outline-success w-100 rounded-pill fw-medium py-2 shadow-sm mb-3 bg-white">
-                    View My Applications
-                  </Link>
                 </>
               ) : (
                 <>

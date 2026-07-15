@@ -57,7 +57,7 @@ const UserMenu = ({ roleLabel = 'User' }) => {
   useEffect(() => {
     if (profile) {
       setFormData({
-        name: profile.name || '',
+        name: profile.name || profile.username || '',
         phone: profile.phone || '',
         email: profile.email || ''
       });
@@ -162,14 +162,27 @@ const UserMenu = ({ roleLabel = 'User' }) => {
       </div>
 
       {/* Logout Modal */}
-      <Modal isOpen={isLogoutOpen} onClose={() => setIsLogoutOpen(false)} title="Confirm Logout" size="sm">
-        <div className="text-center p-3">
-          <i className="bi bi-box-arrow-right text-danger mb-3" style={{ fontSize: '3rem' }}></i>
-          <h5 className="fw-bold mb-2">Ready to leave?</h5>
-          <p className="text-muted small mb-4">Are you sure you want to sign out of your account?</p>
-          <div className="d-flex gap-2 justify-content-center">
-            <button className="btn btn-light px-4 rounded-pill fw-medium border" onClick={() => setIsLogoutOpen(false)}>Cancel</button>
-            <button className="btn btn-danger px-4 rounded-pill fw-medium" onClick={handleLogout}>Yes, Logout</button>
+      <Modal isOpen={isLogoutOpen} onClose={() => setIsLogoutOpen(false)} size="sm" hideHeader={true}>
+        <div className="position-relative overflow-hidden rounded-4">
+          {/* Decorative background gradient */}
+          <div className="position-absolute top-0 start-0 w-100" style={{ height: '100px', background: 'linear-gradient(135deg, var(--blue-50) 0%, #ffffff 100%)', zIndex: 0 }}></div>
+          
+          <div className="position-absolute top-0 end-0 p-3" style={{ zIndex: 2 }}>
+            <button type="button" className="btn-close" onClick={() => setIsLogoutOpen(false)} aria-label="Close"></button>
+          </div>
+
+          <div className="text-center p-4 position-relative" style={{ zIndex: 1, marginTop: '20px' }}>
+            <div className="d-inline-flex align-items-center justify-content-center rounded-circle mb-4" style={{ width: '80px', height: '80px', backgroundColor: '#fef2f2', border: '6px solid #fff', boxShadow: '0 4px 14px rgba(220, 38, 38, 0.1)' }}>
+              <i className="bi bi-box-arrow-right text-danger" style={{ fontSize: '2.5rem' }}></i>
+            </div>
+            
+            <h5 className="fw-bold tracking-tight text-dark mb-2">Ready to leave?</h5>
+            <p className="text-muted small mb-4 px-2" style={{ lineHeight: '1.6' }}>Are you sure you want to sign out of your account? You will need to log back in to access your dashboard.</p>
+            
+            <div className="d-flex flex-column gap-2 mt-2">
+              <button className="btn btn-danger py-2 rounded-pill fw-semibold shadow-sm w-100" onClick={handleLogout}>Yes, Log me out</button>
+              <button className="btn btn-light py-2 rounded-pill fw-medium text-muted w-100" onClick={() => setIsLogoutOpen(false)}>Cancel and stay</button>
+            </div>
           </div>
         </div>
       </Modal>

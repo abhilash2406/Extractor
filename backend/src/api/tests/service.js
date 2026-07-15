@@ -46,6 +46,35 @@ export const getTestByIdService = async (testId, userId) => {
     throw new Error('Test not found or access denied');
   }
 
+  // Prevent exposing questions, correct answers, and selected answers after the test is submitted
+  if (test.is_completed) {
+    delete test.dataValues.answers;
+  }
+
+  return test;
+};
+
+export const getAdminTestByIdService = async (testId) => {
+  const test = await Test.findOne({
+    where: { id: testId },
+    include: [
+      {
+        model: TestAnswer,
+        as: 'answers',
+        include: [
+          {
+            model: Question,
+            as: 'question',
+          }
+        ]
+      }
+    ]
+  });
+
+  if (!test) {
+    throw new Error('Test not found');
+  }
+
   return test;
 };
 
