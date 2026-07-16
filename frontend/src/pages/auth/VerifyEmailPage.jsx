@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useVerifyEmail } from '../../hooks/useAuth';
+import AuthLayout from '../../components/layout/AuthLayout';
 
 const VerifyEmailPage = () => {
   const [params] = useSearchParams();
@@ -9,18 +10,43 @@ const VerifyEmailPage = () => {
 
   useEffect(() => {
     if (token) verify({ token });
-  }, [token]);
+  }, [token, verify]);
 
   return (
-    <div className="min-vh-100 d-flex align-items-center justify-content-center bg-white">
-      <div className="text-center" style={{ maxWidth: '400px' }}>
-        <h3 className="mb-4 fw-bold tracking-tight text-dark">Extractor.</h3>
-        {!token && <p className="text-danger small fw-medium">No verification token found in the URL.</p>}
-        {isPending && <><div className="spinner-border text-dark spinner-border-sm mb-3" /><p className="text-muted small">Verifying your email…</p></>}
-        {isSuccess && <p className="text-success small fw-medium">✅ Email verified! Redirecting to login…</p>}
-        {isError && <p className="text-danger small fw-medium">❌ Verification failed. The link may have expired.</p>}
+    <AuthLayout 
+      title="Email Verification" 
+      subtitle={token ? "Please wait while we verify your email address..." : ""}
+    >
+      <div className="text-center py-4">
+        {!token && (
+          <div className="alert alert-danger border-danger bg-danger-subtle text-danger small fw-bold p-3 rounded-3 d-flex align-items-center mb-0">
+            <i className="bi bi-x-circle-fill fs-5 me-2"></i>
+            No verification token found in the URL.
+          </div>
+        )}
+        {isPending && (
+          <div className="d-flex flex-column align-items-center">
+            <div className="spinner-border text-primary mb-3" style={{width: '3rem', height: '3rem'}} role="status"></div>
+            <h5 className="fw-bold text-dark">Verifying your email...</h5>
+            <p className="text-muted small">This will only take a moment.</p>
+          </div>
+        )}
+        {isSuccess && (
+          <div className="alert alert-success border-success bg-success-subtle text-success small fw-bold p-4 rounded-4 d-flex flex-column align-items-center mb-0">
+            <i className="bi bi-check-circle-fill display-4 mb-2"></i>
+            <span className="fs-5">Email verified successfully!</span>
+            <span className="mt-2 opacity-75 fw-normal">Redirecting you to login...</span>
+          </div>
+        )}
+        {isError && (
+          <div className="alert alert-danger border-danger bg-danger-subtle text-danger small fw-bold p-4 rounded-4 d-flex flex-column align-items-center mb-0">
+            <i className="bi bi-x-circle-fill display-4 mb-2"></i>
+            <span className="fs-5">Verification failed</span>
+            <span className="mt-2 opacity-75 fw-normal">The link may be invalid or has expired.</span>
+          </div>
+        )}
       </div>
-    </div>
+    </AuthLayout>
   );
 };
 

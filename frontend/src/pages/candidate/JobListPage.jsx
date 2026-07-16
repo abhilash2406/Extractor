@@ -78,17 +78,17 @@ const JobListPage = () => {
                 <div key={job.id} className="col-12 col-md-6 col-lg-4">
                   <div className="card h-100 border-0 shadow-soft rounded-4 overflow-hidden position-relative transition-hover">
                     <div className="card-body p-4 d-flex flex-column">
-                      <div className="d-flex justify-content-between align-items-start mb-3">
+                      <div className="d-flex justify-content-between align-items-start mb-3 flex-wrap gap-2">
                         {isApplied ? (
-                          <div className="bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1 fw-semibold small d-flex align-items-center">
+                          <div className="bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1 fw-semibold small d-flex align-items-center text-nowrap">
                             <i className="bi bi-check2-circle me-1"></i> Already Applied
                           </div>
                         ) : (
-                          <div className="bg-primary-subtle text-primary rounded px-3 py-1 fw-semibold small">
+                          <div className="bg-primary-subtle text-primary rounded px-3 py-1 fw-semibold small text-nowrap">
                             {job.min_experience}+ Years Exp
                           </div>
                         )}
-                        <div className="text-muted small d-flex align-items-center" title="Last Application Date">
+                        <div className="text-muted small d-flex align-items-center text-nowrap" title="Last Application Date">
                           <i className="bi bi-clock me-1"></i>
                           {job.last_application_date ? moment(job.last_application_date).format('MMM DD, YYYY') : 'Ongoing'}
                         </div>

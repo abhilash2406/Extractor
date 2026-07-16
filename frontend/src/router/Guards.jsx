@@ -9,14 +9,14 @@ export const ProtectedRoute = () => {
 export const AdminRoute = () => {
   const { isAuthenticated, user } = useAuthStore();
   if (!isAuthenticated) return <Navigate to="/login" replace />;
-  if (user?.role !== 'ADMIN') return <Navigate to="/jobs" replace />;
+  if (user?.role !== 'ADMIN') return <Navigate to="/dashboard" replace />;
   return <Outlet />;
 };
 
 export const GuestRoute = () => {
   const { isAuthenticated, user } = useAuthStore();
   if (isAuthenticated) {
-    return user?.role === 'ADMIN' ? <Navigate to="/admin" replace /> : <Navigate to="/jobs" replace />;
+    return user?.role === 'ADMIN' ? <Navigate to="/admin" replace /> : <Navigate to="/dashboard" replace />;
   }
   return <Outlet />;
 };

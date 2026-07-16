@@ -2,6 +2,7 @@ import { NavLink, Outlet } from 'react-router-dom';
 import UserMenu from './UserMenu';
 
 const navItems = [
+  { to: '/dashboard', label: 'Dashboard', icon: 'bi-grid-1x2', end: true },
   { to: '/jobs', label: 'Browse Jobs', icon: 'bi-briefcase', end: false },
   { to: '/applications', label: 'Applied Jobs', icon: 'bi-clipboard-check', end: true },
   { to: '/tests', label: 'Tests', icon: 'bi-journal-check', end: false },

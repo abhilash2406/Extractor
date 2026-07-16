@@ -19,7 +19,7 @@ export const useLogin = () => {
       if (user?.role === 'ADMIN') {
         navigate('/admin');
       } else {
-        navigate('/jobs');
+        navigate('/dashboard');
       }
     },
     onError: (err) => {

@@ -143,93 +143,127 @@ const UsersPage = () => {
       </div>
 
       {/* View User Modal */}
-      <Modal isOpen={!!viewUser} onClose={() => setViewUser(null)} title="User Details" size={showResume ? "lg" : "md"}>
+      <Modal isOpen={!!viewUser} onClose={() => setViewUser(null)} title="User Details" size="xl">
         {isDetailedUserLoading ? (
           <div className="text-center py-5">
-            <div className="spinner-border text-primary"></div>
-            <div className="mt-2 text-muted small">Loading user details...</div>
+            <div className="spinner-border text-primary" style={{ width: '3rem', height: '3rem' }}></div>
+            <div className="mt-3 text-muted fw-medium tracking-wide">Retrieving user profile...</div>
           </div>
         ) : detailedUser ? (
-          <div className="d-flex flex-column gap-3">
-            <div className="d-flex align-items-center mb-3">
-              <div className="bg-primary-subtle text-primary rounded-circle d-flex align-items-center justify-content-center me-3" style={{ width: '64px', height: '64px' }}>
-                <i className="bi bi-person fs-1"></i>
-              </div>
-              <div>
-                <h5 className="mb-0 fw-bold">{detailedUser.username}</h5>
-                <p className="text-muted mb-0">{detailedUser.email}</p>
-              </div>
-            </div>
-            
-            <div className="row g-3">
-              <div className="col-6">
-                <label className="small text-muted fw-semibold text-uppercase">Role</label>
-                <div className="fw-medium text-capitalize">{detailedUser.role.toLowerCase()}</div>
-              </div>
-              <div className="col-6">
-                <label className="small text-muted fw-semibold text-uppercase">Status</label>
-                <div className="fw-medium text-capitalize">{detailedUser.status.toLowerCase()}</div>
-              </div>
-              <div className="col-6">
-                <label className="small text-muted fw-semibold text-uppercase">Phone</label>
-                <div className="fw-medium">{detailedUser.phone || '-'}</div>
-              </div>
-              <div className="col-6">
-                <label className="small text-muted fw-semibold text-uppercase">Verified</label>
-                <div className="fw-medium">{detailedUser.is_verified ? 'Yes' : 'No'}</div>
+          <div className="row g-4">
+            {/* Left Column: Profile Info */}
+            <div className="col-lg-5 col-xl-4 d-flex flex-column">
+              {/* Header / Profile Section */}
+              <div className="position-relative bg-primary-subtle rounded-4 p-4 mb-4 text-center overflow-hidden">
+                <div className="position-absolute top-0 start-0 w-100 h-100 bg-white" style={{ opacity: 0.4 }}></div>
+                <div className="position-relative z-1 d-flex flex-column align-items-center">
+                  <div className="bg-white text-primary rounded-circle d-flex align-items-center justify-content-center mb-3 shadow-sm border border-primary-subtle" style={{ width: '80px', height: '80px' }}>
+                    <i className="bi bi-person-bounding-box fs-1"></i>
+                  </div>
+                  <h4 className="mb-1 fw-bold text-dark">{detailedUser.username}</h4>
+                  <p className="text-muted mb-2 d-flex align-items-center justify-content-center gap-2">
+                    <i className="bi bi-envelope"></i> {detailedUser.email}
+                  </p>
+                  <div className="d-flex gap-2 justify-content-center mt-2">
+                    <span className={`badge px-3 py-2 rounded-pill ${detailedUser.role === 'admin' ? 'bg-danger text-white' : 'bg-primary text-white'} text-capitalize shadow-sm`}>
+                      <i className={`bi ${detailedUser.role === 'admin' ? 'bi-shield-lock' : 'bi-person-badge'} me-2`}></i>
+                      {detailedUser.role.toLowerCase()}
+                    </span>
+                    <span className={`badge px-3 py-2 rounded-pill ${detailedUser.status === 'ACTIVE' ? 'bg-success text-white' : 'bg-secondary text-white'} shadow-sm`}>
+                      {detailedUser.status.toLowerCase()}
+                    </span>
+                  </div>
+                </div>
               </div>
               
-              {/* Extra parsed details */}
+              {/* Details Grid */}
+              <h6 className="fw-bold text-dark mb-3 px-1"><i className="bi bi-info-circle me-2 text-primary"></i>Profile Information</h6>
+              <div className="row g-3 mb-4">
+                <div className="col-sm-6">
+                  <div className="bg-light rounded-4 p-3 border h-100 transition-hover">
+                    <label className="small text-muted fw-semibold text-uppercase tracking-wide mb-1 d-block"><i className="bi bi-telephone me-1"></i>Phone</label>
+                    <div className="fw-bold text-dark">{detailedUser.phone || 'Not Provided'}</div>
+                  </div>
+                </div>
+                <div className="col-sm-6">
+                  <div className="bg-light rounded-4 p-3 border h-100 transition-hover">
+                    <label className="small text-muted fw-semibold text-uppercase tracking-wide mb-1 d-block"><i className="bi bi-check-circle me-1"></i>Verified</label>
+                    <div className="d-flex align-items-center fw-bold">
+                      {detailedUser.is_verified ? (
+                        <span className="text-success"><i className="bi bi-patch-check-fill me-1"></i> Yes</span>
+                      ) : (
+                        <span className="text-warning"><i className="bi bi-exclamation-circle-fill me-1"></i> No</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                <div className="col-12">
+                  <div className="bg-light rounded-4 p-3 border transition-hover">
+                    <label className="small text-muted fw-semibold text-uppercase tracking-wide mb-1 d-block"><i className="bi bi-calendar3 me-1"></i>Member Since</label>
+                    <div className="fw-bold text-dark">{moment(detailedUser.createdAt || detailedUser.created_at).format('MMMM DD, YYYY [at] hh:mm A')}</div>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Social Links */}
               {(detailedUser.website || detailedUser.linkedin_url || detailedUser.github_url) && (
-                <div className="col-12 mt-3">
-                  <label className="small text-muted fw-semibold text-uppercase d-block mb-2">Social / Links</label>
-                  <div className="d-flex flex-wrap gap-2">
-                    {detailedUser.website && <a href={detailedUser.website} target="_blank" rel="noreferrer" className="badge bg-info-subtle text-info border border-info-subtle text-decoration-none px-2 py-1"><i className="bi bi-globe me-1"></i>Website</a>}
-                    {detailedUser.linkedin_url && <a href={detailedUser.linkedin_url} target="_blank" rel="noreferrer" className="badge bg-primary-subtle text-primary border border-primary-subtle text-decoration-none px-2 py-1"><i className="bi bi-linkedin me-1"></i>LinkedIn</a>}
-                    {detailedUser.github_url && <a href={detailedUser.github_url} target="_blank" rel="noreferrer" className="badge bg-dark-subtle text-dark border border-dark-subtle text-decoration-none px-2 py-1"><i className="bi bi-github me-1"></i>GitHub</a>}
+                <div className="mb-4">
+                  <h6 className="fw-bold text-dark mb-3 px-1"><i className="bi bi-link-45deg me-2 text-primary"></i>Web & Social</h6>
+                  <div className="bg-light rounded-4 p-3 border d-flex flex-wrap gap-2 transition-hover">
+                    {detailedUser.website && <a href={detailedUser.website} target="_blank" rel="noreferrer" className="btn btn-sm btn-outline-info rounded-pill px-3 fw-medium"><i className="bi bi-globe me-2"></i>Website</a>}
+                    {detailedUser.linkedin_url && <a href={detailedUser.linkedin_url} target="_blank" rel="noreferrer" className="btn btn-sm btn-outline-primary rounded-pill px-3 fw-medium"><i className="bi bi-linkedin me-2"></i>LinkedIn</a>}
+                    {detailedUser.github_url && <a href={detailedUser.github_url} target="_blank" rel="noreferrer" className="btn btn-sm btn-outline-dark rounded-pill px-3 fw-medium"><i className="bi bi-github me-2"></i>GitHub</a>}
                   </div>
                 </div>
               )}
-
-              <div className="col-12 mt-3">
-                <label className="small text-muted fw-semibold text-uppercase">Joined Date</label>
-                <div className="fw-medium">{moment(detailedUser.createdAt || detailedUser.created_at).format('MMMM DD, YYYY [at] hh:mm A')}</div>
-              </div>
             </div>
 
-            <div className="mt-4 pt-4 border-top">
-              <h6 className="fw-bold mb-3">Resume Document</h6>
-              {!showResume ? (
-                <button className="btn btn-primary" onClick={() => setShowResume(true)}>
-                  <i className="bi bi-file-earmark-pdf me-2"></i>Load Resume
-                </button>
-              ) : isResumeLoading ? (
-                <div className="d-flex align-items-center text-primary">
-                  <div className="spinner-border spinner-border-sm me-2"></div>
-                  Loading document...
-                </div>
-              ) : isResumeError || !resumeUrl ? (
-                <div className="alert alert-danger mb-0 py-2 d-inline-block shadow-none border-0">
-                  <i className="bi bi-exclamation-triangle me-2"></i>No resume uploaded.
-                </div>
-              ) : (
-                <div className="border rounded-3 overflow-hidden bg-light" style={{ height: '500px' }}>
-                  <object data={resumeUrl?.url || resumeUrl} type="application/pdf" width="100%" height="100%">
-                    <div className="p-4 text-center">
-                      <p className="text-muted mb-2">Your browser cannot display PDFs directly.</p>
-                      <a href={resumeUrl?.url || resumeUrl} target="_blank" rel="noreferrer" className="btn btn-outline-primary btn-sm">
-                        Download PDF
+            {/* Right Column: Resume Section */}
+            <div className="col-lg-7 col-xl-8 d-flex flex-column">
+              <h6 className="fw-bold text-dark mb-3 px-1"><i className="bi bi-file-earmark-person me-2 text-primary"></i>Resume Document</h6>
+              
+              <div className="flex-grow-1 d-flex flex-column h-100" style={{ minHeight: '600px' }}>
+                {!showResume ? (
+                  <div className="bg-light border border-dashed rounded-4 p-5 text-center transition-hover d-flex flex-column align-items-center justify-content-center flex-grow-1" style={{ cursor: 'pointer' }} onClick={() => setShowResume(true)}>
+                    <div className="bg-white rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm mb-3 text-primary" style={{ width: '80px', height: '80px' }}>
+                      <i className="bi bi-file-earmark-pdf fs-1"></i>
+                    </div>
+                    <h5 className="fw-bold mb-2">View Candidate Resume</h5>
+                    <p className="text-muted small mb-0 px-4">Click here to securely fetch and load the candidate's PDF document in this pane.</p>
+                  </div>
+                ) : isResumeLoading ? (
+                  <div className="bg-light border rounded-4 p-5 text-center d-flex flex-column align-items-center justify-content-center flex-grow-1">
+                    <div className="spinner-border text-primary mb-3" style={{ width: '3rem', height: '3rem' }}></div>
+                    <h6 className="fw-bold text-muted tracking-wide">Loading Document...</h6>
+                  </div>
+                ) : isResumeError || !resumeUrl ? (
+                  <div className="bg-danger-subtle border border-danger-subtle rounded-4 p-4 text-center d-flex flex-column align-items-center justify-content-center flex-grow-1">
+                    <i className="bi bi-exclamation-triangle text-danger fs-1 mb-3"></i>
+                    <h5 className="fw-bold text-danger mb-0">No resume available for this user.</h5>
+                  </div>
+                ) : (
+                  <div className="border rounded-4 overflow-hidden bg-dark shadow-sm position-relative flex-grow-1 d-flex flex-column">
+                    <div className="bg-white p-2 d-flex justify-content-between align-items-center border-bottom shadow-sm z-1">
+                      <span className="fw-semibold text-dark small px-2"><i className="bi bi-file-earmark-pdf text-danger me-2"></i>Candidate_Resume.pdf</span>
+                      <a href={resumeUrl?.url || resumeUrl} target="_blank" rel="noreferrer" className="btn btn-sm btn-primary rounded-pill px-3">
+                        <i className="bi bi-download me-1"></i> Download
                       </a>
                     </div>
-                  </object>
-                </div>
-              )}
+                    <object data={resumeUrl?.url || resumeUrl} type="application/pdf" width="100%" className="flex-grow-1">
+                      <div className="p-5 text-center bg-light h-100 d-flex flex-column align-items-center justify-content-center">
+                        <i className="bi bi-file-earmark-x text-muted fs-1 mb-3"></i>
+                        <p className="text-muted mb-3">Your browser cannot display PDFs directly.</p>
+                        <a href={resumeUrl?.url || resumeUrl} target="_blank" rel="noreferrer" className="btn btn-primary rounded-pill px-4">
+                          <i className="bi bi-download me-2"></i>Download PDF
+                        </a>
+                      </div>
+                    </object>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         ) : null}
-        <div className="d-flex justify-content-end mt-4 pt-3 border-top">
-          <button type="button" className="btn btn-light border" onClick={() => setViewUser(null)}>Close</button>
-        </div>
       </Modal>
 
       {/* Delete Confirmation Modal */}

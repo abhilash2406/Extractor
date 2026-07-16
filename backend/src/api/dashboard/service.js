@@ -1,6 +1,7 @@
 import User from '../../models/user.js';
 import JobRole from '../../models/jobRole.js';
 import Application from '../../models/application.js';
+import Test from '../../models/test.js';
 import { UserType } from '../../common/enum/usertype-enum.js';
 import { EntityType } from '../../common/enum/activity-enum.js';
 import sequelize from '../../config/sequelize-config.js';
@@ -12,7 +13,7 @@ export const getDashboardStatsService = async () => {
     totalCandidates,
     totalJobRoles,
     pendingApplications,
-    approvedCandidates,
+    acceptedApplications,
     statusAggregation
   ] = await Promise.all([
     User.count({ where: { role: UserType.CANDIDATE } }),
@@ -57,8 +58,40 @@ export const getDashboardStatsService = async () => {
     totalCandidates,
     totalJobRoles,
     pendingApplications,
-    approvedCandidates,
+    acceptedApplications,
     applicationsByStatus,
     applicationsOverTime
+  };
+};
+
+export const getCandidateDashboardStatsService = async (candidateId) => {
+  const [
+    totalApplications,
+    pendingApplications,
+    completedTests,
+    recentApplications
+  ] = await Promise.all([
+    Application.count({ where: { user_id: candidateId } }),
+    Application.count({ where: { user_id: candidateId, status: { [Op.in]: ['pending', 'reviewed', 'aptitude_round', 'technical_round', 'face_to_face_interview'] } } }),
+    Test.count({ where: { user_id: candidateId, is_completed: true } }),
+    Application.findAll({
+      where: { user_id: candidateId },
+      order: [['applied_at', 'DESC']],
+      limit: 5,
+      include: [
+        {
+          model: JobRole,
+          as: 'job_role',
+          attributes: ['title', 'min_experience']
+        }
+      ]
+    })
+  ]);
+
+  return {
+    totalApplications,
+    pendingApplications,
+    completedTests,
+    recentApplications
   };
 };

@@ -29,8 +29,8 @@ const DashboardPage = () => {
       bgClass: 'bg-warning-subtle',
     },
     {
-      title: 'Approved Candidates',
-      value: stats?.approvedCandidates || 0,
+      title: 'Accepted Applications',
+      value: stats?.acceptedApplications || 0,
       icon: 'bi-check-circle',
       colorClass: 'text-info',
       bgClass: 'bg-info-subtle',

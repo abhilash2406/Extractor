@@ -6,3 +6,9 @@ export const useDashboardStats = () =>
     queryKey: ['dashboard-stats'],
     queryFn: () => dashboardApi.getDashboardStats().then((r) => r.data.data),
   });
+
+export const useCandidateDashboardStats = () =>
+  useQuery({
+    queryKey: ['candidate-dashboard-stats'],
+    queryFn: () => dashboardApi.getCandidateDashboardStats().then((r) => r.data.data),
+  });

@@ -17,6 +17,7 @@ import UsersPage from '../pages/admin/UsersPage';
 import ApplicationsPage from '../pages/admin/ApplicationsPage';
 
 // Candidate pages
+import CandidateDashboardPage from '../pages/candidate/CandidateDashboardPage';
 import JobListPage from '../pages/candidate/JobListPage';
 import JobDetailPage from '../pages/candidate/JobDetailPage';
 import CandidateApplicationsPage from '../pages/candidate/CandidateApplicationsPage';
@@ -66,6 +67,7 @@ const router = createBrowserRouter([
       {
         element: <CandidateLayout />,
         children: [
+          { path: '/dashboard', element: <CandidateDashboardPage /> },
           { path: '/jobs', element: <JobListPage /> },
           { path: '/jobs/:id', element: <JobDetailPage /> },
           { path: '/applications', element: <CandidateApplicationsPage /> },
