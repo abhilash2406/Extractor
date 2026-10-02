@@ -5,6 +5,7 @@ import { Toaster } from 'react-hot-toast';
 import AppRouter from './router/AppRouter';
 import { queryClient } from './utils/queryClient';
 import './styles/custom.css';
+import './styles/auth.css';
 
 export default function App() {
   return (

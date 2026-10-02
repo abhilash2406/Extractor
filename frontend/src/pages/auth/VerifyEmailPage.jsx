@@ -17,32 +17,47 @@ const VerifyEmailPage = () => {
       title="Email Verification" 
       subtitle={token ? "Please wait while we verify your email address..." : ""}
     >
-      <div className="text-center py-4">
+      <div style={{ textAlign: 'center', padding: '20px 0' }}>
         {!token && (
-          <div className="alert alert-danger border-danger bg-danger-subtle text-danger small fw-bold p-3 rounded-3 d-flex align-items-center mb-0">
-            <i className="bi bi-x-circle-fill fs-5 me-2"></i>
+          <div className="auth-error" style={{ 
+            padding: '14px 18px', 
+            background: '#fef2f2', 
+            borderRadius: '12px', 
+            border: '1px solid #fecaca',
+            justifyContent: 'center',
+            fontSize: '0.88rem'
+          }}>
+            <i className="bi bi-x-circle-fill" style={{ fontSize: '1.1rem' }}></i>
             No verification token found in the URL.
           </div>
         )}
         {isPending && (
-          <div className="d-flex flex-column align-items-center">
-            <div className="spinner-border text-primary mb-3" style={{width: '3rem', height: '3rem'}} role="status"></div>
-            <h5 className="fw-bold text-dark">Verifying your email...</h5>
-            <p className="text-muted small">This will only take a moment.</p>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
+            <div className="spinner-border" style={{ width: '3rem', height: '3rem', color: '#6366f1' }} role="status"></div>
+            <h5 style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700, color: '#0f172a', margin: 0 }}>Verifying your email...</h5>
+            <p style={{ color: '#94a3b8', fontSize: '0.9rem', margin: 0 }}>This will only take a moment.</p>
           </div>
         )}
         {isSuccess && (
-          <div className="alert alert-success border-success bg-success-subtle text-success small fw-bold p-4 rounded-4 d-flex flex-column align-items-center mb-0">
-            <i className="bi bi-check-circle-fill display-4 mb-2"></i>
-            <span className="fs-5">Email verified successfully!</span>
-            <span className="mt-2 opacity-75 fw-normal">Redirecting you to login...</span>
+          <div className="auth-success-alert" style={{ flexDirection: 'column', textAlign: 'center', padding: '32px' }}>
+            <i className="bi bi-check-circle-fill" style={{ fontSize: '3rem' }}></i>
+            <span style={{ fontSize: '1.1rem', marginTop: '8px' }}>Email verified successfully!</span>
+            <span style={{ color: '#6b7280', fontWeight: 400, fontSize: '0.88rem', marginTop: '4px' }}>Redirecting you to login...</span>
           </div>
         )}
         {isError && (
-          <div className="alert alert-danger border-danger bg-danger-subtle text-danger small fw-bold p-4 rounded-4 d-flex flex-column align-items-center mb-0">
-            <i className="bi bi-x-circle-fill display-4 mb-2"></i>
-            <span className="fs-5">Verification failed</span>
-            <span className="mt-2 opacity-75 fw-normal">The link may be invalid or has expired.</span>
+          <div className="auth-error" style={{ 
+            flexDirection: 'column', 
+            textAlign: 'center', 
+            padding: '32px', 
+            background: '#fef2f2', 
+            borderRadius: '16px', 
+            border: '1px solid #fecaca',
+            justifyContent: 'center'
+          }}>
+            <i className="bi bi-x-circle-fill" style={{ fontSize: '3rem' }}></i>
+            <span style={{ fontSize: '1.1rem', marginTop: '8px' }}>Verification failed</span>
+            <span style={{ color: '#9ca3af', fontWeight: 400, fontSize: '0.88rem', marginTop: '4px' }}>The link may be invalid or has expired.</span>
           </div>
         )}
       </div>

@@ -2,41 +2,79 @@ import React from 'react';
 
 const AuthLayout = ({ children, title, subtitle }) => {
   return (
-    <div className="d-flex min-vh-100 flex-column flex-md-row">
-      {/* Left Panel: Visual/Branding */}
-      <div className="col-12 col-md-6 auth-bg-img position-relative d-none d-md-flex align-items-end p-5">
-        <div className="bg-glass p-5 rounded-4 shadow-lg w-100 mb-4" style={{ zIndex: 2 }}>
-          <div className="d-flex align-items-center gap-3 mb-4">
-            <div className="bg-white text-primary rounded-circle d-flex align-items-center justify-content-center shadow" style={{ width: '48px', height: '48px' }}>
-              <i className="bi bi-lightning-charge-fill fs-4"></i>
-            </div>
-            <h2 className="mb-0 fw-bolder text-white tracking-tight" style={{ fontSize: '2.5rem' }}>Extractor.</h2>
+    <div className="auth-wrapper">
+      {/* Left Panel: Animated Visual/Branding */}
+      <div className="auth-left-panel">
+        {/* Animated background elements */}
+        <div className="auth-bg-shapes">
+          <div className="shape shape-1"></div>
+          <div className="shape shape-2"></div>
+          <div className="shape shape-3"></div>
+          <div className="shape shape-4"></div>
+          <div className="shape shape-5"></div>
+          <div className="shape shape-6"></div>
+          <div className="shape shape-7"></div>
+          <div className="shape shape-8"></div>
+        </div>
+
+        {/* Grid overlay */}
+        <div className="auth-grid-overlay"></div>
+
+        {/* Gradient orbs */}
+        <div className="auth-orb auth-orb-1"></div>
+        <div className="auth-orb auth-orb-2"></div>
+        <div className="auth-orb auth-orb-3"></div>
+
+        {/* Branding card */}
+        <div className="auth-brand-card">
+          <div className="auth-brand-icon">
+            <i className="bi bi-lightning-charge-fill"></i>
           </div>
-          <p className="text-white opacity-75 fs-5 mb-0 fw-light lh-base">
-            Streamline your hiring process with our intelligent Applicant Tracking System.
+          <h1 className="auth-brand-title">Extractor</h1>
+          <p className="auth-brand-subtitle">
+            Intelligent Talent Acquisition Platform
+          </p>
+          <div className="auth-brand-divider"></div>
+          <p className="auth-brand-description">
+            Streamline your hiring process with our intelligent ATS. 
             Identify top talent faster and smarter.
           </p>
+          <div className="auth-brand-stats">
+            <div className="auth-stat">
+              <span className="auth-stat-number">10x</span>
+              <span className="auth-stat-label">Faster Hiring</span>
+            </div>
+            <div className="auth-stat-divider"></div>
+            <div className="auth-stat">
+              <span className="auth-stat-number">95%</span>
+              <span className="auth-stat-label">Accuracy</span>
+            </div>
+            <div className="auth-stat-divider"></div>
+            <div className="auth-stat">
+              <span className="auth-stat-number">500+</span>
+              <span className="auth-stat-label">Companies</span>
+            </div>
+          </div>
         </div>
       </div>
 
       {/* Right Panel: Form */}
-      <div className="col-12 col-md-6 d-flex align-items-center justify-content-center bg-white p-4 p-sm-5">
-        <div className="w-100" style={{ maxWidth: '440px' }}>
-          <div className="mb-5 text-center text-md-start">
-            {/* Mobile Branding (hidden on desktop) */}
-            <div className="d-flex d-md-none align-items-center justify-content-center gap-2 mb-4">
-              <div className="bg-primary rounded text-white d-flex align-items-center justify-content-center" style={{ width: '36px', height: '36px' }}>
-                <i className="bi bi-lightning-charge-fill fs-5"></i>
-              </div>
-              <h3 className="mb-0 fw-bold tracking-tight text-dark">Extractor.</h3>
+      <div className="auth-right-panel">
+        <div className="auth-form-container">
+          {/* Mobile Branding */}
+          <div className="auth-mobile-brand">
+            <div className="auth-mobile-icon">
+              <i className="bi bi-lightning-charge-fill"></i>
             </div>
-            
-            <h3 className="fw-bolder text-dark mb-2 tracking-tight">{title}</h3>
-            {subtitle && <p className="text-muted">{subtitle}</p>}
+            <span className="auth-mobile-name">Extractor</span>
+          </div>
+
+          <div className="auth-form-header">
+            <h2 className="auth-form-title">{title}</h2>
+            {subtitle && <p className="auth-form-subtitle">{subtitle}</p>}
           </div>
 
           {children}
-
         </div>
       </div>
     </div>

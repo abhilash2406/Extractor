@@ -18,40 +18,53 @@ const RegisterPage = () => {
 
   const onSubmit = ({ name, email, password }) => doRegister({ name, email, password });
 
+  const fields = [
+    { name: 'name', label: 'Full Name', type: 'text', icon: 'bi-person', placeholder: 'John Doe' },
+    { name: 'email', label: 'Email Address', type: 'email', icon: 'bi-envelope', placeholder: 'name@company.com' },
+    { name: 'password', label: 'Password', type: 'password', icon: 'bi-lock', placeholder: '••••••••' },
+    { name: 'confirmPassword', label: 'Confirm Password', type: 'password', icon: 'bi-lock-fill', placeholder: '••••••••' },
+  ];
+
   return (
     <AuthLayout 
       title="Create account" 
       subtitle="Join Extractor to streamline your hiring process."
     >
       <form onSubmit={handleSubmit(onSubmit)}>
-        {[
-          { name: 'name', label: 'Full Name', type: 'text', icon: 'bi-person' },
-          { name: 'email', label: 'Email Address', type: 'email', icon: 'bi-envelope' },
-          { name: 'password', label: 'Password', type: 'password', icon: 'bi-lock' },
-          { name: 'confirmPassword', label: 'Confirm Password', type: 'password', icon: 'bi-lock-fill' },
-        ].map(({ name, label, type, icon }) => (
-          <div className="mb-4" key={name}>
-            <label className="form-label small fw-bold text-dark text-uppercase tracking-wide">{label}</label>
-            <div className="position-relative">
-              <i className={`bi ${icon} position-absolute top-50 translate-middle-y text-muted ms-3`}></i>
+        {fields.map(({ name: fieldName, label, type, icon, placeholder }) => (
+          <div className="auth-field" key={fieldName}>
+            <div className="auth-field-header">
+              <label className="auth-label">{label}</label>
+            </div>
+            <div className="auth-input-wrap">
               <input 
                 type={type} 
-                className={`form-control form-control-lg input-float ps-5 ${errors[name] ? 'is-invalid border-danger' : ''}`} 
-                style={{fontSize: '0.95rem'}} 
-                {...register(name)} 
+                className={`auth-input ${errors[fieldName] ? 'is-invalid' : ''}`} 
+                placeholder={placeholder}
+                {...register(fieldName)} 
               />
+              <i className={`bi ${icon} auth-input-icon`}></i>
             </div>
-            {errors[name] && <div className="text-danger small mt-1 fw-medium"><i className="bi bi-exclamation-circle me-1"></i>{errors[name].message}</div>}
+            {errors[fieldName] && (
+              <div className="auth-error">
+                <i className="bi bi-exclamation-circle"></i>
+                {errors[fieldName].message}
+              </div>
+            )}
           </div>
         ))}
         
-        <button type="submit" className="btn btn-glow w-100 py-3 mt-2 mb-4 fw-bold rounded-3 text-uppercase tracking-wide fs-6" disabled={isPending}>
-          {isPending ? <><span className="spinner-border spinner-border-sm me-2"></span>Registering...</> : 'Create account'}
+        <button type="submit" className="auth-submit-btn" disabled={isPending}>
+          {isPending ? (
+            <><span className="spinner-border spinner-border-sm"></span>Registering...</>
+          ) : (
+            'Create account'
+          )}
         </button>
       </form>
       
-      <p className="text-center text-muted fw-medium mb-0">
-        Already have an account? <Link to="/login" className="text-primary fw-bold text-decoration-none ms-1 hover-underline">Sign In</Link>
+      <p className="auth-bottom-link">
+        Already have an account?<Link to="/login">Sign In</Link>
       </p>
     </AuthLayout>
   );

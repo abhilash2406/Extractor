@@ -17,33 +17,43 @@ const ForgotPasswordPage = () => {
       subtitle="Enter your email and we'll send a reset link."
     >
       {isSuccess ? (
-        <div className="alert alert-success border-success bg-success-subtle text-success small fw-bold p-3 rounded-3 d-flex align-items-center">
-          <i className="bi bi-check-circle-fill fs-5 me-2"></i>
+        <div className="auth-success-alert">
+          <i className="bi bi-check-circle-fill"></i>
           Check your inbox for the reset link!
         </div>
       ) : (
         <form onSubmit={handleSubmit((d) => forgot(d))}>
-          <div className="mb-4">
-            <label className="form-label small fw-bold text-dark text-uppercase tracking-wide">Email</label>
-            <div className="position-relative">
-              <i className="bi bi-envelope position-absolute top-50 translate-middle-y text-muted ms-3"></i>
+          <div className="auth-field">
+            <div className="auth-field-header">
+              <label className="auth-label">Email</label>
+            </div>
+            <div className="auth-input-wrap">
               <input 
                 type="email" 
-                className={`form-control form-control-lg input-float ps-5 ${errors.email ? 'is-invalid border-danger' : ''}`} 
-                style={{fontSize: '0.95rem'}} 
+                className={`auth-input ${errors.email ? 'is-invalid' : ''}`} 
                 placeholder="name@company.com" 
                 {...register('email')} 
               />
+              <i className="bi bi-envelope auth-input-icon"></i>
             </div>
-            {errors.email && <div className="text-danger small mt-1 fw-medium"><i className="bi bi-exclamation-circle me-1"></i>{errors.email.message}</div>}
+            {errors.email && (
+              <div className="auth-error">
+                <i className="bi bi-exclamation-circle"></i>
+                {errors.email.message}
+              </div>
+            )}
           </div>
-          <button type="submit" className="btn btn-glow w-100 py-3 mb-4 fw-bold rounded-3 text-uppercase tracking-wide fs-6" disabled={isPending}>
-            {isPending ? <><span className="spinner-border spinner-border-sm me-2"></span>Sending...</> : 'Send Reset Link'}
+          <button type="submit" className="auth-submit-btn" disabled={isPending}>
+            {isPending ? (
+              <><span className="spinner-border spinner-border-sm"></span>Sending...</>
+            ) : (
+              'Send Reset Link'
+            )}
           </button>
         </form>
       )}
-      <p className="text-center text-muted fw-medium mb-0">
-        <Link to="/login" className="text-primary fw-bold text-decoration-none hover-underline"><i className="bi bi-arrow-left me-1"></i>Back to Login</Link>
+      <p className="auth-bottom-link">
+        <Link to="/login"><i className="bi bi-arrow-left" style={{ marginRight: '6px' }}></i>Back to Login</Link>
       </p>
     </AuthLayout>
   );

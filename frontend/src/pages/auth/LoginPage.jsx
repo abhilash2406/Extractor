@@ -20,46 +20,60 @@ const LoginPage = () => {
       subtitle="Please enter your details to sign in to your account."
     >
       <form onSubmit={handleSubmit((data) => login(data))}>
-        <div className="mb-4">
-          <label className="form-label small fw-bold text-dark text-uppercase tracking-wide">Email</label>
-          <div className="position-relative">
-            <i className="bi bi-envelope position-absolute top-50 translate-middle-y text-muted ms-3"></i>
+        <div className="auth-field">
+          <div className="auth-field-header">
+            <label className="auth-label">Email</label>
+          </div>
+          <div className="auth-input-wrap">
             <input 
               type="email" 
-              className={`form-control form-control-lg input-float ps-5 ${errors.email ? 'is-invalid border-danger' : ''}`} 
-              style={{fontSize: '0.95rem'}} 
+              className={`auth-input ${errors.email ? 'is-invalid' : ''}`} 
               placeholder="name@company.com" 
               {...register('email')} 
             />
+            <i className="bi bi-envelope auth-input-icon"></i>
           </div>
-          {errors.email && <div className="text-danger small mt-1 fw-medium"><i className="bi bi-exclamation-circle me-1"></i>{errors.email.message}</div>}
+          {errors.email && (
+            <div className="auth-error">
+              <i className="bi bi-exclamation-circle"></i>
+              {errors.email.message}
+            </div>
+          )}
         </div>
         
-        <div className="mb-5">
-          <div className="d-flex justify-content-between align-items-center mb-1">
-            <label className="form-label small fw-bold text-dark text-uppercase tracking-wide mb-0">Password</label>
-            <Link to="/forgot-password" className="text-primary text-decoration-none small fw-semibold hover-underline">Forgot password?</Link>
+        <div className="auth-field" style={{ marginBottom: '28px' }}>
+          <div className="auth-field-header">
+            <label className="auth-label">Password</label>
+            <Link to="/forgot-password" className="auth-forgot-link">Forgot password?</Link>
           </div>
-          <div className="position-relative">
-            <i className="bi bi-lock position-absolute top-50 translate-middle-y text-muted ms-3"></i>
+          <div className="auth-input-wrap">
             <input 
               type="password" 
-              className={`form-control form-control-lg input-float ps-5 ${errors.password ? 'is-invalid border-danger' : ''}`} 
-              style={{fontSize: '0.95rem'}} 
+              className={`auth-input ${errors.password ? 'is-invalid' : ''}`} 
               placeholder="••••••••" 
               {...register('password')} 
             />
+            <i className="bi bi-lock auth-input-icon"></i>
           </div>
-          {errors.password && <div className="text-danger small mt-1 fw-medium"><i className="bi bi-exclamation-circle me-1"></i>{errors.password.message}</div>}
+          {errors.password && (
+            <div className="auth-error">
+              <i className="bi bi-exclamation-circle"></i>
+              {errors.password.message}
+            </div>
+          )}
         </div>
         
-        <button type="submit" className="btn btn-glow w-100 py-3 mb-4 fw-bold rounded-3 text-uppercase tracking-wide fs-6" disabled={isPending}>
-          {isPending ? <><span className="spinner-border spinner-border-sm me-2"></span>Signing in...</> : 'Sign in to account'}
+        <button type="submit" className="auth-submit-btn" disabled={isPending}>
+          {isPending ? (
+            <><span className="spinner-border spinner-border-sm"></span>Signing in...</>
+          ) : (
+            'Sign in to account'
+          )}
         </button>
       </form>
       
-      <p className="text-center text-muted fw-medium mb-0">
-        Don't have an account? <Link to="/register" className="text-primary fw-bold text-decoration-none ms-1 hover-underline">Register here</Link>
+      <p className="auth-bottom-link">
+        Don't have an account?<Link to="/register">Register here</Link>
       </p>
     </AuthLayout>
   );

@@ -24,8 +24,15 @@ const ResetPasswordPage = () => {
       subtitle="Please enter your new password below."
     >
       {!token && (
-        <div className="alert alert-danger border-danger bg-danger-subtle text-danger small fw-bold p-3 rounded-3 d-flex align-items-center mb-4">
-          <i className="bi bi-x-circle-fill fs-5 me-2"></i>
+        <div className="auth-error" style={{ 
+          padding: '14px 18px', 
+          background: '#fef2f2', 
+          borderRadius: '12px', 
+          border: '1px solid #fecaca',
+          marginBottom: '20px',
+          fontSize: '0.88rem'
+        }}>
+          <i className="bi bi-x-circle-fill" style={{ fontSize: '1.1rem' }}></i>
           Invalid or missing reset link.
         </div>
       )}
@@ -34,22 +41,33 @@ const ResetPasswordPage = () => {
           { name: 'newPassword', label: 'New Password', icon: 'bi-lock' },
           { name: 'confirmPassword', label: 'Confirm Password', icon: 'bi-lock-fill' },
         ].map(({ name, label, icon }) => (
-          <div className="mb-4" key={name}>
-            <label className="form-label small fw-bold text-dark text-uppercase tracking-wide">{label}</label>
-            <div className="position-relative">
-              <i className={`bi ${icon} position-absolute top-50 translate-middle-y text-muted ms-3`}></i>
+          <div className="auth-field" key={name}>
+            <div className="auth-field-header">
+              <label className="auth-label">{label}</label>
+            </div>
+            <div className="auth-input-wrap">
               <input 
                 type="password" 
-                className={`form-control form-control-lg input-float ps-5 ${errors[name] ? 'is-invalid border-danger' : ''}`} 
-                style={{fontSize: '0.95rem'}} 
+                className={`auth-input ${errors[name] ? 'is-invalid' : ''}`} 
+                placeholder="••••••••"
                 {...register(name)} 
               />
+              <i className={`bi ${icon} auth-input-icon`}></i>
             </div>
-            {errors[name] && <div className="text-danger small mt-1 fw-medium"><i className="bi bi-exclamation-circle me-1"></i>{errors[name].message}</div>}
+            {errors[name] && (
+              <div className="auth-error">
+                <i className="bi bi-exclamation-circle"></i>
+                {errors[name].message}
+              </div>
+            )}
           </div>
         ))}
-        <button type="submit" className="btn btn-glow w-100 py-3 mt-2 fw-bold rounded-3 text-uppercase tracking-wide fs-6" disabled={isPending || !token}>
-          {isPending ? <><span className="spinner-border spinner-border-sm me-2"></span>Resetting...</> : 'Reset Password'}
+        <button type="submit" className="auth-submit-btn" disabled={isPending || !token}>
+          {isPending ? (
+            <><span className="spinner-border spinner-border-sm"></span>Resetting...</>
+          ) : (
+            'Reset Password'
+          )}
         </button>
       </form>
     </AuthLayout>
