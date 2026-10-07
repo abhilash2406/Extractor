@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import * as yup from 'yup';
 import { yupResolver } from '@hookform/resolvers/yup';
@@ -6,9 +6,34 @@ import { useJobs, useCreateJob, useUpdateJob, useDeleteJob, useGenerateJobDescri
 import { useSkills } from '../../hooks/useSkills';
 import Modal from '../../components/ui/Modal';
 import moment from 'moment';
-
 import * as jobsApi from '../../api/jobs.api';
 import toast from 'react-hot-toast';
+import { 
+  Briefcase, 
+  Plus, 
+  Search, 
+  Pencil, 
+  Trash2, 
+  Sparkles, 
+  Calendar, 
+  GraduationCap, 
+  Clock, 
+  ChevronLeft, 
+  ChevronRight,
+  Check
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 
 const schema = yup.object().shape({
   title: yup.string().required('Title is required'),
@@ -27,7 +52,7 @@ const JobsPage = () => {
   const [isFetchingDetail, setIsFetchingDetail] = useState(false);
 
   const { data: response, isLoading } = useJobs({ page, limit: 10, search });
-  const { data: skillsResponse } = useSkills({ limit: 100 }); // fetch skills for the form
+  const { data: skillsResponse } = useSkills({ limit: 100 });
   const skillsList = skillsResponse?.data || [];
 
   const { mutate: createJob, isPending: isCreating } = useCreateJob();
@@ -122,167 +147,252 @@ const JobsPage = () => {
   const meta = response?.meta || { totalPages: 1, page: 1 };
 
   return (
-    <div>
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <h4 className="fw-bold tracking-tight text-dark mb-0">Jobs</h4>
-        <button className="btn btn-dark fw-medium shadow-sm" onClick={() => openModal()}>
-          <i className="bi bi-plus-lg me-2"></i>Add Job
-        </button>
-      </div>
-
-      <div className="bg-white rounded-4 shadow-soft border p-4 mb-4">
-        <div className="mb-4" style={{ maxWidth: '300px' }}>
-          <div className="position-relative">
-            <i className="bi bi-search position-absolute top-50 translate-middle-y text-muted ms-3"></i>
-            <input 
-              type="text" 
-              className="form-control input-stylish ps-5" 
-              placeholder="Search jobs..." 
-              value={search}
-              onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-            />
-          </div>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="font-heading text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
+            Job Openings
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Create, manage and distribute job positions across candidate pipelines.
+          </p>
         </div>
-
-        {isLoading ? (
-          <div className="text-center py-5"><div className="spinner-border text-primary" /></div>
-        ) : jobs.length === 0 ? (
-          <div className="text-center py-5 text-muted">No jobs found.</div>
-        ) : (
-          <div className="table-responsive">
-            <table className="table table-hover align-middle">
-              <thead className="table-light">
-                <tr>
-                  <th className="fw-semibold text-muted small text-uppercase">Title</th>
-                  <th className="fw-semibold text-muted small text-uppercase">Experience</th>
-                  <th className="fw-semibold text-muted small text-uppercase">Last Date</th>
-                  <th className="fw-semibold text-muted small text-uppercase">Skills</th>
-                  <th className="fw-semibold text-muted small text-uppercase text-end">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {jobs.map((job) => (
-                  <tr key={job.id}>
-                    <td className="fw-medium text-dark">{job.title}</td>
-                    <td className="text-muted small">{job.min_experience} yrs</td>
-                    <td className="text-muted small">{job.last_application_date ? moment(job.last_application_date).format('MMM DD, YYYY') : '-'}</td>
-                    <td>
-                      {job.required_skills?.map(s => (
-                        <span key={s.id} className="badge bg-light text-dark border me-1">{s.name}</span>
-                      ))}
-                    </td>
-                    <td className="text-end">
-                      <button 
-                        className="btn btn-sm btn-light text-primary border-0 me-2" 
-                        title="Edit"
-                        onClick={() => openModal(job.id)}
-                        disabled={isFetchingDetail}
-                      >
-                        <i className="bi bi-pencil"></i>
-                      </button>
-                      <button 
-                        className="btn btn-sm btn-light text-danger border-0" 
-                        title="Delete"
-                        onClick={() => setDeleteConfirmId(job.id)}
-                      >
-                        <i className="bi bi-trash"></i>
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-
-        {meta.totalPages > 1 && (
-          <div className="d-flex justify-content-between align-items-center mt-3">
-            <div className="small text-muted">Showing page {meta.page} of {meta.totalPages}</div>
-            <div className="d-flex gap-2">
-              <button className="btn btn-sm btn-light border" disabled={meta.page <= 1} onClick={() => setPage(p => Math.max(1, p - 1))}>Previous</button>
-              <button className="btn btn-sm btn-light border" disabled={meta.page >= meta.totalPages} onClick={() => setPage(p => p + 1)}>Next</button>
-            </div>
-          </div>
-        )}
+        <Button onClick={() => openModal()} className="gap-2 self-start sm:self-auto">
+          <Plus className="h-4 w-4" />
+          <span>Add Position</span>
+        </Button>
       </div>
 
-      <Modal isOpen={modalState.isOpen} onClose={closeModal} title={modalState.data ? 'Edit Job' : 'Add New Job'} size="lg">
-        <form onSubmit={handleSubmit(onSubmit)}>
-          <div className="mb-3">
-            <label className="form-label small fw-semibold text-dark">Job Title</label>
-            <input type="text" className={`form-control input-stylish ${errors.title ? 'is-invalid' : ''}`} {...register('title')} />
-            {errors.title && <div className="invalid-feedback">{errors.title.message}</div>}
-          </div>
-
-
-          <div className="row mb-3">
-            <div className="col-md-4 mb-3 mb-md-0">
-              <label className="form-label small fw-semibold text-dark">Min Education</label>
-              <input type="text" className={`form-control input-stylish ${errors.min_education ? 'is-invalid' : ''}`} placeholder="e.g., Bachelor's Degree" {...register('min_education')} />
-              {errors.min_education && <div className="invalid-feedback">{errors.min_education.message}</div>}
+      {/* Main Table Card */}
+      <Card>
+        <CardHeader className="p-4 sm:p-6 pb-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="relative w-full sm:w-72">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search jobs..."
+                className="pl-9"
+                value={search}
+                onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+              />
             </div>
-            <div className="col-md-4 mb-3 mb-md-0">
-              <label className="form-label small fw-semibold text-dark">Min Experience (Years)</label>
-              <input type="number" className={`form-control input-stylish ${errors.min_experience ? 'is-invalid' : ''}`} min="0" {...register('min_experience')} />
-              {errors.min_experience && <div className="invalid-feedback">{errors.min_experience.message}</div>}
-            </div>
-            <div className="col-md-4">
-              <label className="form-label small fw-semibold text-dark">Last Application Date</label>
-              <input type="date" className={`form-control input-stylish ${errors.last_application_date ? 'is-invalid' : ''}`} {...register('last_application_date')} />
-              {errors.last_application_date && <div className="invalid-feedback">{errors.last_application_date.message}</div>}
+            <div className="text-xs text-muted-foreground font-medium">
+              Showing <span className="font-semibold text-foreground">{jobs.length}</span> positions
             </div>
           </div>
+        </CardHeader>
 
-          <div className="mb-4">
-            <label className="form-label small fw-semibold text-dark mb-2">Required Skills</label>
-            <div className="d-flex flex-wrap gap-2 p-3 border rounded bg-light" style={{ maxHeight: '150px', overflowY: 'auto' }}>
-              {skillsList.map(skill => (
+        <CardContent className="p-0 sm:p-6 pt-0">
+          {isLoading ? (
+            <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
+              <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent mb-3" />
+              <p className="text-sm font-medium">Loading positions...</p>
+            </div>
+          ) : jobs.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 text-center text-muted-foreground px-4">
+              <div className="h-12 w-12 rounded-full bg-muted/60 flex items-center justify-center mb-3">
+                <Briefcase className="h-6 w-6 text-muted-foreground/60" />
+              </div>
+              <h3 className="font-semibold text-foreground">No jobs posted yet</h3>
+              <p className="text-xs text-muted-foreground mt-1 max-w-sm">
+                Click "Add Position" to create your first job posting.
+              </p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Role Title</TableHead>
+                    <TableHead>Experience</TableHead>
+                    <TableHead className="hidden md:table-cell">Deadline</TableHead>
+                    <TableHead>Required Skills</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {jobs.map((job) => (
+                    <TableRow key={job.id}>
+                      <TableCell className="font-semibold text-foreground">
+                        {job.title}
+                      </TableCell>
+                      <TableCell className="text-xs text-muted-foreground">
+                        {job.min_experience} yrs min
+                      </TableCell>
+                      <TableCell className="hidden md:table-cell text-xs text-muted-foreground">
+                        {job.last_application_date ? moment(job.last_application_date).format('MMM DD, YYYY') : '-'}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex flex-wrap gap-1 max-w-xs">
+                          {job.required_skills?.map((s) => (
+                            <Badge key={s.id} variant="secondary" className="text-[11px] font-normal">
+                              {s.name}
+                            </Badge>
+                          ))}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 rounded-lg text-primary hover:text-primary hover:bg-primary/10"
+                            onClick={() => openModal(job.id)}
+                            disabled={isFetchingDetail}
+                            title="Edit"
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 rounded-lg text-destructive hover:text-destructive hover:bg-destructive/10"
+                            onClick={() => setDeleteConfirmId(job.id)}
+                            title="Delete"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+
+          {/* Pagination */}
+          {meta.totalPages > 1 && (
+            <div className="flex items-center justify-between px-4 py-3 border-t border-border/60">
+              <div className="text-xs text-muted-foreground">
+                Page <span className="font-semibold text-foreground">{meta.page}</span> of <span className="font-semibold text-foreground">{meta.totalPages}</span>
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={meta.page <= 1}
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  className="h-8 gap-1"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                  <span>Previous</span>
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={meta.page >= meta.totalPages}
+                  onClick={() => setPage((p) => p + 1)}
+                  className="h-8 gap-1"
+                >
+                  <span>Next</span>
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Add / Edit Job Modal */}
+      <Modal isOpen={modalState.isOpen} onClose={closeModal} title={modalState.data ? 'Edit Job Opening' : 'Add New Position'} size="lg">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Job Title</label>
+            <Input {...register('title')} placeholder="e.g., Senior Full Stack Engineer" />
+            {errors.title && <p className="text-xs text-destructive mt-1">{errors.title.message}</p>}
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Min Education</label>
+              <Input {...register('min_education')} placeholder="e.g., Bachelor's Degree" />
+              {errors.min_education && <p className="text-xs text-destructive mt-1">{errors.min_education.message}</p>}
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Min Experience (Yrs)</label>
+              <Input type="number" min="0" {...register('min_experience')} />
+              {errors.min_experience && <p className="text-xs text-destructive mt-1">{errors.min_experience.message}</p>}
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Deadline Date</label>
+              <Input type="date" {...register('last_application_date')} />
+              {errors.last_application_date && <p className="text-xs text-destructive mt-1">{errors.last_application_date.message}</p>}
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Required Skills</label>
+            <div className="flex flex-wrap gap-2 p-3 border rounded-xl bg-muted/30 max-h-36 overflow-y-auto">
+              {skillsList.map((skill) => (
                 <button
                   key={skill.id}
                   type="button"
-                  className={`btn btn-sm rounded-pill ${selectedSkills.includes(skill.id) ? 'btn-primary shadow-sm' : 'btn-outline-secondary bg-white'}`}
                   onClick={() => handleSkillToggle(skill.id)}
+                  className={`inline-flex items-center gap-1 px-3 py-1 rounded-lg text-xs font-medium transition-all ${
+                    selectedSkills.includes(skill.id)
+                      ? 'bg-primary text-primary-foreground shadow-xs'
+                      : 'bg-card text-muted-foreground border hover:text-foreground'
+                  }`}
                 >
-                  {skill.name} {selectedSkills.includes(skill.id) && <i className="bi bi-check2 ms-1"></i>}
+                  <span>{skill.name}</span>
+                  {selectedSkills.includes(skill.id) && <Check className="h-3 w-3" />}
                 </button>
               ))}
-              {skillsList.length === 0 && <span className="text-muted small">No skills available. Add some in the Skills tab.</span>}
+              {skillsList.length === 0 && <span className="text-xs text-muted-foreground">No skills available.</span>}
             </div>
           </div>
 
-          <div className="mb-4">
-            <div className="d-flex justify-content-between align-items-center mb-2">
-              <label className="form-label small fw-semibold text-dark mb-0">Description</label>
-              <button 
-                type="button" 
-                className="btn btn-sm btn-outline-primary border-0 rounded-pill d-flex align-items-center gap-1 shadow-sm px-3"
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Job Description</label>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-7 text-xs gap-1.5 text-primary border-primary/30 hover:bg-primary/10"
                 onClick={handleGenerateDescription}
                 disabled={isGeneratingDesc}
               >
-                {isGeneratingDesc ? <span className="spinner-border spinner-border-sm me-1" role="status"></span> : <i className="bi bi-magic"></i>}
-                <span className="small fw-bold">Auto-generate with AI</span>
-              </button>
+                <Sparkles className="h-3.5 w-3.5" />
+                <span>{isGeneratingDesc ? 'Generating with AI...' : 'Auto-Generate (Groq AI)'}</span>
+              </Button>
             </div>
-            <textarea className={`form-control input-stylish ${errors.description ? 'is-invalid' : ''}`} rows="6" {...register('description')} />
-            {errors.description && <div className="invalid-feedback">{errors.description.message}</div>}
+            <textarea
+              rows={6}
+              className="w-full rounded-xl border border-input bg-background/80 p-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 leading-relaxed"
+              placeholder="Detailed roles, responsibilities, and qualifications..."
+              {...register('description')}
+            />
+            {errors.description && <p className="text-xs text-destructive mt-1">{errors.description.message}</p>}
           </div>
 
-          <div className="d-flex justify-content-end gap-2 border-top pt-3">
-            <button type="button" className="btn btn-light border" onClick={closeModal}>Cancel</button>
-            <button type="submit" className="btn btn-dark" disabled={isCreating || isUpdating}>
-              {isCreating || isUpdating ? 'Saving...' : 'Save Job'}
-            </button>
+          <div className="flex justify-end gap-2 pt-3 border-t border-border/60">
+            <Button type="button" variant="outline" onClick={closeModal}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={isCreating || isUpdating}>
+              {isCreating || isUpdating ? 'Saving...' : 'Save Job Opening'}
+            </Button>
           </div>
         </form>
       </Modal>
 
+      {/* Delete Confirmation Modal */}
       <Modal isOpen={!!deleteConfirmId} onClose={() => setDeleteConfirmId(null)} title="Confirm Deletion" size="sm">
-        <p className="text-muted mb-4">Are you sure you want to delete this job? This action cannot be undone.</p>
-        <div className="d-flex justify-content-end gap-2">
-          <button type="button" className="btn btn-light border" onClick={() => setDeleteConfirmId(null)}>Cancel</button>
-          <button type="button" className="btn btn-danger" onClick={handleDelete} disabled={isDeleting}>
-            {isDeleting ? 'Deleting...' : 'Delete'}
-          </button>
+        <div className="space-y-4">
+          <p className="text-sm text-muted-foreground">
+            Are you sure you want to delete this job opening? Candidates will no longer be able to apply.
+          </p>
+          <div className="flex justify-end gap-2 pt-2 border-t border-border/60">
+            <Button variant="outline" onClick={() => setDeleteConfirmId(null)}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={handleDelete} disabled={isDeleting}>
+              {isDeleting ? 'Deleting...' : 'Delete Position'}
+            </Button>
+          </div>
         </div>
       </Modal>
     </div>

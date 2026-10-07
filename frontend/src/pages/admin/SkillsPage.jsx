@@ -5,6 +5,26 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { useSkills, useCreateSkill, useDeleteSkill } from '../../hooks/useSkills';
 import Modal from '../../components/ui/Modal';
 import moment from 'moment';
+import { 
+  Plus, 
+  Search, 
+  Trash2, 
+  Sparkles, 
+  ChevronLeft, 
+  ChevronRight,
+  Code
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 
 const schema = yup.object().shape({
   name: yup.string().required('Skill name is required').min(2, 'Too short'),
@@ -45,119 +65,164 @@ const SkillsPage = () => {
   const meta = response?.meta || { totalPages: 1, page: 1 };
 
   return (
-    <div>
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <h4 className="fw-bold tracking-tight text-dark mb-0">Skills</h4>
-        <button className="btn btn-dark fw-medium shadow-sm" onClick={() => setIsAddModalOpen(true)}>
-          <i className="bi bi-plus-lg me-2"></i>Add Skill
-        </button>
-      </div>
-
-      <div className="bg-white rounded-4 shadow-soft border p-4 mb-4">
-        <div className="mb-4" style={{ maxWidth: '300px' }}>
-          <div className="position-relative">
-            <i className="bi bi-search position-absolute top-50 translate-middle-y text-muted ms-3"></i>
-            <input 
-              type="text" 
-              className="form-control input-stylish ps-5" 
-              placeholder="Search skills..." 
-              value={search}
-              onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-            />
-          </div>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="font-heading text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
+            Skills Library
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Manage searchable taxonomies, proficiencies, and extraction tags.
+          </p>
         </div>
-
-        {isLoading ? (
-          <div className="text-center py-5"><div className="spinner-border text-primary" /></div>
-        ) : skills.length === 0 ? (
-          <div className="text-center py-5 text-muted">No skills found.</div>
-        ) : (
-          <div className="table-responsive">
-            <table className="table table-hover align-middle">
-              <thead className="table-light">
-                <tr>
-                  <th className="fw-semibold text-muted small text-uppercase">Name</th>
-                  <th className="fw-semibold text-muted small text-uppercase">Created At</th>
-                  <th className="fw-semibold text-muted small text-uppercase text-end">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {skills.map((skill) => (
-                  <tr key={skill.id}>
-                    <td className="fw-medium text-dark">{skill.name}</td>
-                    <td className="text-muted small">{moment(skill.created_at).format('MMM DD, YYYY')}</td>
-                    <td className="text-end">
-                      <button 
-                        className="btn btn-sm btn-light text-danger border-0" 
-                        title="Delete"
-                        onClick={() => setDeleteConfirmId(skill.id)}
-                      >
-                        <i className="bi bi-trash"></i>
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-
-        {/* Pagination */}
-        {meta.totalPages > 1 && (
-          <div className="d-flex justify-content-between align-items-center mt-3">
-            <div className="small text-muted">
-              Showing page {meta.page} of {meta.totalPages}
-            </div>
-            <div className="d-flex gap-2">
-              <button 
-                className="btn btn-sm btn-light border" 
-                disabled={meta.page <= 1}
-                onClick={() => setPage(p => Math.max(1, p - 1))}
-              >
-                Previous
-              </button>
-              <button 
-                className="btn btn-sm btn-light border" 
-                disabled={meta.page >= meta.totalPages}
-                onClick={() => setPage(p => p + 1)}
-              >
-                Next
-              </button>
-            </div>
-          </div>
-        )}
+        <Button onClick={() => setIsAddModalOpen(true)} className="gap-2 self-start sm:self-auto">
+          <Plus className="h-4 w-4" />
+          <span>Add Skill</span>
+        </Button>
       </div>
+
+      {/* Main Table Card */}
+      <Card>
+        <CardHeader className="p-4 sm:p-6 pb-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="relative w-full sm:w-72">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search skills..."
+                className="pl-9"
+                value={search}
+                onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+              />
+            </div>
+            <div className="text-xs text-muted-foreground font-medium">
+              Showing <span className="font-semibold text-foreground">{skills.length}</span> skills
+            </div>
+          </div>
+        </CardHeader>
+
+        <CardContent className="p-0 sm:p-6 pt-0">
+          {isLoading ? (
+            <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
+              <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent mb-3" />
+              <p className="text-sm font-medium">Loading skills...</p>
+            </div>
+          ) : skills.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 text-center text-muted-foreground px-4">
+              <div className="h-12 w-12 rounded-full bg-muted/60 flex items-center justify-center mb-3">
+                <Code className="h-6 w-6 text-muted-foreground/60" />
+              </div>
+              <h3 className="font-semibold text-foreground">No skills found</h3>
+              <p className="text-xs text-muted-foreground mt-1 max-w-sm">
+                Add your first skill to start categorizing candidate profiles.
+              </p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Skill Name</TableHead>
+                    <TableHead>Date Added</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {skills.map((skill) => (
+                    <TableRow key={skill.id}>
+                      <TableCell className="font-semibold text-foreground">
+                        {skill.name}
+                      </TableCell>
+                      <TableCell className="text-xs text-muted-foreground">
+                        {moment(skill.created_at).format('MMM DD, YYYY')}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 rounded-lg text-destructive hover:text-destructive hover:bg-destructive/10"
+                          onClick={() => setDeleteConfirmId(skill.id)}
+                          title="Delete Skill"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+
+          {/* Pagination */}
+          {meta.totalPages > 1 && (
+            <div className="flex items-center justify-between px-4 py-3 border-t border-border/60">
+              <div className="text-xs text-muted-foreground">
+                Page <span className="font-semibold text-foreground">{meta.page}</span> of <span className="font-semibold text-foreground">{meta.totalPages}</span>
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={meta.page <= 1}
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  className="h-8 gap-1"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                  <span>Previous</span>
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={meta.page >= meta.totalPages}
+                  onClick={() => setPage((p) => p + 1)}
+                  className="h-8 gap-1"
+                >
+                  <span>Next</span>
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Add Skill Modal */}
-      <Modal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} title="Add New Skill">
-        <form onSubmit={handleSubmit(onSubmit)}>
-          <div className="mb-4">
-            <label className="form-label small fw-semibold text-dark">Skill Name</label>
-            <input 
-              type="text" 
-              className={`form-control input-stylish ${errors.name ? 'is-invalid' : ''}`} 
-              placeholder="e.g., React, Python, UI/UX"
+      <Modal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} title="Add New Skill" size="sm">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Skill Name</label>
+            <Input 
+              placeholder="e.g., React, Python, UI/UX" 
               {...register('name')} 
             />
-            {errors.name && <div className="invalid-feedback">{errors.name.message}</div>}
+            {errors.name && <p className="text-xs text-destructive mt-1">{errors.name.message}</p>}
           </div>
-          <div className="d-flex justify-content-end gap-2">
-            <button type="button" className="btn btn-light border" onClick={() => setIsAddModalOpen(false)}>Cancel</button>
-            <button type="submit" className="btn btn-dark" disabled={isCreating}>
+          <div className="flex justify-end gap-2 pt-2 border-t border-border/60">
+            <Button type="button" variant="outline" onClick={() => setIsAddModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={isCreating}>
               {isCreating ? 'Saving...' : 'Save Skill'}
-            </button>
+            </Button>
           </div>
         </form>
       </Modal>
 
       {/* Delete Confirmation Modal */}
       <Modal isOpen={!!deleteConfirmId} onClose={() => setDeleteConfirmId(null)} title="Confirm Deletion" size="sm">
-        <p className="text-muted mb-4">Are you sure you want to delete this skill? This action cannot be undone.</p>
-        <div className="d-flex justify-content-end gap-2">
-          <button type="button" className="btn btn-light border" onClick={() => setDeleteConfirmId(null)}>Cancel</button>
-          <button type="button" className="btn btn-danger" onClick={handleDelete} disabled={isDeleting}>
-            {isDeleting ? 'Deleting...' : 'Delete'}
-          </button>
+        <div className="space-y-4">
+          <p className="text-sm text-muted-foreground">
+            Are you sure you want to delete this skill?
+          </p>
+          <div className="flex justify-end gap-2 pt-2 border-t border-border/60">
+            <Button variant="outline" onClick={() => setDeleteConfirmId(null)}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={handleDelete} disabled={isDeleting}>
+              {isDeleting ? 'Deleting...' : 'Delete Skill'}
+            </Button>
+          </div>
         </div>
       </Modal>
     </div>

@@ -2,6 +2,39 @@ import { useState, useEffect } from 'react';
 import { useUsers, useUser, useUpdateUserStatus, useUserResume } from '../../hooks/useUsers';
 import Modal from '../../components/ui/Modal';
 import moment from 'moment';
+import { 
+  Search, 
+  Eye, 
+  Trash2, 
+  Mail, 
+  Phone, 
+  Calendar, 
+  CheckCircle, 
+  XCircle, 
+  FileText, 
+  Download, 
+  Globe, 
+  Link2, 
+  AlertTriangle, 
+  ChevronLeft, 
+  ChevronRight,
+  ShieldCheck,
+  UserCheck,
+  UserX
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 const UsersPage = () => {
   const [page, setPage] = useState(1);
@@ -17,7 +50,7 @@ const UsersPage = () => {
   // Fetch detailed user data for the modal
   const { data: detailedUser, isLoading: isDetailedUserLoading } = useUser(viewUser?.id);
   
-  // Use query for resume fetching, enabled only when showResume is true
+  // Resume fetching query
   const { data: resumeUrl, isLoading: isResumeLoading, isError: isResumeError, refetch: fetchResume } = useUserResume(viewUser?.id);
 
   useEffect(() => {
@@ -48,219 +81,301 @@ const UsersPage = () => {
   };
 
   return (
-    <div>
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <h4 className="fw-bold tracking-tight text-dark mb-0">Users</h4>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="font-heading text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
+            User Management
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Manage system users, access roles, and permissions.
+          </p>
+        </div>
       </div>
 
-      <div className="bg-white rounded-4 shadow-soft border p-4 mb-4">
-        <div className="mb-4" style={{ maxWidth: '300px' }}>
-          <div className="position-relative">
-            <i className="bi bi-search position-absolute top-50 translate-middle-y text-muted ms-3"></i>
-            <input 
-              type="text" 
-              className="form-control input-stylish ps-5" 
-              placeholder="Search users..." 
-              value={search}
-              onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-            />
-          </div>
-        </div>
-
-        {isLoading ? (
-          <div className="text-center py-5"><div className="spinner-border text-primary" /></div>
-        ) : users.length === 0 ? (
-          <div className="text-center py-5 text-muted">No users found.</div>
-        ) : (
-          <div className="table-responsive">
-            <table className="table table-hover align-middle">
-              <thead className="table-light">
-                <tr>
-                  <th className="fw-semibold text-muted small text-uppercase">User</th>
-                  <th className="fw-semibold text-muted small text-uppercase">Role</th>
-                  <th className="fw-semibold text-muted small text-uppercase">Joined</th>
-                  <th className="fw-semibold text-muted small text-uppercase" style={{ width: '150px' }}>Status</th>
-                  <th className="fw-semibold text-muted small text-uppercase text-end">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {users.map((user) => (
-                  <tr key={user.id}>
-                    <td>
-                      <div className="fw-medium text-dark">{user.username}</div>
-                      <div className="text-muted small">{user.email}</div>
-                    </td>
-                    <td>
-                      <span className={`badge ${user.role === 'admin' ? 'bg-danger-subtle text-danger border-danger-subtle' : 'bg-primary-subtle text-primary border-primary-subtle'} border text-capitalize`}>
-                        {user.role.toLowerCase()}
-                      </span>
-                    </td>
-                    <td className="text-muted small">{moment(user.createdAt || user.created_at).format('MMM DD, YYYY')}</td>
-                    <td>
-                      <select 
-                        className={`form-select form-select-sm fw-medium shadow-none ${user.status === 'ACTIVE' ? 'text-success bg-success-subtle border-success-subtle' : 'text-danger bg-danger-subtle border-danger-subtle'}`}
-                        value={user.status}
-                        onChange={(e) => handleStatusChange(user.id, e.target.value)}
-                        disabled={isUpdating}
-                        style={{ cursor: 'pointer' }}
-                      >
-                        <option value="ACTIVE" className="bg-white text-dark">Active</option>
-                        <option value="BLOCKED" className="bg-white text-dark">Blocked</option>
-                      </select>
-                    </td>
-                    <td className="text-end">
-                      <button 
-                        className="btn btn-sm btn-light text-primary border-0 me-2" 
-                        title="View Details"
-                        onClick={() => setViewUser(user)}
-                      >
-                        <i className="bi bi-eye"></i>
-                      </button>
-                      <button 
-                        className="btn btn-sm btn-light text-danger border-0" 
-                        title="Delete User"
-                        onClick={() => setDeleteConfirmId(user.id)}
-                      >
-                        <i className="bi bi-trash"></i>
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-
-        {meta.totalPages > 1 && (
-          <div className="d-flex justify-content-between align-items-center mt-3">
-            <div className="small text-muted">Showing page {meta.page} of {meta.totalPages}</div>
-            <div className="d-flex gap-2">
-              <button className="btn btn-sm btn-light border" disabled={meta.page <= 1} onClick={() => setPage(p => Math.max(1, p - 1))}>Previous</button>
-              <button className="btn btn-sm btn-light border" disabled={meta.page >= meta.totalPages} onClick={() => setPage(p => p + 1)}>Next</button>
+      {/* Main Table Card */}
+      <Card>
+        <CardHeader className="p-4 sm:p-6 pb-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="relative w-full sm:w-72">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search users by name, email..."
+                className="pl-9"
+                value={search}
+                onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+              />
+            </div>
+            <div className="text-xs text-muted-foreground font-medium">
+              Showing <span className="font-semibold text-foreground">{users.length}</span> users
             </div>
           </div>
-        )}
-      </div>
+        </CardHeader>
+
+        <CardContent className="p-0 sm:p-6 pt-0">
+          {isLoading ? (
+            <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
+              <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent mb-3" />
+              <p className="text-sm font-medium">Loading users...</p>
+            </div>
+          ) : users.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 text-center text-muted-foreground px-4">
+              <div className="h-12 w-12 rounded-full bg-muted/60 flex items-center justify-center mb-3">
+                <Search className="h-6 w-6 text-muted-foreground/60" />
+              </div>
+              <h3 className="font-semibold text-foreground">No users found</h3>
+              <p className="text-xs text-muted-foreground mt-1 max-w-sm">
+                Try adjusting your search keywords to find what you're looking for.
+              </p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>User</TableHead>
+                    <TableHead>Role</TableHead>
+                    <TableHead className="hidden md:table-cell">Joined</TableHead>
+                    <TableHead className="w-[140px]">Status</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {users.map((user) => (
+                    <TableRow key={user.id} className="group">
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          <Avatar className="h-9 w-9 border border-primary/20 shrink-0">
+                            <AvatarFallback className="bg-primary/10 text-primary font-semibold text-xs">
+                              {(user.username || user.email || 'U').charAt(0).toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="min-w-0">
+                            <div className="font-medium text-foreground truncate">{user.username}</div>
+                            <div className="text-xs text-muted-foreground truncate">{user.email}</div>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge 
+                          variant={user.role === 'admin' ? 'destructive' : 'secondary'}
+                          className="capitalize text-[11px]"
+                        >
+                          {user.role}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="hidden md:table-cell text-xs text-muted-foreground">
+                        {moment(user.createdAt || user.created_at).format('MMM DD, YYYY')}
+                      </TableCell>
+                      <TableCell>
+                        <select
+                          className={`text-xs font-semibold rounded-lg px-2.5 py-1.5 border transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring ${
+                            user.status === 'ACTIVE'
+                              ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-800'
+                              : 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/50 dark:text-rose-300 dark:border-rose-800'
+                          }`}
+                          value={user.status}
+                          onChange={(e) => handleStatusChange(user.id, e.target.value)}
+                          disabled={isUpdating}
+                        >
+                          <option value="ACTIVE">Active</option>
+                          <option value="BLOCKED">Blocked</option>
+                        </select>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 rounded-lg text-primary hover:text-primary hover:bg-primary/10"
+                            onClick={() => setViewUser(user)}
+                            title="View Details"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 rounded-lg text-destructive hover:text-destructive hover:bg-destructive/10"
+                            onClick={() => setDeleteConfirmId(user.id)}
+                            title="Delete User"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+
+          {/* Pagination */}
+          {meta.totalPages > 1 && (
+            <div className="flex items-center justify-between px-4 py-3 border-t border-border/60">
+              <div className="text-xs text-muted-foreground">
+                Page <span className="font-semibold text-foreground">{meta.page}</span> of <span className="font-semibold text-foreground">{meta.totalPages}</span>
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={meta.page <= 1}
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  className="h-8 gap-1"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                  <span>Previous</span>
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={meta.page >= meta.totalPages}
+                  onClick={() => setPage((p) => p + 1)}
+                  className="h-8 gap-1"
+                >
+                  <span>Next</span>
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* View User Modal */}
       <Modal isOpen={!!viewUser} onClose={() => setViewUser(null)} title="User Details" size="xl">
         {isDetailedUserLoading ? (
-          <div className="text-center py-5">
-            <div className="spinner-border text-primary" style={{ width: '3rem', height: '3rem' }}></div>
-            <div className="mt-3 text-muted fw-medium tracking-wide">Retrieving user profile...</div>
+          <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
+            <div className="h-10 w-10 animate-spin rounded-full border-3 border-primary border-t-transparent mb-3" />
+            <p className="text-sm font-medium">Retrieving user profile...</p>
           </div>
         ) : detailedUser ? (
-          <div className="row g-4">
-            {/* Left Column: Profile Info */}
-            <div className="col-lg-5 col-xl-4 d-flex flex-column">
-              {/* Header / Profile Section */}
-              <div className="position-relative bg-primary-subtle rounded-4 p-4 mb-4 text-center overflow-hidden">
-                <div className="position-absolute top-0 start-0 w-100 h-100 bg-white" style={{ opacity: 0.4 }}></div>
-                <div className="position-relative z-1 d-flex flex-column align-items-center">
-                  <div className="bg-white text-primary rounded-circle d-flex align-items-center justify-content-center mb-3 shadow-sm border border-primary-subtle" style={{ width: '80px', height: '80px' }}>
-                    <i className="bi bi-person-bounding-box fs-1"></i>
-                  </div>
-                  <h4 className="mb-1 fw-bold text-dark">{detailedUser.username}</h4>
-                  <p className="text-muted mb-2 d-flex align-items-center justify-content-center gap-2">
-                    <i className="bi bi-envelope"></i> {detailedUser.email}
-                  </p>
-                  <div className="d-flex gap-2 justify-content-center mt-2">
-                    <span className={`badge px-3 py-2 rounded-pill ${detailedUser.role === 'admin' ? 'bg-danger text-white' : 'bg-primary text-white'} text-capitalize shadow-sm`}>
-                      <i className={`bi ${detailedUser.role === 'admin' ? 'bi-shield-lock' : 'bi-person-badge'} me-2`}></i>
-                      {detailedUser.role.toLowerCase()}
-                    </span>
-                    <span className={`badge px-3 py-2 rounded-pill ${detailedUser.status === 'ACTIVE' ? 'bg-success text-white' : 'bg-secondary text-white'} shadow-sm`}>
-                      {detailedUser.status.toLowerCase()}
-                    </span>
-                  </div>
-                </div>
-              </div>
-              
-              {/* Details Grid */}
-              <h6 className="fw-bold text-dark mb-3 px-1"><i className="bi bi-info-circle me-2 text-primary"></i>Profile Information</h6>
-              <div className="row g-3 mb-4">
-                <div className="col-sm-6">
-                  <div className="bg-light rounded-4 p-3 border h-100 transition-hover">
-                    <label className="small text-muted fw-semibold text-uppercase tracking-wide mb-1 d-block"><i className="bi bi-telephone me-1"></i>Phone</label>
-                    <div className="fw-bold text-dark">{detailedUser.phone || 'Not Provided'}</div>
-                  </div>
-                </div>
-                <div className="col-sm-6">
-                  <div className="bg-light rounded-4 p-3 border h-100 transition-hover">
-                    <label className="small text-muted fw-semibold text-uppercase tracking-wide mb-1 d-block"><i className="bi bi-check-circle me-1"></i>Verified</label>
-                    <div className="d-flex align-items-center fw-bold">
-                      {detailedUser.is_verified ? (
-                        <span className="text-success"><i className="bi bi-patch-check-fill me-1"></i> Yes</span>
-                      ) : (
-                        <span className="text-warning"><i className="bi bi-exclamation-circle-fill me-1"></i> No</span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-                <div className="col-12">
-                  <div className="bg-light rounded-4 p-3 border transition-hover">
-                    <label className="small text-muted fw-semibold text-uppercase tracking-wide mb-1 d-block"><i className="bi bi-calendar3 me-1"></i>Member Since</label>
-                    <div className="fw-bold text-dark">{moment(detailedUser.createdAt || detailedUser.created_at).format('MMMM DD, YYYY [at] hh:mm A')}</div>
-                  </div>
-                </div>
-              </div>
-              
-              {/* Social Links */}
-              {(detailedUser.website || detailedUser.linkedin_url || detailedUser.github_url) && (
-                <div className="mb-4">
-                  <h6 className="fw-bold text-dark mb-3 px-1"><i className="bi bi-link-45deg me-2 text-primary"></i>Web & Social</h6>
-                  <div className="bg-light rounded-4 p-3 border d-flex flex-wrap gap-2 transition-hover">
-                    {detailedUser.website && <a href={detailedUser.website} target="_blank" rel="noreferrer" className="btn btn-sm btn-outline-info rounded-pill px-3 fw-medium"><i className="bi bi-globe me-2"></i>Website</a>}
-                    {detailedUser.linkedin_url && <a href={detailedUser.linkedin_url} target="_blank" rel="noreferrer" className="btn btn-sm btn-outline-primary rounded-pill px-3 fw-medium"><i className="bi bi-linkedin me-2"></i>LinkedIn</a>}
-                    {detailedUser.github_url && <a href={detailedUser.github_url} target="_blank" rel="noreferrer" className="btn btn-sm btn-outline-dark rounded-pill px-3 fw-medium"><i className="bi bi-github me-2"></i>GitHub</a>}
-                  </div>
-                </div>
-              )}
-            </div>
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            {/* Left Column: Profile Card */}
+            <div className="lg:col-span-5 space-y-4">
+              <div className="flex flex-col items-center text-center p-6 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-border/80">
+                <Avatar className="h-20 w-20 ring-4 ring-primary/10 mb-3">
+                  <AvatarFallback className="text-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white font-bold">
+                    {(detailedUser.username || 'U').charAt(0).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <h3 className="font-heading font-bold text-lg text-foreground">{detailedUser.username}</h3>
+                <p className="text-xs text-muted-foreground flex items-center gap-1.5 mt-1">
+                  <Mail className="h-3.5 w-3.5" /> {detailedUser.email}
+                </p>
 
-            {/* Right Column: Resume Section */}
-            <div className="col-lg-7 col-xl-8 d-flex flex-column">
-              <h6 className="fw-bold text-dark mb-3 px-1"><i className="bi bi-file-earmark-person me-2 text-primary"></i>Resume Document</h6>
-              
-              <div className="flex-grow-1 d-flex flex-column h-100" style={{ minHeight: '600px' }}>
-                {!showResume ? (
-                  <div className="bg-light border border-dashed rounded-4 p-5 text-center transition-hover d-flex flex-column align-items-center justify-content-center flex-grow-1" style={{ cursor: 'pointer' }} onClick={() => setShowResume(true)}>
-                    <div className="bg-white rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm mb-3 text-primary" style={{ width: '80px', height: '80px' }}>
-                      <i className="bi bi-file-earmark-pdf fs-1"></i>
-                    </div>
-                    <h5 className="fw-bold mb-2">View Candidate Resume</h5>
-                    <p className="text-muted small mb-0 px-4">Click here to securely fetch and load the candidate's PDF document in this pane.</p>
+                <div className="flex items-center gap-2 mt-3">
+                  <Badge variant={detailedUser.role === 'admin' ? 'destructive' : 'default'} className="capitalize">
+                    {detailedUser.role}
+                  </Badge>
+                  <Badge variant={detailedUser.status === 'ACTIVE' ? 'success' : 'secondary'}>
+                    {detailedUser.status}
+                  </Badge>
+                </div>
+              </div>
+
+              {/* Information List */}
+              <div className="rounded-2xl border border-border/80 p-4 space-y-3 bg-card">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Profile Information</h4>
+                <div className="grid grid-cols-2 gap-3 text-xs">
+                  <div className="p-3 rounded-xl bg-muted/40">
+                    <span className="text-muted-foreground block mb-0.5">Phone</span>
+                    <span className="font-semibold text-foreground">{detailedUser.phone || 'Not Provided'}</span>
                   </div>
-                ) : isResumeLoading ? (
-                  <div className="bg-light border rounded-4 p-5 text-center d-flex flex-column align-items-center justify-content-center flex-grow-1">
-                    <div className="spinner-border text-primary mb-3" style={{ width: '3rem', height: '3rem' }}></div>
-                    <h6 className="fw-bold text-muted tracking-wide">Loading Document...</h6>
+                  <div className="p-3 rounded-xl bg-muted/40">
+                    <span className="text-muted-foreground block mb-0.5">Verified</span>
+                    <span className={`font-semibold flex items-center gap-1 ${detailedUser.is_verified ? 'text-emerald-600' : 'text-amber-600'}`}>
+                      {detailedUser.is_verified ? <CheckCircle className="h-3.5 w-3.5" /> : <XCircle className="h-3.5 w-3.5" />}
+                      {detailedUser.is_verified ? 'Yes' : 'No'}
+                    </span>
                   </div>
-                ) : isResumeError || !resumeUrl ? (
-                  <div className="bg-danger-subtle border border-danger-subtle rounded-4 p-4 text-center d-flex flex-column align-items-center justify-content-center flex-grow-1">
-                    <i className="bi bi-exclamation-triangle text-danger fs-1 mb-3"></i>
-                    <h5 className="fw-bold text-danger mb-0">No resume available for this user.</h5>
-                  </div>
-                ) : (
-                  <div className="border rounded-4 overflow-hidden bg-dark shadow-sm position-relative flex-grow-1 d-flex flex-column">
-                    <div className="bg-white p-2 d-flex justify-content-between align-items-center border-bottom shadow-sm z-1">
-                      <span className="fw-semibold text-dark small px-2"><i className="bi bi-file-earmark-pdf text-danger me-2"></i>Candidate_Resume.pdf</span>
-                      <a href={resumeUrl?.url || resumeUrl} target="_blank" rel="noreferrer" className="btn btn-sm btn-primary rounded-pill px-3">
-                        <i className="bi bi-download me-1"></i> Download
+                </div>
+
+                <div className="p-3 rounded-xl bg-muted/40 text-xs">
+                  <span className="text-muted-foreground block mb-0.5">Member Since</span>
+                  <span className="font-semibold text-foreground">
+                    {moment(detailedUser.createdAt || detailedUser.created_at).format('MMMM DD, YYYY [at] hh:mm A')}
+                  </span>
+                </div>
+
+                {/* Social links if any */}
+                {(detailedUser.website || detailedUser.linkedin_url || detailedUser.github_url) && (
+                  <div className="pt-2 border-t border-border/60 flex flex-wrap gap-2">
+                    {detailedUser.website && (
+                      <a href={detailedUser.website} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-lg bg-muted hover:bg-muted/80 text-foreground font-medium transition-colors">
+                        <Globe className="h-3.5 w-3.5" /> Website
                       </a>
-                    </div>
-                    <object data={resumeUrl?.url || resumeUrl} type="application/pdf" width="100%" className="flex-grow-1">
-                      <div className="p-5 text-center bg-light h-100 d-flex flex-column align-items-center justify-content-center">
-                        <i className="bi bi-file-earmark-x text-muted fs-1 mb-3"></i>
-                        <p className="text-muted mb-3">Your browser cannot display PDFs directly.</p>
-                        <a href={resumeUrl?.url || resumeUrl} target="_blank" rel="noreferrer" className="btn btn-primary rounded-pill px-4">
-                          <i className="bi bi-download me-2"></i>Download PDF
-                        </a>
-                      </div>
-                    </object>
+                    )}
+                    {detailedUser.linkedin_url && (
+                      <a href={detailedUser.linkedin_url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 font-medium transition-colors">
+                        <Link2 className="h-3.5 w-3.5" /> LinkedIn
+                      </a>
+                    )}
+                    {detailedUser.github_url && (
+                      <a href={detailedUser.github_url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-lg bg-slate-900 text-white hover:bg-slate-800 font-medium transition-colors">
+                        <Link2 className="h-3.5 w-3.5" /> GitHub
+                      </a>
+                    )}
                   </div>
                 )}
               </div>
+            </div>
+
+            {/* Right Column: Resume Section */}
+            <div className="lg:col-span-7 flex flex-col min-h-[380px]">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">Candidate Resume</h4>
+              
+              {!showResume ? (
+                <div 
+                  onClick={() => setShowResume(true)}
+                  className="flex-1 flex flex-col items-center justify-center p-8 rounded-2xl border-2 border-dashed border-border hover:border-primary/50 bg-slate-50/50 dark:bg-slate-900/50 cursor-pointer transition-all duration-200 group text-center"
+                >
+                  <div className="h-14 w-14 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                    <FileText className="h-7 w-7" />
+                  </div>
+                  <h5 className="font-heading font-semibold text-foreground text-sm">View Attached Resume</h5>
+                  <p className="text-xs text-muted-foreground mt-1 max-w-xs">
+                    Click here to preview candidate's uploaded resume document.
+                  </p>
+                </div>
+              ) : isResumeLoading ? (
+                <div className="flex-1 flex flex-col items-center justify-center p-8 rounded-2xl border bg-slate-50 dark:bg-slate-900">
+                  <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent mb-2" />
+                  <p className="text-xs font-medium text-muted-foreground">Loading PDF Document...</p>
+                </div>
+              ) : isResumeError || !resumeUrl ? (
+                <div className="flex-1 flex flex-col items-center justify-center p-8 rounded-2xl border border-destructive/20 bg-destructive/5 text-center text-destructive">
+                  <AlertTriangle className="h-8 w-8 mb-2 opacity-80" />
+                  <p className="text-xs font-semibold">No resume document available for this user.</p>
+                </div>
+              ) : (
+                <div className="flex-1 flex flex-col rounded-2xl border border-border/80 overflow-hidden bg-slate-950 shadow-sm">
+                  <div className="flex items-center justify-between px-4 py-2.5 bg-card border-b border-border/60">
+                    <span className="text-xs font-semibold text-foreground flex items-center gap-1.5 truncate">
+                      <FileText className="h-4 w-4 text-primary" /> Candidate_Resume.pdf
+                    </span>
+                    <Button asChild size="sm" variant="outline" className="h-7 text-xs gap-1">
+                      <a href={resumeUrl?.url || resumeUrl} target="_blank" rel="noreferrer">
+                        <Download className="h-3.5 w-3.5" /> Download
+                      </a>
+                    </Button>
+                  </div>
+                  <object data={resumeUrl?.url || resumeUrl} type="application/pdf" className="w-full h-[450px]">
+                    <div className="p-8 text-center bg-card h-full flex flex-col items-center justify-center">
+                      <FileText className="h-10 w-10 text-muted-foreground mb-2" />
+                      <p className="text-xs text-muted-foreground mb-3">Your browser doesn't support inline PDF preview.</p>
+                      <Button asChild size="sm">
+                        <a href={resumeUrl?.url || resumeUrl} target="_blank" rel="noreferrer">
+                          Download Resume PDF
+                        </a>
+                      </Button>
+                    </div>
+                  </object>
+                </div>
+              )}
             </div>
           </div>
         ) : null}
@@ -268,12 +383,18 @@ const UsersPage = () => {
 
       {/* Delete Confirmation Modal */}
       <Modal isOpen={!!deleteConfirmId} onClose={() => setDeleteConfirmId(null)} title="Confirm Deletion" size="sm">
-        <p className="text-muted mb-4">Are you sure you want to delete this user? This will hide them from the platform. This action cannot be undone.</p>
-        <div className="d-flex justify-content-end gap-2">
-          <button type="button" className="btn btn-light border" onClick={() => setDeleteConfirmId(null)}>Cancel</button>
-          <button type="button" className="btn btn-danger" onClick={handleDelete} disabled={isUpdating}>
-            {isUpdating ? 'Deleting...' : 'Delete'}
-          </button>
+        <div className="space-y-4">
+          <p className="text-sm text-muted-foreground">
+            Are you sure you want to delete this user? This action will disable their account access.
+          </p>
+          <div className="flex justify-end gap-2 pt-2 border-t border-border/60">
+            <Button variant="outline" onClick={() => setDeleteConfirmId(null)}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={handleDelete} disabled={isUpdating}>
+              {isUpdating ? 'Deleting...' : 'Delete User'}
+            </Button>
+          </div>
         </div>
       </Modal>
     </div>

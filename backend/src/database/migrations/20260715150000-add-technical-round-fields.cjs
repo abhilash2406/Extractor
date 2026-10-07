@@ -31,19 +31,19 @@ module.exports = {
       comment: 'Should match option_a, option_b, option_c, or option_d exactly or hold a key identifier',
     });
 
-    // 2. Update tests table
-    await queryInterface.addColumn('tests', 'test_type', {
+    // 2. Update student_tests table
+    await queryInterface.addColumn('student_tests', 'test_type', {
       type: Sequelize.ENUM('APTITUDE', 'TECHNICAL'),
       defaultValue: 'APTITUDE',
       allowNull: false,
     });
 
-    // 3. Update test_answers table
-    await queryInterface.changeColumn('test_answers', 'selected_answer', {
+    // 3. Update student_answers table
+    await queryInterface.changeColumn('student_answers', 'selected_answer', {
       type: Sequelize.TEXT,
       allowNull: true,
     });
-    await queryInterface.addColumn('test_answers', 'language', {
+    await queryInterface.addColumn('student_answers', 'language', {
       type: Sequelize.STRING,
       allowNull: true,
     });
@@ -75,13 +75,13 @@ module.exports = {
     await queryInterface.removeColumn('questions', 'type');
     await queryInterface.sequelize.query('DROP TYPE IF EXISTS "enum_questions_type";');
 
-    // 2. Revert tests table
-    await queryInterface.removeColumn('tests', 'test_type');
-    await queryInterface.sequelize.query('DROP TYPE IF EXISTS "enum_tests_test_type";');
+    // 2. Revert student_tests table
+    await queryInterface.removeColumn('student_tests', 'test_type');
+    await queryInterface.sequelize.query('DROP TYPE IF EXISTS "enum_student_tests_test_type";');
 
-    // 3. Revert test_answers table
-    await queryInterface.removeColumn('test_answers', 'language');
-    await queryInterface.changeColumn('test_answers', 'selected_answer', {
+    // 3. Revert student_answers table
+    await queryInterface.removeColumn('student_answers', 'language');
+    await queryInterface.changeColumn('student_answers', 'selected_answer', {
       type: Sequelize.STRING,
       allowNull: true,
     });

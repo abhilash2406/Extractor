@@ -4,9 +4,32 @@ import * as yup from 'yup';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useQuestions, useCreateQuestion, useUpdateQuestion, useDeleteQuestion, useGenerateQuestion } from '../../hooks/useQuestions';
 import Modal from '../../components/ui/Modal';
-
 import * as questionsApi from '../../api/questions.api';
 import toast from 'react-hot-toast';
+import { 
+  Plus, 
+  Search, 
+  Pencil, 
+  Trash2, 
+  Sparkles, 
+  HelpCircle, 
+  ChevronLeft, 
+  ChevronRight,
+  Code2,
+  ListChecks
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 
 const schema = yup.object().shape({
   type: yup.string().required('Type is required').oneOf(['MCQ', 'PROGRAMMING']),
@@ -53,7 +76,7 @@ const QuestionsPage = () => {
   const [aiTopic, setAiTopic] = useState('');
   const [aiDifficulty, setAiDifficulty] = useState('Medium');
 
-  const { register, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm({
+  const { register, handleSubmit, reset, watch, formState: { errors } } = useForm({
     resolver: yupResolver(schema),
     defaultValues: {
       type: 'MCQ',
@@ -62,7 +85,6 @@ const QuestionsPage = () => {
   });
 
   const selectedType = watch('type');
-
   const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
 
   const handleGenerateQuestion = () => {
@@ -148,235 +170,288 @@ const QuestionsPage = () => {
   const meta = response?.meta || { totalPages: 1, page: 1 };
 
   return (
-    <div>
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <h4 className="fw-bold tracking-tight text-dark mb-0">Questions</h4>
-        <div className="d-flex gap-2">
-          <button className="btn btn-outline-primary fw-medium shadow-sm d-flex align-items-center gap-2" onClick={() => setIsBulkModalOpen(true)}>
-            <i className="bi bi-magic"></i>Generate 10 Questions
-          </button>
-          <button className="btn btn-dark fw-medium shadow-sm" onClick={() => openModal()}>
-            <i className="bi bi-plus-lg me-2"></i>Add Question
-          </button>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="font-heading text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
+            Assessment Questions
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Build MCQ and coding challenges to test candidate skills.
+          </p>
+        </div>
+        <div className="flex items-center gap-2 self-start sm:self-auto">
+          <Button 
+            variant="outline" 
+            onClick={() => setIsBulkModalOpen(true)} 
+            className="gap-2 text-primary border-primary/30 hover:bg-primary/10"
+          >
+            <Sparkles className="h-4 w-4" />
+            <span>Generate with AI</span>
+          </Button>
+          <Button onClick={() => openModal()} className="gap-2">
+            <Plus className="h-4 w-4" />
+            <span>Add Question</span>
+          </Button>
         </div>
       </div>
 
-      <div className="bg-white rounded-4 shadow-soft border p-4 mb-4">
-        <div className="mb-4" style={{ maxWidth: '300px' }}>
-          <div className="position-relative">
-            <i className="bi bi-search position-absolute top-50 translate-middle-y text-muted ms-3"></i>
-            <input 
-              type="text" 
-              className="form-control input-stylish ps-5" 
-              placeholder="Search questions..." 
-              value={search}
-              onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-            />
-          </div>
-        </div>
-
-        {isLoading ? (
-          <div className="text-center py-5"><div className="spinner-border text-primary" /></div>
-        ) : questions.length === 0 ? (
-          <div className="text-center py-5 text-muted">No questions found.</div>
-        ) : (
-          <div className="table-responsive">
-            <table className="table table-hover align-middle">
-              <thead className="table-light">
-                <tr>
-                  <th className="fw-semibold text-muted small text-uppercase">Question</th>
-                  <th className="fw-semibold text-muted small text-uppercase">Type</th>
-                  <th className="fw-semibold text-muted small text-uppercase">Correct Option</th>
-                  <th className="fw-semibold text-muted small text-uppercase text-end">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {questions.map((q) => (
-                  <tr key={q.id}>
-                    <td className="fw-medium text-dark">
-                      <div className="text-truncate" style={{maxWidth: '400px'}} title={q.question}>{q.question}</div>
-                    </td>
-                    <td>
-                      <span className={`badge ${q.type === 'PROGRAMMING' ? 'bg-primary-subtle text-primary border-primary-subtle' : 'bg-secondary-subtle text-secondary border-secondary-subtle'} border`}>
-                        {q.type || 'MCQ'}
-                      </span>
-                    </td>
-                    <td>
-                      {q.type === 'PROGRAMMING' ? (
-                        <span className="text-muted small">Manual Review</span>
-                      ) : (
-                        <span className="badge bg-success-subtle text-success border border-success-subtle">Option {q.correct_answer}</span>
-                      )}
-                    </td>
-                    <td className="text-end">
-                      <button 
-                        className="btn btn-sm btn-light text-primary border-0 me-2" 
-                        title="Edit"
-                        onClick={() => openModal(q.id)}
-                        disabled={isFetchingDetail}
-                      >
-                        <i className="bi bi-pencil"></i>
-                      </button>
-                      <button 
-                        className="btn btn-sm btn-light text-danger border-0" 
-                        title="Delete"
-                        onClick={() => setDeleteConfirmId(q.id)}
-                      >
-                        <i className="bi bi-trash"></i>
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-
-        {/* Pagination */}
-        {meta.totalPages > 1 && (
-          <div className="d-flex justify-content-between align-items-center mt-3">
-            <div className="small text-muted">
-              Showing page {meta.page} of {meta.totalPages}
+      {/* Main Table Card */}
+      <Card>
+        <CardHeader className="p-4 sm:p-6 pb-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="relative w-full sm:w-72">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search questions..."
+                className="pl-9"
+                value={search}
+                onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+              />
             </div>
-            <div className="d-flex gap-2">
-              <button 
-                className="btn btn-sm btn-light border" 
-                disabled={meta.page <= 1}
-                onClick={() => setPage(p => Math.max(1, p - 1))}
-              >
-                Previous
-              </button>
-              <button 
-                className="btn btn-sm btn-light border" 
-                disabled={meta.page >= meta.totalPages}
-                onClick={() => setPage(p => p + 1)}
-              >
-                Next
-              </button>
+            <div className="text-xs text-muted-foreground font-medium">
+              Showing <span className="font-semibold text-foreground">{questions.length}</span> questions
             </div>
           </div>
-        )}
-      </div>
+        </CardHeader>
 
-      {/* Add/Edit Question Modal */}
+        <CardContent className="p-0 sm:p-6 pt-0">
+          {isLoading ? (
+            <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
+              <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent mb-3" />
+              <p className="text-sm font-medium">Loading questions...</p>
+            </div>
+          ) : questions.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 text-center text-muted-foreground px-4">
+              <div className="h-12 w-12 rounded-full bg-muted/60 flex items-center justify-center mb-3">
+                <HelpCircle className="h-6 w-6 text-muted-foreground/60" />
+              </div>
+              <h3 className="font-semibold text-foreground">No questions found</h3>
+              <p className="text-xs text-muted-foreground mt-1 max-w-sm">
+                Add manual test questions or generate a batch using Groq AI.
+              </p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Question Statement</TableHead>
+                    <TableHead>Type</TableHead>
+                    <TableHead>Answer</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {questions.map((q) => (
+                    <TableRow key={q.id}>
+                      <TableCell className="font-medium text-foreground max-w-md truncate">
+                        {q.question}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={q.type === 'PROGRAMMING' ? 'default' : 'secondary'} className="text-[11px]">
+                          {q.type || 'MCQ'}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        {q.type === 'PROGRAMMING' ? (
+                          <span className="text-xs text-muted-foreground font-mono">Code Evaluation</span>
+                        ) : (
+                          <Badge variant="success" className="text-[11px]">
+                            Option {q.correct_answer}
+                          </Badge>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 rounded-lg text-primary hover:text-primary hover:bg-primary/10"
+                            onClick={() => openModal(q.id)}
+                            disabled={isFetchingDetail}
+                            title="Edit"
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 rounded-lg text-destructive hover:text-destructive hover:bg-destructive/10"
+                            onClick={() => setDeleteConfirmId(q.id)}
+                            title="Delete"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+
+          {/* Pagination */}
+          {meta.totalPages > 1 && (
+            <div className="flex items-center justify-between px-4 py-3 border-t border-border/60">
+              <div className="text-xs text-muted-foreground">
+                Page <span className="font-semibold text-foreground">{meta.page}</span> of <span className="font-semibold text-foreground">{meta.totalPages}</span>
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={meta.page <= 1}
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  className="h-8 gap-1"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                  <span>Previous</span>
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={meta.page >= meta.totalPages}
+                  onClick={() => setPage((p) => p + 1)}
+                  className="h-8 gap-1"
+                >
+                  <span>Next</span>
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Add / Edit Question Modal */}
       <Modal isOpen={modalState.isOpen} onClose={closeModal} title={modalState.data ? 'Edit Question' : 'Add New Question'} size="lg">
-        <form onSubmit={handleSubmit(onSubmit)}>
-
-
-          <div className="mb-3">
-            <label className="form-label small fw-semibold text-dark">Question Type</label>
-            <select className={`form-select input-stylish ${errors.type ? 'is-invalid' : ''}`} {...register('type')}>
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Question Type</label>
+            <select 
+              className="w-full rounded-xl border border-input bg-background/80 p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+              {...register('type')}
+            >
               <option value="MCQ">Multiple Choice (MCQ)</option>
-              <option value="PROGRAMMING">Programming</option>
+              <option value="PROGRAMMING">Programming Challenge</option>
             </select>
-            {errors.type && <div className="invalid-feedback">{errors.type.message}</div>}
           </div>
 
-          <div className="mb-3">
-            <label className="form-label small fw-semibold text-dark">Question Text</label>
-            <textarea 
-              className={`form-control input-stylish ${errors.question ? 'is-invalid' : ''}`} 
-              rows="3"
-              placeholder={selectedType === 'PROGRAMMING' ? "Enter the programming problem statement..." : "Enter the test question..."}
-              {...register('question')} 
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Question Text</label>
+            <textarea
+              rows={3}
+              className="w-full rounded-xl border border-input bg-background/80 p-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+              placeholder={selectedType === 'PROGRAMMING' ? "Enter problem description..." : "Enter the assessment question..."}
+              {...register('question')}
             />
-            {errors.question && <div className="invalid-feedback">{errors.question.message}</div>}
+            {errors.question && <p className="text-xs text-destructive mt-1">{errors.question.message}</p>}
           </div>
-          
+
           {selectedType === 'MCQ' && (
-            <>
-              <div className="row mb-3">
-                <div className="col-md-6 mb-3 mb-md-0">
-                  <label className="form-label small fw-semibold text-dark">Option A</label>
-                  <input type="text" className={`form-control input-stylish ${errors.option_a ? 'is-invalid' : ''}`} {...register('option_a')} />
-                  {errors.option_a && <div className="invalid-feedback">{errors.option_a.message}</div>}
+            <div className="space-y-4 pt-2 border-t border-border/60">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Option A</label>
+                  <Input {...register('option_a')} placeholder="Option A text" />
                 </div>
-                <div className="col-md-6">
-                  <label className="form-label small fw-semibold text-dark">Option B</label>
-                  <input type="text" className={`form-control input-stylish ${errors.option_b ? 'is-invalid' : ''}`} {...register('option_b')} />
-                  {errors.option_b && <div className="invalid-feedback">{errors.option_b.message}</div>}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Option B</label>
+                  <Input {...register('option_b')} placeholder="Option B text" />
                 </div>
               </div>
-
-              <div className="row mb-4">
-                <div className="col-md-6 mb-3 mb-md-0">
-                  <label className="form-label small fw-semibold text-dark">Option C</label>
-                  <input type="text" className={`form-control input-stylish ${errors.option_c ? 'is-invalid' : ''}`} {...register('option_c')} />
-                  {errors.option_c && <div className="invalid-feedback">{errors.option_c.message}</div>}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Option C</label>
+                  <Input {...register('option_c')} placeholder="Option C text" />
                 </div>
-                <div className="col-md-6">
-                  <label className="form-label small fw-semibold text-dark">Option D</label>
-                  <input type="text" className={`form-control input-stylish ${errors.option_d ? 'is-invalid' : ''}`} {...register('option_d')} />
-                  {errors.option_d && <div className="invalid-feedback">{errors.option_d.message}</div>}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Option D</label>
+                  <Input {...register('option_d')} placeholder="Option D text" />
                 </div>
               </div>
-
-              <div className="mb-4">
-                <label className="form-label small fw-semibold text-dark">Correct Answer</label>
-                <select className={`form-select input-stylish ${errors.correct_answer ? 'is-invalid' : ''}`} {...register('correct_answer')}>
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Correct Answer</label>
+                <select 
+                  className="w-full rounded-xl border border-input bg-background/80 p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+                  {...register('correct_answer')}
+                >
                   <option value="A">Option A</option>
                   <option value="B">Option B</option>
                   <option value="C">Option C</option>
                   <option value="D">Option D</option>
                 </select>
-                {errors.correct_answer && <div className="invalid-feedback">{errors.correct_answer.message}</div>}
               </div>
-            </>
+            </div>
           )}
 
-          <div className="d-flex justify-content-end gap-2 border-top pt-3">
-            <button type="button" className="btn btn-light border" onClick={closeModal}>Cancel</button>
-            <button type="submit" className="btn btn-dark" disabled={isCreating || isUpdating}>
+          <div className="flex justify-end gap-2 pt-3 border-t border-border/60">
+            <Button type="button" variant="outline" onClick={closeModal}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={isCreating || isUpdating}>
               {isCreating || isUpdating ? 'Saving...' : 'Save Question'}
-            </button>
+            </Button>
           </div>
         </form>
       </Modal>
 
       {/* Delete Confirmation Modal */}
       <Modal isOpen={!!deleteConfirmId} onClose={() => setDeleteConfirmId(null)} title="Confirm Deletion" size="sm">
-        <p className="text-muted mb-4">Are you sure you want to delete this question? This action cannot be undone.</p>
-        <div className="d-flex justify-content-end gap-2">
-          <button type="button" className="btn btn-light border" onClick={() => setDeleteConfirmId(null)}>Cancel</button>
-          <button type="button" className="btn btn-danger" onClick={handleDelete} disabled={isDeleting}>
-            {isDeleting ? 'Deleting...' : 'Delete'}
-          </button>
+        <div className="space-y-4">
+          <p className="text-sm text-muted-foreground">
+            Are you sure you want to delete this question?
+          </p>
+          <div className="flex justify-end gap-2 pt-2 border-t border-border/60">
+            <Button variant="outline" onClick={() => setDeleteConfirmId(null)}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={handleDelete} disabled={isDeleting}>
+              {isDeleting ? 'Deleting...' : 'Delete Question'}
+            </Button>
+          </div>
         </div>
       </Modal>
 
-      {/* Bulk Generation Modal */}
-      <Modal isOpen={isBulkModalOpen} onClose={() => setIsBulkModalOpen(false)} title="Generate 10 AI Questions" size="md">
-        <div className="bg-primary-subtle rounded-4 p-4 mb-4 border border-primary-subtle">
-          <p className="text-muted small mb-4">
-            The AI will generate 10 unique, high-quality multiple-choice questions based on your topic and save them directly to the database. This may take up to 20 seconds.
+      {/* AI Bulk Generation Modal */}
+      <Modal isOpen={isBulkModalOpen} onClose={() => setIsBulkModalOpen(false)} title="Generate AI Questions (Groq)" size="md">
+        <div className="space-y-4">
+          <p className="text-xs text-muted-foreground">
+            Groq Llama-3 AI will generate 10 structured multiple-choice questions on your specified topic and save them directly into your question bank.
           </p>
-          <div className="mb-3">
-            <label className="form-label small fw-semibold text-dark mb-1">Topic</label>
-            <input type="text" className="form-control input-stylish bg-white" placeholder="e.g. React Hooks, Node.js Events" value={aiTopic} onChange={(e) => setAiTopic(e.target.value)} disabled={isGeneratingQuestion} />
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Topic or Tech Stack</label>
+            <Input 
+              placeholder="e.g., React 19 Hooks, PostgreSQL Indexing, Docker" 
+              value={aiTopic} 
+              onChange={(e) => setAiTopic(e.target.value)} 
+              disabled={isGeneratingQuestion} 
+            />
           </div>
-          <div className="mb-4">
-            <label className="form-label small fw-semibold text-dark mb-1">Difficulty</label>
-            <select className="form-select input-stylish bg-white" value={aiDifficulty} onChange={(e) => setAiDifficulty(e.target.value)} disabled={isGeneratingQuestion}>
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Difficulty Level</label>
+            <select 
+              className="w-full rounded-xl border border-input bg-background/80 p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+              value={aiDifficulty} 
+              onChange={(e) => setAiDifficulty(e.target.value)} 
+              disabled={isGeneratingQuestion}
+            >
               <option value="Easy">Easy</option>
               <option value="Medium">Medium</option>
               <option value="Hard">Hard</option>
             </select>
           </div>
-          <div className="d-flex justify-content-end gap-2">
-            <button type="button" className="btn btn-light border" onClick={() => setIsBulkModalOpen(false)} disabled={isGeneratingQuestion}>Cancel</button>
-            <button type="button" className="btn btn-primary fw-medium shadow-sm d-flex justify-content-center align-items-center gap-2" onClick={handleGenerateQuestion} disabled={isGeneratingQuestion}>
-              {isGeneratingQuestion ? (
-                <>
-                  <span className="spinner-border spinner-border-sm"></span>
-                  <span>Generating (approx 15s)...</span>
-                </>
-              ) : (
-                <>
-                  <i className="bi bi-magic"></i>
-                  <span>Generate 10 Questions</span>
-                </>
-              )}
-            </button>
+          <div className="flex justify-end gap-2 pt-3 border-t border-border/60">
+            <Button type="button" variant="outline" onClick={() => setIsBulkModalOpen(false)} disabled={isGeneratingQuestion}>
+              Cancel
+            </Button>
+            <Button onClick={handleGenerateQuestion} disabled={isGeneratingQuestion} className="gap-2">
+              <Sparkles className="h-4 w-4" />
+              <span>{isGeneratingQuestion ? 'Generating Questions...' : 'Generate 10 Questions'}</span>
+            </Button>
           </div>
         </div>
       </Modal>

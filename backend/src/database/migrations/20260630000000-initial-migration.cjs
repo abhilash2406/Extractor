@@ -25,9 +25,9 @@ module.exports = {
         allowNull: false,
       },
       role: {
-        type: Sequelize.ENUM('STUDENT', 'ADMIN', 'RECRUITER'),
+        type: Sequelize.ENUM('USER', 'ADMIN'),
         allowNull: false,
-        defaultValue: 'STUDENT',
+        defaultValue: 'USER',
       },
       status: {
         type: Sequelize.ENUM('ACTIVE', 'BLOCKED', 'INACTIVE', 'DELETED'),
@@ -338,7 +338,7 @@ module.exports = {
         allowNull: true,
       },
       status: {
-        type: Sequelize.STRING,
+        type: Sequelize.ENUM('pending', 'reviewed', 'aptitude_round', 'face_to_face_interview', 'accepted', 'rejected'),
         allowNull: false,
         defaultValue: 'pending',
       },

@@ -10,10 +10,15 @@ import ResetPasswordPage from '../pages/auth/ResetPasswordPage';
 
 // Admin pages
 import DashboardPage from '../pages/admin/DashboardPage';
+import UsersPage from '../pages/admin/UsersPage';
+import TemplatesPage from '../pages/admin/TemplatesPage';
+import TransactionsPage from '../pages/admin/TransactionsPage';
+import SubscriptionsPage from '../pages/admin/SubscriptionsPage';
+import AIUsagePage from '../pages/admin/AIUsagePage';
+import SettingsPage from '../pages/admin/SettingsPage';
 import JobsPage from '../pages/admin/JobsPage';
 import SkillsPage from '../pages/admin/SkillsPage';
 import QuestionsPage from '../pages/admin/QuestionsPage';
-import UsersPage from '../pages/admin/UsersPage';
 import ApplicationsPage from '../pages/admin/ApplicationsPage';
 
 // Candidate pages
@@ -29,7 +34,7 @@ import AdminLayout from '../components/layout/AdminLayout';
 import CandidateLayout from '../components/layout/CandidateLayout';
 
 const router = createBrowserRouter([
-  // Guest-only routes (redirect to /jobs if already logged in)
+  // Guest-only routes (redirect to /dashboard or /admin if already logged in)
   {
     element: <GuestRoute />,
     children: [
@@ -50,10 +55,15 @@ const router = createBrowserRouter([
         element: <AdminLayout />,
         children: [
           { path: '/admin', element: <DashboardPage /> },
+          { path: '/admin/users', element: <UsersPage /> },
+          { path: '/admin/templates', element: <TemplatesPage /> },
+          { path: '/admin/transactions', element: <TransactionsPage /> },
+          { path: '/admin/subscriptions', element: <SubscriptionsPage /> },
+          { path: '/admin/ai-usage', element: <AIUsagePage /> },
+          { path: '/admin/settings', element: <SettingsPage /> },
           { path: '/admin/jobs', element: <JobsPage /> },
           { path: '/admin/skills', element: <SkillsPage /> },
           { path: '/admin/questions', element: <QuestionsPage /> },
-          { path: '/admin/users', element: <UsersPage /> },
           { path: '/admin/applications', element: <ApplicationsPage /> },
         ],
       },

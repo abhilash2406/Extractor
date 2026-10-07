@@ -10,13 +10,13 @@ import moment from 'moment';
 
 export const getDashboardStatsService = async () => {
   const [
-    totalCandidates,
+    totalUsers,
     totalJobRoles,
     pendingApplications,
     acceptedApplications,
     statusAggregation
   ] = await Promise.all([
-    User.count({ where: { role: UserType.CANDIDATE } }),
+    User.count({ where: { role: UserType.USER } }),
     JobRole.count({ where: { status: EntityType.ACTIVE } }),
     Application.count({ where: { status: 'pending' } }),
     Application.count({ where: { status: 'accepted' } }),
@@ -55,7 +55,7 @@ export const getDashboardStatsService = async () => {
   }));
 
   return {
-    totalCandidates,
+    totalUsers,
     totalJobRoles,
     pendingApplications,
     acceptedApplications,

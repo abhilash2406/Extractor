@@ -226,48 +226,140 @@ a:hover {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Auth Layout Utilities */
-.bg-glass {
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+/* Sidebar & Responsive App Layout */
+.app-layout-wrapper {
+  display: flex;
+  width: 100%;
+  min-height: 100vh;
+  background-color: var(--bg-app);
+  overflow: hidden;
 }
 
-.input-float {
-  transition: all 0.3s ease;
-  background-color: #f8fafc !important;
-  border-color: #e2e8f0 !important;
-  color: var(--text-main) !important;
+/* Desktop Sidebar */
+.app-sidebar {
+  width: 270px;
+  min-width: 270px;
+  height: 100vh;
+  position: sticky;
+  top: 0;
+  background-color: #ffffff;
+  border-right: 1px solid var(--border-light);
+  display: flex;
+  flex-direction: column;
+  z-index: 1020;
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease;
 }
 
-.input-float:focus {
-  background-color: #fff !important;
-  border-color: var(--blue-600) !important;
-  box-shadow: 0 0 0 0.25rem rgba(37, 99, 235, 0.2) !important;
-  transform: translateY(-1px);
+/* Mobile App Header */
+.mobile-app-header {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 64px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border-light);
+  padding: 0 1rem;
+  align-items: center;
+  justify-content: space-between;
+  z-index: 1030;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
-.btn-glow {
-  background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%) !important;
-  color: white !important;
-  border: none !important;
-  transition: all 0.3s ease !important;
-  box-shadow: 0 4px 15px rgba(124, 58, 237, 0.3) !important;
+/* Mobile Backdrop */
+.mobile-drawer-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.5);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 1040;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
 }
 
-.btn-glow:hover {
-  transform: translateY(-2px) !important;
-  box-shadow: 0 6px 20px rgba(124, 58, 237, 0.4) !important;
-  color: white !important;
+.mobile-drawer-backdrop.show {
+  opacity: 1;
+  pointer-events: auto;
 }
 
-.auth-bg-img {
-  background-color: #0b0f19 !important;
-  background-image: url('/auth-bg.png') !important;
-  background-size: cover !important;
-  background-position: center !important;
-  background-repeat: no-repeat !important;
+/* Main Content Wrapper */
+.app-main-content {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  min-width: 0; /* Prevents flex children from overflowing */
+  height: 100vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  background-color: var(--bg-app);
+}
+
+/* Responsive adjustments for Mobile screens */
+@media (max-width: 991.98px) {
+  .app-layout-wrapper {
+    flex-direction: column;
+    height: auto;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  .mobile-app-header {
+    display: flex;
+  }
+
+  .app-sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 285px;
+    max-width: 85vw;
+    height: 100vh;
+    height: 100dvh; /* For mobile dynamic viewport height */
+    z-index: 1050;
+    transform: translateX(-100%);
+    box-shadow: none;
+  }
+
+  .app-sidebar.drawer-open {
+    transform: translateX(0);
+    box-shadow: 10px 0 30px rgba(0, 0, 0, 0.15);
+  }
+
+  .app-main-content {
+    height: auto;
+    min-height: calc(100vh - 64px);
+    margin-top: 64px;
+    overflow-y: visible;
+  }
+}
+
+/* Touch targets and mobile optimizations */
+.touch-target {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* Responsive Table Wrapper with clean scroll indication */
+.table-responsive {
+  border-radius: 0.75rem;
+  -webkit-overflow-scrolling: touch;
+}
+
+@media (max-width: 575.98px) {
+  .card-body {
+    padding: 1.25rem !important;
+  }
+  
+  .glass-card {
+    border-radius: 0.75rem;
+  }
 }
 
 

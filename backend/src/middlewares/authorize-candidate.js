@@ -5,12 +5,12 @@ import { UserType } from '../common/enum/usertype-enum.js';
  * Must be used after the auth middleware.
  */
 export default (req, res, next) => {
-  if (req.user && req.user.role === UserType.CANDIDATE) {
+  if (req.user && req.user.role === UserType.USER) {
     return next();
   }
   
   return res.status(403).json({
     success: false,
-    message: 'Forbidden: Candidate access required',
+    message: 'Forbidden: User access required',
   });
 };
