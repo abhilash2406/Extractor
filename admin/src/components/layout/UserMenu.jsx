@@ -150,32 +150,32 @@ const UserMenu = ({ roleLabel = 'User', isMobile = false, isCollapsed = false })
               className="flex h-10 w-10 mx-auto items-center justify-center rounded-xl border border-border/70 bg-card shadow-xs transition-all hover:bg-accent hover:border-primary/50 focus:outline-none focus:ring-2 focus:ring-ring"
             >
               <Avatar className="h-8 w-8 border border-primary/20">
-                <AvatarFallback className="bg-gradient-to-tr from-blue-600 to-cyan-500 text-white font-semibold text-xs">
+                <AvatarFallback className="bg-gradient-to-tr from-blue-600 to-indigo-600 text-white font-semibold text-xs">
                   {initials}
                 </AvatarFallback>
               </Avatar>
             </button>
           ) : (
-            <button className="flex w-full items-center justify-between rounded-xl border border-border/70 bg-card p-2 text-left shadow-xs transition-all hover:bg-accent hover:border-border focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1">
+            <button className="flex w-full items-center justify-between rounded-2xl border border-border bg-card p-2.5 text-left shadow-xs transition-all hover:bg-secondary/80 hover:border-border/80 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1">
               <div className="flex items-center gap-3 min-w-0">
-                <Avatar className="h-9 w-9 border border-primary/20">
-                  <AvatarFallback className="bg-gradient-to-tr from-blue-600 to-cyan-500 text-white font-semibold text-sm">
+                <Avatar className="h-8 w-8 shrink-0">
+                  <AvatarFallback className="bg-blue-600 text-white font-bold text-xs">
                     {initials}
                   </AvatarFallback>
                 </Avatar>
                 <div className="min-w-0 flex-1">
-                  <div className="truncate text-sm font-semibold text-foreground leading-tight">
-                    {user?.name || user?.username || 'Admin User'}
+                  <div className="truncate text-xs font-bold text-foreground leading-tight">
+                    {user?.name || user?.username || 'admin'}
                   </div>
                   <div className="flex items-center gap-1.5 mt-0.5">
-                    <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-                      {roleLabel}
+                    <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+                      {roleLabel || 'ADMIN'}
                     </span>
                   </div>
                 </div>
               </div>
-              <div className="text-muted-foreground/60 p-1">
-                <ChevronDown className="h-4 w-4" />
+              <div className="text-muted-foreground p-0.5">
+                <ChevronDown className="h-3.5 w-3.5" />
               </div>
             </button>
           )}

@@ -30,7 +30,7 @@ const VerifyEmailPage = () => {
 
         {isPending && (
           <div className="flex flex-col items-center justify-center py-8 space-y-3">
-            <div className="h-10 w-10 animate-spin rounded-full border-3 border-cyan-500 border-t-transparent" />
+            <div className="h-10 w-10 animate-spin rounded-full border-3 border-primary border-t-transparent" />
             <h3 className="font-heading text-lg font-bold text-foreground">Verifying your email...</h3>
             <p className="text-xs text-muted-foreground">This will only take a moment.</p>
           </div>
@@ -41,7 +41,7 @@ const VerifyEmailPage = () => {
             <CheckCircle2 className="h-12 w-12 text-emerald-500" />
             <h3 className="font-heading text-lg font-bold text-foreground">Email Verified Successfully!</h3>
             <p className="text-xs text-muted-foreground">Your account is now fully active. Proceed to sign in.</p>
-            <Button asChild className="w-full h-12 rounded-xl text-sm font-bold bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white shadow-lg shadow-cyan-500/25 mt-2">
+            <Button asChild className="w-full h-12 rounded-xl text-sm font-bold bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white shadow-lg shadow-indigo-500/25 mt-2">
               <Link to="/login" className="gap-2">
                 <span>Go to Login</span>
                 <ArrowRight className="h-4 w-4" />

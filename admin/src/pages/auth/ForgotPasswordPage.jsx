@@ -61,7 +61,7 @@ const ForgotPasswordPage = () => {
           <Button 
             type="submit" 
             disabled={isPending}
-            className="w-full h-12 rounded-xl text-sm font-bold tracking-wide bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white shadow-lg shadow-cyan-500/25 transition-all duration-200 active:scale-[0.99] gap-2 mt-2"
+            className="w-full h-12 rounded-xl text-sm font-bold tracking-wide bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white shadow-lg shadow-indigo-500/25 transition-all duration-200 active:scale-[0.99] gap-2 mt-2"
           >
             {isPending ? (
               <>

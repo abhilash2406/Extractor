@@ -146,42 +146,42 @@ const DashboardPage = () => {
   const { user } = useAuthStore();
   const { data: stats } = useDashboardStats();
 
-  // Top metric cards as requested in the wireframe
+  // Top metric cards
   const metrics = [
     {
       title: 'Users',
       value: stats?.totalUsers ? stats.totalUsers.toLocaleString() : '2,431',
       growth: '+12.5%',
       icon: Users,
-      iconBg: 'bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 border-indigo-100 dark:border-indigo-900/50',
+      iconBg: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20',
     },
     {
       title: 'Active',
       value: '1,842',
       growth: '+8.2%',
       icon: Activity,
-      iconBg: 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 border-emerald-100 dark:border-emerald-900/50',
+      iconBg: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
     },
     {
       title: 'Resumes',
       value: '5,823',
       growth: '+15.4%',
       icon: FileText,
-      iconBg: 'bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 border-blue-100 dark:border-blue-900/50',
+      iconBg: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
     },
     {
       title: 'Revenue',
       value: '₹82.4K',
       growth: '+18.7%',
       icon: IndianRupee,
-      iconBg: 'bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400 border-amber-100 dark:border-amber-900/50',
+      iconBg: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
     },
     {
       title: 'AI Usage',
       value: '8,923',
       growth: '+21.4%',
       icon: Bot,
-      iconBg: 'bg-purple-50 dark:bg-purple-950/50 text-purple-600 dark:text-purple-400 border-purple-100 dark:border-purple-900/50',
+      iconBg: 'bg-purple-500/10 text-purple-400 border-purple-500/20',
     },
   ];
 
@@ -194,7 +194,7 @@ const DashboardPage = () => {
             Dashboard
           </h1>
           <p className="text-sm text-muted-foreground mt-0.5">
-            Welcome back, <span className="font-semibold text-foreground">{user?.name || 'Admin'}</span>
+            Welcome back, <span className="font-semibold text-foreground">{user?.name || 'admin'}</span>
           </p>
         </div>
         <div className="flex items-center gap-2 self-start sm:self-auto">
@@ -257,8 +257,8 @@ const DashboardPage = () => {
                 <AreaChart data={userGrowthData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                   <defs>
                     <linearGradient id="userGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#4F46E5" stopOpacity={0.35}/>
-                      <stop offset="95%" stopColor="#4F46E5" stopOpacity={0}/>
+                      <stop offset="5%" stopColor="#6366F1" stopOpacity={0.35}/>
+                      <stop offset="95%" stopColor="#6366F1" stopOpacity={0}/>
                     </linearGradient>
                     <linearGradient id="activeGrad" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor="#10B981" stopOpacity={0.3}/>
@@ -277,7 +277,7 @@ const DashboardPage = () => {
                       fontSize: '12px',
                     }} 
                   />
-                  <Area type="monotone" dataKey="users" name="Total Users" stroke="#4F46E5" strokeWidth={2.5} fillOpacity={1} fill="url(#userGrad)" />
+                  <Area type="monotone" dataKey="users" name="Total Users" stroke="#6366F1" strokeWidth={2.5} fillOpacity={1} fill="url(#userGrad)" />
                   <Area type="monotone" dataKey="active" name="Active Users" stroke="#10B981" strokeWidth={2} fillOpacity={1} fill="url(#activeGrad)" />
                   <Legend verticalAlign="top" height={30} iconType="circle" wrapperStyle={{ fontSize: '12px' }} />
                 </AreaChart>
@@ -301,8 +301,8 @@ const DashboardPage = () => {
                 <BarChart data={revenueData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
                   <defs>
                     <linearGradient id="barGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#6366F1"/>
-                      <stop offset="100%" stopColor="#4F46E5"/>
+                      <stop offset="0%" stopColor="#8B5CF6"/>
+                      <stop offset="100%" stopColor="#6366F1"/>
                     </linearGradient>
                   </defs>
                   <XAxis dataKey="month" tick={{fontSize: 11}} stroke="#94a3b8" axisLine={false} tickLine={false} />
