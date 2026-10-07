@@ -502,7 +502,7 @@ const DashboardPage = () => {
           <CardHeader className="p-6 pb-3 flex flex-row items-center justify-between">
             <div>
               <CardTitle className="text-base font-semibold">RECENT USERS</CardTitle>
-              <CardDescription>New registered candidates & team members</CardDescription>
+              <CardDescription>New registered Users & team members</CardDescription>
             </div>
             <UserCheck className="h-4 w-4 text-muted-foreground" />
           </CardHeader>

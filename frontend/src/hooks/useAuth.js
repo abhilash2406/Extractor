@@ -11,6 +11,10 @@ export const useLogin = () => {
   return useMutation({
     mutationFn: authApi.login,
     onSuccess: ({ data: res }) => {
+      if (!res?.success || !res?.accessToken) {
+        toast.error(res?.message || 'Login failed');
+        return;
+      }
       // Backend returns: { success, accessToken, data: { name, role } }
       const user = res.data;
       const accessToken = res.accessToken;
@@ -19,7 +23,7 @@ export const useLogin = () => {
       if (user?.role === 'ADMIN') {
         navigate('/admin');
       } else {
-        navigate('/dashboard');
+        navigate('/');
       }
     },
     onError: (err) => {

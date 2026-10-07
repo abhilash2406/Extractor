@@ -17,8 +17,10 @@ import {
   Award,
   Sparkle,
   LogIn,
+  LogOut,
   BrainCircuit
 } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
@@ -31,9 +33,14 @@ import { cn } from '@/lib/utils';
 export const PublicNavbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const { isAuthenticated, user } = useAuthStore();
+  const { isAuthenticated, user, logout } = useAuthStore();
   const { openAuthModal } = useAuthModalStore();
   const location = useLocation();
+
+  const handleLogout = () => {
+    logout();
+    toast.success('Signed out successfully');
+  };
 
   useEffect(() => {
     const handleScroll = () => {
@@ -114,17 +121,29 @@ export const PublicNavbar = () => {
           })}
         </nav>
 
-        {/* Right Actions: Login & CTAs */}
+        {/* Right Actions: Login / Logout & CTAs */}
         <div className="flex items-center gap-2.5">
           <ThemeToggle className="h-9 w-9" />
 
           {isAuthenticated ? (
-            <Button asChild className="h-9 sm:h-10 px-4 rounded-xl text-xs font-semibold gap-1.5 shadow-xs">
-              <Link to="/dashboard">
-                <span>My Dashboard</span>
-                <ArrowRight className="h-3.5 w-3.5" />
-              </Link>
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={handleLogout}
+                className="h-9 sm:h-10 px-3.5 sm:px-4 text-xs font-semibold border-border hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30 rounded-xl gap-1.5 transition-colors"
+              >
+                <LogOut className="h-3.5 w-3.5 text-destructive" />
+                <span>Sign Out</span>
+              </Button>
+              <Button asChild className="h-9 sm:h-10 px-3.5 sm:px-4 rounded-xl text-xs font-semibold gap-1.5 shadow-xs">
+                <Link to="/builder">
+                  <Sparkles className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">Create Resume</span>
+                  <span className="sm:hidden">Build</span>
+                </Link>
+              </Button>
+            </div>
           ) : (
             <div className="flex items-center gap-2">
               <Button 
@@ -208,32 +227,39 @@ export const PublicNavbar = () => {
               </nav>
 
               <div className="pt-4 border-t border-border/60 space-y-2.5">
+                <Button asChild variant="gradient" className="w-full h-11 rounded-xl text-xs font-bold justify-center gap-2">
+                  <Link to="/builder" onClick={() => setMobileMenuOpen(false)}>
+                    <Sparkles className="h-3.5 w-3.5" />
+                    <span>Build Resume Free</span>
+                  </Link>
+                </Button>
+
                 {isAuthenticated ? (
-                  <Button asChild variant="gradient" className="w-full h-11 rounded-xl text-xs font-bold justify-center">
-                    <Link to="/dashboard" onClick={() => setMobileMenuOpen(false)}>
-                      Go to Dashboard
-                    </Link>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      handleLogout();
+                    }}
+                    className="w-full h-11 rounded-xl text-xs font-semibold justify-center gap-2 text-destructive border-destructive/30 hover:bg-destructive/10"
+                  >
+                    <LogOut className="h-4 w-4" />
+                    <span>Sign Out</span>
                   </Button>
                 ) : (
-                  <>
-                    <Button asChild variant="gradient" className="w-full h-11 rounded-xl text-xs font-bold justify-center gap-2">
-                      <Link to="/builder" onClick={() => setMobileMenuOpen(false)}>
-                        <Sparkles className="h-3.5 w-3.5" />
-                        <span>Build Resume Free</span>
-                      </Link>
-                    </Button>
-                    <Button 
-                      type="button" 
-                      variant="outline" 
-                      onClick={() => {
-                        setMobileMenuOpen(false);
-                        openAuthModal('login');
-                      }}
-                      className="w-full h-11 rounded-xl text-xs font-semibold justify-center"
-                    >
-                      Sign In
-                    </Button>
-                  </>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      openAuthModal('login');
+                    }}
+                    className="w-full h-11 rounded-xl text-xs font-semibold justify-center gap-2"
+                  >
+                    <LogIn className="h-4 w-4 text-primary" />
+                    <span>Sign In</span>
+                  </Button>
                 )}
               </div>
             </SheetContent>
@@ -312,7 +338,7 @@ export const PublicFooter = () => {
                   onClick={() => openAuthModal('login')} 
                   className="hover:text-primary transition-colors text-left"
                 >
-                  Candidate Login
+                  Sign In
                 </button>
               </li>
               <li>
@@ -324,7 +350,6 @@ export const PublicFooter = () => {
                   Create Free Account
                 </button>
               </li>
-              <li><Link to="/dashboard" className="hover:text-primary transition-colors">Candidate Portal</Link></li>
               <li><a href="http://localhost:5174/admin" target="_blank" rel="noreferrer" className="hover:text-primary transition-colors flex items-center gap-1">Admin Portal</a></li>
             </ul>
           </div>

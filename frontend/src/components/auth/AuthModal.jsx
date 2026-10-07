@@ -81,6 +81,9 @@ export default function AuthModal() {
     try {
       const response = await authApi.login(data);
       const res = response.data;
+      if (!res?.success || !res?.accessToken) {
+        throw new Error(res?.message || 'Login failed');
+      }
       const user = res.data;
       const accessToken = res.accessToken;
       
@@ -94,7 +97,7 @@ export default function AuthModal() {
       closeAuthModal();
       resetLoginForm();
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Invalid credentials');
+      toast.error(err.response?.data?.message || err.message || 'Invalid credentials');
     } finally {
       setIsSubmitting(false);
     }
@@ -103,18 +106,22 @@ export default function AuthModal() {
   const onRegister = async (data) => {
     setIsSubmitting(true);
     try {
-      await authApi.register({
+      const response = await authApi.register({
         name: data.name,
         email: data.email,
         password: data.password,
         role: 'CANDIDATE'
       });
+      const res = response?.data;
+      if (res && res.success === false) {
+        throw new Error(res.message || 'Registration failed');
+      }
       
       toast.success('Account created! Please sign in to continue.');
       setMode('login');
       resetRegisterForm();
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Registration failed');
+      toast.error(err.response?.data?.message || err.message || 'Registration failed');
     } finally {
       setIsSubmitting(false);
     }

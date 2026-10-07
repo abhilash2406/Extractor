@@ -8,8 +8,10 @@ export const useAuthStore = create(
       accessToken: null,
       isAuthenticated: false,
 
-      login: (user, accessToken) =>
-        set({ user, accessToken, isAuthenticated: true }),
+      login: (user, accessToken) => {
+        if (!accessToken && !user) return;
+        set({ user, accessToken, isAuthenticated: true });
+      },
 
       logout: () =>
         set({ user: null, accessToken: null, isAuthenticated: false }),

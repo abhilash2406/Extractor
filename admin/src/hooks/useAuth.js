@@ -11,6 +11,11 @@ export const useLogin = () => {
   return useMutation({
     mutationFn: authApi.login,
     onSuccess: ({ data: res }) => {
+      if (!res?.success || !res?.accessToken) {
+        logout();
+        toast.error(res?.message || 'Login failed');
+        return;
+      }
       // Backend returns: { success, accessToken, data: { name, role } }
       const user = res.data;
       const accessToken = res.accessToken;

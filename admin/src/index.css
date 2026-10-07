@@ -140,3 +140,17 @@
 .dark .glass-effect {
   background-color: rgba(30, 41, 59, 0.8);
 }
+
+/* ============================================
+   PREMIUM TOASTER DESIGN
+   ============================================ */
+[data-toaster-container] {
+  z-index: 99999 !important;
+}
+
+div[role="status"] {
+  font-family: inherit !important;
+  letter-spacing: -0.01em !important;
+}
+
+

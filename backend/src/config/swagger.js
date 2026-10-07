@@ -12,8 +12,14 @@ const swaggerOptions = {
     info: {
       title: 'Extractor API',
       version: '1.0.0',
-      description: 'API documentation for Extractor system',
+      description: 'API documentation for Extractor AI Talent & Document Extraction system',
     },
+    servers: [
+      {
+        url: 'http://localhost:5000',
+        description: 'Local Development Server',
+      },
+    ],
     components: {
       securitySchemes: {
         bearerAuth: {
@@ -30,8 +36,10 @@ const swaggerOptions = {
     ],
   },
   apis: [
-    path.resolve(__dirname, '../routes/*.js'),
-    path.resolve(__dirname, '../api/**/*.js'),
+    './src/routes/**/*.js',
+    './src/modules/**/*.js',
+    path.join(__dirname, '../routes/**/*.js').replace(/\\/g, '/'),
+    path.join(__dirname, '../modules/**/*.js').replace(/\\/g, '/'),
   ],
 };
 

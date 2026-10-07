@@ -1,9 +1,6 @@
-class BadRequest extends Error {
-  constructor(message) {
-    super(message);
+export default function BadRequest(message, code = 'BAD_REQUEST') {
+    this.message = message;
+    this.code = code;
     this.name = 'BadRequest';
-    this.status = 400;
-  }
+    this.statusCode = 400;
 }
-
-export default BadRequest;

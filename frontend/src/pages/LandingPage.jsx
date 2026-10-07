@@ -144,21 +144,21 @@ const extractorServices = [
     isPrimary: false
   },
   {
-    id: 'dashboard',
-    title: 'Candidate Portal & Job Tracker',
-    badge: 'Requires Sign In',
-    badgeVariant: 'slate',
-    icon: UserCheck,
-    iconColor: 'from-slate-700 to-slate-900 dark:from-slate-800 dark:to-slate-950',
-    description: 'Log in to save multiple resume versions in the cloud, track submitted job applications, review test assessments, and schedule interviews.',
+    id: 'pricing',
+    title: 'Transparent Plans & Pricing',
+    badge: 'Free Tier Available',
+    badgeVariant: 'amber',
+    icon: Zap,
+    iconColor: 'from-amber-500 to-orange-600',
+    description: 'Start for free with core ATS resume building and diagnostics. Upgrade anytime for unlimited AI generation, deep resume rewrites, and mock interviews.',
     workflow: [
-      '1. Create free account or sign in',
-      '2. Cloud sync all saved resumes',
-      '3. Track applications in real-time',
-      '4. Take skill tests & view offers'
+      '1. Free access to core resume builder',
+      '2. Instant ATS scoring & keywords',
+      '3. Pro AI generation & deep audits',
+      '4. Unlimited exports & cloud storage'
     ],
-    ctaText: 'Sign In / My Portal',
-    to: '/login',
+    ctaText: 'View Plans & Pricing',
+    to: '/pricing',
     isPrimary: false
   }
 ];

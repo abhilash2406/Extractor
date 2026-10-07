@@ -14,10 +14,6 @@ import TransactionsPage from '../pages/admin/TransactionsPage';
 import SubscriptionsPage from '../pages/admin/SubscriptionsPage';
 import AIUsagePage from '../pages/admin/AIUsagePage';
 import SettingsPage from '../pages/admin/SettingsPage';
-import JobsPage from '../pages/admin/JobsPage';
-import SkillsPage from '../pages/admin/SkillsPage';
-import QuestionsPage from '../pages/admin/QuestionsPage';
-import ApplicationsPage from '../pages/admin/ApplicationsPage';
 
 // Layout
 import AdminLayout from '../components/layout/AdminLayout';
@@ -47,10 +43,6 @@ const router = createBrowserRouter([
           { path: '/admin/subscriptions', element: <SubscriptionsPage /> },
           { path: '/admin/ai-usage', element: <AIUsagePage /> },
           { path: '/admin/settings', element: <SettingsPage /> },
-          { path: '/admin/jobs', element: <JobsPage /> },
-          { path: '/admin/skills', element: <SkillsPage /> },
-          { path: '/admin/questions', element: <QuestionsPage /> },
-          { path: '/admin/applications', element: <ApplicationsPage /> },
         ],
       },
     ],
