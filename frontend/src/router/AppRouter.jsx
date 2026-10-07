@@ -1,5 +1,8 @@
 import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom';
-import { ProtectedRoute, AdminRoute, GuestRoute } from './Guards';
+import { ProtectedRoute, GuestRoute } from './Guards';
+
+// Public Landing Page
+import LandingPage from '../pages/LandingPage';
 
 // Auth pages
 import LoginPage from '../pages/auth/LoginPage';
@@ -7,19 +10,6 @@ import RegisterPage from '../pages/auth/RegisterPage';
 import VerifyEmailPage from '../pages/auth/VerifyEmailPage';
 import ForgotPasswordPage from '../pages/auth/ForgotPasswordPage';
 import ResetPasswordPage from '../pages/auth/ResetPasswordPage';
-
-// Admin pages
-import DashboardPage from '../pages/admin/DashboardPage';
-import UsersPage from '../pages/admin/UsersPage';
-import TemplatesPage from '../pages/admin/TemplatesPage';
-import TransactionsPage from '../pages/admin/TransactionsPage';
-import SubscriptionsPage from '../pages/admin/SubscriptionsPage';
-import AIUsagePage from '../pages/admin/AIUsagePage';
-import SettingsPage from '../pages/admin/SettingsPage';
-import JobsPage from '../pages/admin/JobsPage';
-import SkillsPage from '../pages/admin/SkillsPage';
-import QuestionsPage from '../pages/admin/QuestionsPage';
-import ApplicationsPage from '../pages/admin/ApplicationsPage';
 
 // Candidate pages
 import CandidateDashboardPage from '../pages/candidate/CandidateDashboardPage';
@@ -29,12 +19,14 @@ import CandidateApplicationsPage from '../pages/candidate/CandidateApplicationsP
 import CandidateTestsPage from '../pages/candidate/CandidateTestsPage';
 import TestTakingPage from '../pages/candidate/TestTakingPage';
 
-// Layouts
-import AdminLayout from '../components/layout/AdminLayout';
+// Layout
 import CandidateLayout from '../components/layout/CandidateLayout';
 
 const router = createBrowserRouter([
-  // Guest-only routes (redirect to /dashboard or /admin if already logged in)
+  // Public Landing Page
+  { path: '/', element: <LandingPage /> },
+
+  // Guest-only routes
   {
     element: <GuestRoute />,
     children: [
@@ -43,34 +35,12 @@ const router = createBrowserRouter([
       { path: '/forgot-password', element: <ForgotPasswordPage /> },
     ],
   },
-  // Public routes (accessible without login)
+  
+  // Public verification routes
   { path: '/verify-email', element: <VerifyEmailPage /> },
   { path: '/reset-password', element: <ResetPasswordPage /> },
 
-  // Admin routes
-  {
-    element: <AdminRoute />,
-    children: [
-      {
-        element: <AdminLayout />,
-        children: [
-          { path: '/admin', element: <DashboardPage /> },
-          { path: '/admin/users', element: <UsersPage /> },
-          { path: '/admin/templates', element: <TemplatesPage /> },
-          { path: '/admin/transactions', element: <TransactionsPage /> },
-          { path: '/admin/subscriptions', element: <SubscriptionsPage /> },
-          { path: '/admin/ai-usage', element: <AIUsagePage /> },
-          { path: '/admin/settings', element: <SettingsPage /> },
-          { path: '/admin/jobs', element: <JobsPage /> },
-          { path: '/admin/skills', element: <SkillsPage /> },
-          { path: '/admin/questions', element: <QuestionsPage /> },
-          { path: '/admin/applications', element: <ApplicationsPage /> },
-        ],
-      },
-    ],
-  },
-
-  // Protected candidate routes
+  // Protected Candidate / User routes
   {
     element: <ProtectedRoute />,
     children: [
@@ -88,9 +58,8 @@ const router = createBrowserRouter([
     ],
   },
 
-  // Default redirect
-  { path: '/', element: <Navigate to="/login" replace /> },
-  { path: '*', element: <Navigate to="/login" replace /> },
+  // Fallback redirect to Landing Page
+  { path: '*', element: <Navigate to="/" replace /> },
 ]);
 
 export default function AppRouter() {
