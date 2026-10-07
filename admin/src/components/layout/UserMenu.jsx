@@ -15,11 +15,8 @@ import {
   Shield, 
   Phone, 
   Mail, 
-  AlertTriangle,
-  Sun,
-  Moon
+  AlertTriangle
 } from 'lucide-react';
-import { useTheme } from '@/hooks/useTheme';
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -43,7 +40,6 @@ import { Badge } from '@/components/ui/badge';
 
 const UserMenu = ({ roleLabel = 'User', isMobile = false, isCollapsed = false }) => {
   const { user, logout, setUser } = useAuthStore();
-  const { isDark, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
@@ -150,7 +146,7 @@ const UserMenu = ({ roleLabel = 'User', isMobile = false, isCollapsed = false })
               className="flex h-10 w-10 mx-auto items-center justify-center rounded-xl border border-border/70 bg-card shadow-xs transition-all hover:bg-accent hover:border-primary/50 focus:outline-none focus:ring-2 focus:ring-ring"
             >
               <Avatar className="h-8 w-8 border border-primary/20">
-                <AvatarFallback className="bg-gradient-to-tr from-blue-600 to-indigo-600 text-white font-semibold text-xs">
+                <AvatarFallback className="bg-primary text-primary-foreground font-semibold text-xs">
                   {initials}
                 </AvatarFallback>
               </Avatar>
@@ -159,7 +155,7 @@ const UserMenu = ({ roleLabel = 'User', isMobile = false, isCollapsed = false })
             <button className="flex w-full items-center justify-between rounded-2xl border border-border bg-card p-2.5 text-left shadow-xs transition-all hover:bg-secondary/80 hover:border-border/80 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1">
               <div className="flex items-center gap-3 min-w-0">
                 <Avatar className="h-8 w-8 shrink-0">
-                  <AvatarFallback className="bg-blue-600 text-white font-bold text-xs">
+                  <AvatarFallback className="bg-primary text-primary-foreground font-bold text-xs">
                     {initials}
                   </AvatarFallback>
                 </Avatar>
@@ -201,19 +197,6 @@ const UserMenu = ({ roleLabel = 'User', isMobile = false, isCollapsed = false })
           <DropdownMenuItem onClick={() => setIsPasswordOpen(true)} className="gap-2 py-2">
             <KeyRound className="h-4 w-4 text-muted-foreground" />
             <span>Change Password</span>
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={toggleTheme} className="gap-2 py-2">
-            {isDark ? (
-              <>
-                <Sun className="h-4 w-4 text-amber-400" />
-                <span>Light Theme</span>
-              </>
-            ) : (
-              <>
-                <Moon className="h-4 w-4 text-indigo-600" />
-                <span>Dark Theme</span>
-              </>
-            )}
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem 

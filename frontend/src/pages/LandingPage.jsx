@@ -8,701 +8,759 @@ import {
   ShieldCheck, 
   ArrowRight, 
   CheckCircle2, 
-  Cpu, 
-  Code2, 
   UploadCloud, 
   BarChart3, 
-  Layers, 
-  ExternalLink,
+  Search, 
+  Target, 
+  FileEdit, 
+  Eye, 
+  Check, 
+  HelpCircle, 
+  TrendingUp, 
+  Palette,
+  LogIn,
+  UserCheck,
+  Award,
+  Sparkle,
+  Lock,
   ChevronRight,
-  Menu,
-  X,
-  Star,
-  Terminal,
-  Activity,
-  Award
+  Clock,
+  Layers,
+  BrainCircuit
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
-import { ThemeToggle } from '@/components/ui/ThemeToggle';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { useAuthModalStore } from '@/store/authModalStore';
 
-// Sample resumes for the interactive live parser preview
-const sampleResumes = [
+// Public services list configured as comprehensive card views
+const extractorServices = [
+  {
+    id: 'builder',
+    title: 'Resume Builder',
+    badge: 'Popular • No Login Required',
+    badgeVariant: 'indigo',
+    icon: FileEdit,
+    iconColor: 'from-indigo-600 to-violet-600',
+    description: 'Build professional, ATS-optimized resumes with our interactive split-screen editor. Live formatting, multiple themes, and instant download.',
+    workflow: [
+      '1. Enter career details & skills',
+      '2. Select modern/executive layout',
+      '3. Instant real-time live preview',
+      '4. Download clean ATS-compliant PDF'
+    ],
+    ctaText: 'Start Building Resume',
+    to: '/builder',
+    isPrimary: true
+  },
+  {
+    id: 'analyzer',
+    title: 'AI Resume Analyzer',
+    badge: 'AI Diagnostic Engine',
+    badgeVariant: 'purple',
+    icon: Bot,
+    iconColor: 'from-purple-600 to-indigo-600',
+    description: 'Upload your current resume to get deep algorithmic scoring, impact verb suggestions, ATS format diagnostics, and bullet point rewrites.',
+    workflow: [
+      '1. Drag & drop existing PDF/DOCX',
+      '2. Sub-second Groq LPU schema parsing',
+      '3. View overall ATS score (0-100%)',
+      '4. Apply 1-click bullet improvements'
+    ],
+    ctaText: 'Analyze My Resume',
+    to: '/analyze',
+    isPrimary: false
+  },
+  {
+    id: 'ats-checker',
+    title: 'ATS Resume Checker',
+    badge: 'Free Job Match Tool',
+    badgeVariant: 'emerald',
+    icon: Search,
+    iconColor: 'from-emerald-600 to-teal-600',
+    description: 'Paste any job description alongside your resume. Instantly identify missing hard skills, critical keywords, and your recruiter match percentage.',
+    workflow: [
+      '1. Paste target job description',
+      '2. Input your current resume text',
+      '3. Get real-time match % score',
+      '4. Fill missing keywords instantly'
+    ],
+    ctaText: 'Check ATS Match',
+    to: '/ats-checker',
+    isPrimary: false
+  },
+  {
+    id: 'interview-prep',
+    title: 'AI Interview Prep & Mock',
+    badge: '1 Free Mock • Pro Feature',
+    badgeVariant: 'indigo',
+    icon: BrainCircuit,
+    iconColor: 'from-indigo-600 via-purple-600 to-pink-600',
+    description: 'Personalized interview questions tailored to your exact resume claims and target job description. Practice with our live AI mock interview simulator.',
+    workflow: [
+      '1. Load resume + target job description',
+      '2. Generate tech & resume defense questions',
+      '3. Review STAR method model answers',
+      '4. Launch interactive AI Mock Interview'
+    ],
+    ctaText: 'Start Interview Prep',
+    to: '/interview-prep',
+    isPrimary: false
+  },
+  {
+    id: 'templates',
+    title: 'Resume Templates',
+    badge: '100% ATS Verified',
+    badgeVariant: 'blue',
+    icon: Palette,
+    iconColor: 'from-purple-600 to-violet-600',
+    description: 'Browse modern, professional, minimalist, and executive templates designed specifically to pass automated applicant tracking systems without error.',
+    workflow: [
+      '1. Filter by Modern, Minimal, Exec',
+      '2. View high-density ATS previews',
+      '3. 1-click load into interactive builder',
+      '4. Customize brand colors & fonts'
+    ],
+    ctaText: 'Browse Templates',
+    to: '/templates',
+    isPrimary: false
+  },
+  {
+    id: 'cover-letter',
+    title: 'Cover Letter Generator',
+    badge: 'AI Tailored in Seconds',
+    badgeVariant: 'pink',
+    icon: FileText,
+    iconColor: 'from-pink-600 to-rose-600',
+    description: 'Generate hyper-personalized cover letters aligned with specific companies and roles. Choose from Professional, Confident, or Creative tones.',
+    workflow: [
+      '1. Enter role title & company name',
+      '2. Select tone & key achievements',
+      '3. AI synthesizes custom narrative',
+      '4. Copy or download in seconds'
+    ],
+    ctaText: 'Generate Cover Letter',
+    to: '/cover-letter',
+    isPrimary: false
+  },
+  {
+    id: 'dashboard',
+    title: 'Candidate Portal & Job Tracker',
+    badge: 'Requires Sign In',
+    badgeVariant: 'slate',
+    icon: UserCheck,
+    iconColor: 'from-slate-700 to-slate-900 dark:from-slate-800 dark:to-slate-950',
+    description: 'Log in to save multiple resume versions in the cloud, track submitted job applications, review test assessments, and schedule interviews.',
+    workflow: [
+      '1. Create free account or sign in',
+      '2. Cloud sync all saved resumes',
+      '3. Track applications in real-time',
+      '4. Take skill tests & view offers'
+    ],
+    ctaText: 'Sign In / My Portal',
+    to: '/login',
+    isPrimary: false
+  }
+];
+
+const samplePreviewResumes = [
   {
     role: "Senior Full-Stack Engineer",
     name: "Alex Rivera",
-    experience: "7+ Years Exp",
     atsScore: 98,
-    matchRate: "Excellent Match",
-    skills: ["React", "TypeScript", "Node.js", "PostgreSQL", "Docker", "AWS", "GraphQL"],
-    summary: "Full-stack architect specialized in distributed cloud systems, real-time streaming, and modern React/TypeScript frontends.",
-    education: "B.Tech Computer Science — 2019"
+    matchRate: "Top 2% Candidate",
+    skills: ["React", "TypeScript", "Node.js", "PostgreSQL", "Docker", "AWS", "GraphQL", "Redis"],
+    summary: "Full-stack architect specialized in distributed cloud systems, real-time streaming, and high-conversion React frontends.",
+    experience: "Slashing p99 API latency by 45% with Groq LPU & Redis micro-caching."
   },
   {
     role: "AI & ML Specialist",
     name: "Dr. Sarah Chen",
-    experience: "5 Years Exp",
     atsScore: 95,
-    matchRate: "High Match",
+    matchRate: "Top 5% Candidate",
     skills: ["Python", "PyTorch", "LLMs", "Groq LPU", "FastAPI", "Vector DBs", "RAG"],
-    summary: "Machine learning researcher focused on fast inference optimization, semantic search, and RAG pipelines.",
-    education: "Ph.D. in Artificial Intelligence — 2021"
+    summary: "Machine learning researcher focused on sub-second inference optimization, semantic search, and RAG pipelines.",
+    experience: "Deployed production RAG pipelines handling 2.5M queries monthly."
   },
   {
-    role: "Lead Product Designer",
+    role: "Lead Product Manager",
     name: "Marcus Vance",
-    experience: "6 Years Exp",
-    atsScore: 92,
-    matchRate: "Good Match",
-    skills: ["UI/UX", "Figma", "Design Systems", "User Research", "Prototyping", "Tailwind"],
-    summary: "Product designer passionate about design systems, accessible SaaS interfaces, and developer handoffs.",
-    education: "B.Des Interaction Design — 2020"
+    atsScore: 94,
+    matchRate: "Top 4% Candidate",
+    skills: ["Product Strategy", "User Research", "Agile / Scrum", "A/B Testing", "Mixpanel", "SQL"],
+    summary: "Product leader passionate about design systems, accessible SaaS interfaces, and developer handoffs.",
+    experience: "Spearheaded 0-to-1 SaaS launch driving $1.2M ARR in first 6 months."
   }
 ];
 
-const pricingPlans = [
+const featuredTemplates = [
   {
-    name: "Free Tier",
-    price: "₹0",
-    period: "forever",
-    description: "Ideal for testing AI extraction capabilities and occasional resume parsing.",
-    features: [
-      "50 Resume extractions / month",
-      "Standard OCR & Schema Parser",
-      "Basic ATS Match Scoring",
-      "JSON Export via Web Dashboard",
-      "Community Support"
-    ],
-    popular: false,
-    cta: "Get Started Free"
+    id: 'modern',
+    name: 'Modern Tech Pro',
+    category: 'Engineering & Tech',
+    atsScore: '99%',
+    accent: '#3B82F6',
+    desc: 'Clean sans-serif layout with dedicated skill badges and high density.'
   },
   {
-    name: "Starter Plan",
-    price: "₹499",
-    period: "per month",
-    description: "Perfect for growing hiring teams and individual recruitment consultants.",
-    features: [
-      "500 Resume extractions / month",
-      "Groq LPU Sub-Second Inference",
-      "Deep ATS Gap Analysis",
-      "Custom Extraction Schemas",
-      "Priority Email Support"
-    ],
-    popular: false,
-    cta: "Start Starter Plan"
+    id: 'executive',
+    name: 'Executive Leadership',
+    category: 'Management & C-Suite',
+    atsScore: '98%',
+    accent: '#4F46E5',
+    desc: 'Structured career progression with revenue metrics and board advisory blocks.'
   },
   {
-    name: "Pro Plan",
-    price: "₹1,499",
-    period: "per month",
-    description: "Designed for high-velocity talent agencies and growing tech startups.",
-    features: [
-      "2,500 Resume extractions / month",
-      "Batch PDF / DOCX Processing",
-      "Automated Candidate Ranking",
-      "REST API & Webhooks Access",
-      "Dedicated Account Manager"
-    ],
-    popular: true,
-    cta: "Upgrade to Pro"
-  },
-  {
-    name: "Enterprise",
-    price: "₹4,999",
-    period: "per month",
-    description: "Full-scale document intelligence pipeline with custom fine-tuned models.",
-    features: [
-      "Unlimited Resume Extractions",
-      "Custom OCR Models & On-Prem Support",
-      "99.9% SLA & Dedicated GPU/LPU Instances",
-      "Single Sign-On (SAML / SSO)",
-      "24/7 Phone & Slack Support"
-    ],
-    popular: false,
-    cta: "Contact Enterprise"
+    id: 'minimal',
+    name: 'Minimalist ATS Scanner',
+    category: 'Enterprise Standard',
+    atsScore: '100%',
+    accent: '#0F172A',
+    desc: 'Zero-distraction monochrome format guaranteed 100% OCR pass rate.'
   }
 ];
 
-const LandingPage = () => {
+export default function LandingPage() {
   const [selectedSample, setSelectedSample] = useState(0);
-  const [showJsonView, setShowJsonView] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-
-  const currentSample = sampleResumes[selectedSample];
+  const currentSample = samplePreviewResumes[selectedSample];
+  const { openAuthModal } = useAuthModalStore();
 
   return (
-    <div className="min-h-screen bg-background text-foreground antialiased selection:bg-primary/20 selection:text-primary">
+    <div className="relative overflow-hidden">
       
       {/* Background Ambient Glows */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
-        <div className="absolute -top-40 left-1/2 -translate-x-1/2 h-[600px] w-[800px] rounded-full bg-blue-600/15 dark:bg-blue-600/20 blur-[140px]" />
-        <div className="absolute top-1/3 -right-40 h-[500px] w-[500px] rounded-full bg-cyan-500/15 dark:bg-cyan-500/15 blur-[140px]" />
-        <div className="absolute bottom-10 -left-40 h-[500px] w-[500px] rounded-full bg-indigo-600/15 dark:bg-indigo-600/15 blur-[140px]" />
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#1e3a5f10_1px,transparent_1px),linear-gradient(to_bottom,#1e3a5f10_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_70%_70%_at_50%_30%,#000_60%,transparent_100%)] opacity-70 pointer-events-none" />
+        <div className="absolute -top-40 left-1/2 -translate-x-1/2 h-[600px] w-[800px] rounded-full bg-indigo-600/15 dark:bg-indigo-600/20 blur-[140px]" />
+        <div className="absolute top-1/3 -right-40 h-[500px] w-[500px] rounded-full bg-purple-500/15 dark:bg-purple-500/15 blur-[140px]" />
+        <div className="absolute bottom-10 -left-40 h-[500px] w-[500px] rounded-full bg-violet-600/15 dark:bg-violet-600/15 blur-[140px]" />
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#33415510_1px,transparent_1px),linear-gradient(to_bottom,#33415510_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_70%_70%_at_50%_30%,#000_60%,transparent_100%)] opacity-70 pointer-events-none" />
       </div>
 
-      {/* Navigation Bar */}
-      <nav className="sticky top-0 z-50 w-full border-b border-border/80 bg-background/80 backdrop-blur-xl">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          
-          {/* Brand Logo */}
-          <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 text-white shadow-md shadow-cyan-500/25">
-              <Zap className="h-5 w-5 fill-current" />
-            </div>
-            <span className="font-heading text-xl font-bold tracking-tight text-foreground">
-              Extractor
-            </span>
-          </div>
-
-          {/* Desktop Nav Links */}
-          <div className="hidden md:flex items-center gap-8 text-sm font-medium text-muted-foreground">
-            <a href="#features" className="hover:text-foreground transition-colors">Features</a>
-            <a href="#how-it-works" className="hover:text-foreground transition-colors">How It Works</a>
-            <a href="#demo" className="hover:text-foreground transition-colors">Live Demo</a>
-            <a href="#pricing" className="hover:text-foreground transition-colors">Pricing</a>
-          </div>
-
-          {/* Right Action Buttons */}
-          <div className="hidden md:flex items-center gap-3">
-            <ThemeToggle />
-            <a 
-              href="http://localhost:5174" 
-              target="_blank" 
-              rel="noreferrer"
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-muted-foreground hover:text-foreground rounded-xl border border-border/80 bg-card hover:bg-accent transition-all shadow-xs"
-            >
-              <span>Admin Portal</span>
-              <ExternalLink className="h-3.5 w-3.5" />
-            </a>
-            <Link to="/login">
-              <Button size="sm" className="rounded-xl px-4 text-xs font-bold bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white shadow-md shadow-cyan-500/20">
-                Sign In
-              </Button>
-            </Link>
-          </div>
-
-          {/* Mobile Menu Trigger */}
-          <div className="flex items-center gap-2 md:hidden">
-            <ThemeToggle />
-            <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
-              <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="rounded-xl h-10 w-10">
-                  <Menu className="h-5 w-5" />
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="right" className="w-[85vw] max-w-sm p-6 flex flex-col bg-sidebar shadow-2xl">
-                <div className="flex items-center gap-2.5 pb-6 border-b border-border/60">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 text-white shadow-xs">
-                    <Zap className="h-4 w-4 fill-current" />
-                  </div>
-                  <span className="font-heading text-lg font-bold">Extractor</span>
-                </div>
-
-                <div className="flex flex-col gap-4 py-6 text-base font-medium">
-                  <a href="#features" onClick={() => setIsMobileMenuOpen(false)} className="text-muted-foreground hover:text-foreground">Features</a>
-                  <a href="#how-it-works" onClick={() => setIsMobileMenuOpen(false)} className="text-muted-foreground hover:text-foreground">How It Works</a>
-                  <a href="#demo" onClick={() => setIsMobileMenuOpen(false)} className="text-muted-foreground hover:text-foreground">Live Demo</a>
-                  <a href="#pricing" onClick={() => setIsMobileMenuOpen(false)} className="text-muted-foreground hover:text-foreground">Pricing</a>
-                </div>
-
-                <div className="mt-auto pt-6 border-t border-border/60 flex flex-col gap-3">
-                  <a 
-                    href="http://localhost:5174" 
-                    target="_blank" 
-                    rel="noreferrer"
-                    className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl border border-border/80 text-sm font-semibold hover:bg-accent"
-                  >
-                    <span>Admin Portal</span>
-                    <ExternalLink className="h-4 w-4" />
-                  </a>
-                  <Link to="/login" onClick={() => setIsMobileMenuOpen(false)}>
-                    <Button className="w-full h-11 rounded-xl font-bold bg-gradient-to-r from-blue-600 to-cyan-500 text-white">
-                      Sign In
-                    </Button>
-                  </Link>
-                </div>
-              </SheetContent>
-            </Sheet>
-          </div>
-
-        </div>
-      </nav>
-
       {/* Hero Section */}
-      <section className="relative z-10 pt-16 pb-20 sm:pt-24 sm:pb-28 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto text-center">
+      <section className="relative z-10 pt-8 pb-12 sm:pt-12 sm:pb-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto text-center space-y-6 sm:space-y-8">
         
-        {/* Announcement Badge */}
-        <div className="inline-flex items-center gap-2 rounded-full border border-cyan-500/30 bg-cyan-500/10 px-4 py-1.5 text-xs font-semibold text-cyan-600 dark:text-cyan-400 mb-6 backdrop-blur-md shadow-xs animate-in fade-in-0 slide-in-from-bottom-2 duration-500">
-          <Sparkles className="h-3.5 w-3.5 animate-pulse" />
-          <span>Next-Generation Resume & Document Intelligence</span>
+        {/* Extractor AI Platform Badge */}
+        <div className="inline-flex items-center gap-2 rounded-full border border-indigo-500/30 bg-indigo-500/10 px-4 py-1.5 text-xs font-semibold text-indigo-600 dark:text-indigo-400 backdrop-blur-md shadow-xs animate-in fade-in-0 duration-500">
+          <Zap className="h-3.5 w-3.5 animate-pulse text-indigo-500" />
+          <span>Extractor AI • Intelligent Resume & ATS Platform</span>
         </div>
 
-        {/* Hero Title */}
+        {/* Main Headline */}
         <h1 className="font-heading text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight text-foreground max-w-5xl mx-auto leading-[1.12]">
-          Turn Unstructured Resumes into <br className="hidden sm:inline" />
-          <span className="bg-gradient-to-r from-blue-600 via-cyan-500 to-teal-400 bg-clip-text text-transparent">
-            Structured Talent Intelligence
+          Build a Resume That <br className="hidden sm:inline" />
+          <span className="bg-gradient-to-r from-indigo-500 via-purple-500 to-violet-500 bg-clip-text text-transparent">
+            Gets You Interviewed
           </span>
         </h1>
 
-        {/* Hero Subtitle */}
-        <p className="mt-6 text-base sm:text-lg lg:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-          Powered by sub-second Groq LPU inference. Extract candidate skills, experience schemas, and ATS match scores with 99.8% precision.
+        {/* Subtitle */}
+        <p className="text-base sm:text-lg lg:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+          AI-powered resumes optimized for enterprise ATS parsers and real job descriptions. Land high-paying roles with sub-second diagnostic intelligence.
         </p>
 
-        {/* CTA Buttons */}
-        <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4 max-w-md mx-auto">
-          <a href="#demo" className="w-full sm:w-auto">
-            <Button size="lg" className="w-full sm:w-auto h-12 px-8 rounded-xl font-bold text-sm bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white shadow-lg shadow-cyan-500/25 transition-all duration-200 active:scale-[0.99] gap-2">
-              <span>Try Live AI Demo</span>
-              <ArrowRight className="h-4 w-4" />
-            </Button>
-          </a>
-          <a 
-            href="http://localhost:5174" 
-            target="_blank" 
-            rel="noreferrer"
-            className="w-full sm:w-auto"
-          >
-            <Button size="lg" variant="outline" className="w-full sm:w-auto h-12 px-6 rounded-xl font-semibold text-sm border-border/80 hover:bg-accent gap-2">
-              <span>Admin Telemetry</span>
-              <ExternalLink className="h-4 w-4" />
-            </Button>
-          </a>
+        {/* Primary Action Buttons */}
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 max-w-md mx-auto pt-2">
+          <Button asChild size="lg" variant="gradient" className="w-full sm:w-auto h-12 px-8 rounded-2xl font-bold text-sm shadow-xl shadow-indigo-500/25 gap-2.5">
+            <Link to="/builder">
+              <Sparkles className="h-4 w-4" />
+              <span>Create My Resume</span>
+            </Link>
+          </Button>
+
+          <Button asChild size="lg" variant="outline" className="w-full sm:w-auto h-12 px-8 rounded-2xl font-semibold text-sm border-border/80 bg-card/80 backdrop-blur-md hover:bg-muted/70 gap-2">
+            <Link to="/ats-checker">
+              <Search className="h-4 w-4 text-primary" />
+              <span>Check My Resume</span>
+            </Link>
+          </Button>
         </div>
 
-        {/* Highlight Stats Strip */}
-        <div className="mt-16 grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto">
-          <div className="p-5 rounded-2xl border border-border/70 bg-card/60 backdrop-blur-md">
-            <div className="font-heading text-3xl font-extrabold text-foreground">10x</div>
-            <div className="text-xs text-muted-foreground uppercase tracking-wider font-semibold mt-1">Faster Screening</div>
+        {/* Login Prompt Banner */}
+        <div className="pt-2 flex items-center justify-center gap-2 text-xs text-muted-foreground">
+          <Lock className="h-3.5 w-3.5 text-indigo-500" />
+          <span>Already have an account or saved resume?</span>
+          <button
+            type="button"
+            onClick={() => openAuthModal('login')}
+            className="font-semibold text-primary hover:underline flex items-center gap-1 cursor-pointer"
+          >
+            Sign In Here <ArrowRight className="h-3 w-3" />
+          </button>
+        </div>
+
+        {/* Social Proof Badges */}
+        <div className="pt-4 flex flex-wrap items-center justify-center gap-6 sm:gap-10 text-xs text-muted-foreground">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+            <span>99.8% ATS Parse Rate</span>
           </div>
-          <div className="p-5 rounded-2xl border border-border/70 bg-card/60 backdrop-blur-md">
-            <div className="font-heading text-3xl font-extrabold text-cyan-600 dark:text-cyan-400">99.8%</div>
-            <div className="text-xs text-muted-foreground uppercase tracking-wider font-semibold mt-1">OCR Precision</div>
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+            <span>No Signup Required to Build</span>
           </div>
-          <div className="p-5 rounded-2xl border border-border/70 bg-card/60 backdrop-blur-md">
-            <div className="font-heading text-3xl font-extrabold text-foreground">&lt; 850ms</div>
-            <div className="text-xs text-muted-foreground uppercase tracking-wider font-semibold mt-1">Groq LPU Speed</div>
-          </div>
-          <div className="p-5 rounded-2xl border border-border/70 bg-card/60 backdrop-blur-md">
-            <div className="font-heading text-3xl font-extrabold text-blue-600 dark:text-blue-400">5,800+</div>
-            <div className="text-xs text-muted-foreground uppercase tracking-wider font-semibold mt-1">Resumes Parsed</div>
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+            <span>Instant PDF Export</span>
           </div>
         </div>
 
       </section>
 
-      {/* Interactive Live Demo Section */}
-      <section id="demo" className="relative z-10 py-16 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto">
-        <div className="text-center mb-10">
-          <Badge variant="outline" className="px-3 py-1 text-xs border-cyan-500/30 text-cyan-600 dark:text-cyan-400 bg-cyan-500/10 mb-3">
-            Interactive Showcase
-          </Badge>
-          <h2 className="font-heading text-3xl sm:text-4xl font-bold tracking-tight text-foreground">
-            Experience Instant AI Extraction
+      {/* ========================================================================= */}
+      {/* 🚀 EXTRACTOR SERVICES & TOOLS (CARD GRID VIEW) */}
+      {/* ========================================================================= */}
+      <section id="services" className="relative z-10 py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+        <div className="text-center space-y-3 mb-12">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20">
+            <Layers className="h-3.5 w-3.5" />
+            <span>Complete AI Career Suite</span>
+          </div>
+          <h2 className="font-heading text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground">
+            Explore Extractor AI Services
           </h2>
-          <p className="text-sm sm:text-base text-muted-foreground mt-2 max-w-xl mx-auto">
-            Select a sample candidate resume below to see real-time schema parsing, skills extraction, and ATS benchmarking.
+          <p className="text-sm sm:text-base text-muted-foreground max-w-2xl mx-auto">
+            Everything you need to write, diagnose, test, and optimize your application materials from start to finish.
           </p>
         </div>
 
-        {/* Sample Profile Selector Tabs */}
-        <div className="flex flex-wrap items-center justify-center gap-2 mb-6">
-          {sampleResumes.map((sample, idx) => (
-            <button
-              key={idx}
-              onClick={() => setSelectedSample(idx)}
-              className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 ${
-                selectedSample === idx
-                  ? 'bg-gradient-to-r from-blue-600 to-cyan-500 text-white shadow-md shadow-cyan-500/20 scale-[1.02]'
-                  : 'bg-card border border-border/80 text-muted-foreground hover:text-foreground hover:bg-accent'
-              }`}
-            >
-              {sample.role}
-            </button>
-          ))}
-        </div>
-
-        {/* Live Card Showcase */}
-        <div className="rounded-3xl border border-border/80 bg-card/90 dark:bg-[#0F1C2E]/90 backdrop-blur-2xl shadow-2xl overflow-hidden">
-          
-          {/* Header Bar */}
-          <div className="p-4 sm:p-5 border-b border-border/60 flex flex-wrap items-center justify-between gap-3 bg-muted/20">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary border border-primary/20 font-bold">
-                {currentSample.name.charAt(0)}
-              </div>
-              <div>
-                <h3 className="font-heading font-bold text-base text-foreground">{currentSample.name}</h3>
-                <p className="text-xs text-muted-foreground">{currentSample.role} • {currentSample.experience}</p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <Button
-                variant={showJsonView ? "default" : "outline"}
-                size="sm"
-                onClick={() => setShowJsonView(!showJsonView)}
-                className="h-8 text-xs font-semibold gap-1.5 rounded-lg"
+        {/* Grid of 6 Comprehensive Service Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
+          {extractorServices.map((service) => {
+            const Icon = service.icon;
+            return (
+              <Link 
+                key={service.id}
+                to={service.to}
+                className="group relative flex flex-col justify-between overflow-hidden rounded-3xl border border-border/80 bg-card/80 backdrop-blur-xl transition-all duration-300 hover:shadow-2xl hover:shadow-indigo-500/15 hover:border-primary hover:-translate-y-1.5 cursor-pointer text-left"
               >
-                <Code2 className="h-3.5 w-3.5" />
-                <span>{showJsonView ? "Visual View" : "View JSON Schema"}</span>
-              </Button>
-              <Badge className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20 px-3 py-1 text-xs">
-                Parsed in 640ms
-              </Badge>
-            </div>
-          </div>
+                {/* Subtle top gradient line */}
+                <div className="absolute top-0 inset-x-0 h-1.5 bg-gradient-to-r from-indigo-600 via-purple-600 to-violet-600 opacity-0 group-hover:opacity-100 transition-opacity" />
 
-          {/* Content Body */}
-          <div className="p-6 sm:p-8">
-            {showJsonView ? (
-              <pre className="p-4 rounded-2xl bg-slate-950 text-cyan-400 font-mono text-xs overflow-x-auto border border-slate-800 leading-relaxed">
-{JSON.stringify({
-  candidate: currentSample.name,
-  targetRole: currentSample.role,
-  experienceLevel: currentSample.experience,
-  atsScore: currentSample.atsScore,
-  matchClassification: currentSample.matchRate,
-  extractedSkills: currentSample.skills,
-  summary: currentSample.summary,
-  education: currentSample.education,
-  modelUsed: "Groq-LPU-llama-3.3-70b-versatile",
-  schemaValidation: "PASSED_100%"
-}, null, 2)}
-              </pre>
-            ) : (
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                
-                {/* Left Overview */}
-                <div className="lg:col-span-8 space-y-5">
-                  <div>
-                    <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">
-                      Extracted Professional Summary
-                    </h4>
-                    <p className="text-sm text-foreground leading-relaxed p-4 rounded-2xl bg-muted/20 border border-border/50">
-                      {currentSample.summary}
-                    </p>
-                  </div>
-
-                  <div>
-                    <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2.5">
-                      Identified Technical & Domain Skills ({currentSample.skills.length})
-                    </h4>
-                    <div className="flex flex-wrap gap-2">
-                      {currentSample.skills.map((skill, i) => (
-                        <span key={i} className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-semibold bg-primary/10 text-primary border border-primary/20">
-                          <CheckCircle2 className="h-3.5 w-3.5 text-cyan-500" />
-                          {skill}
-                        </span>
-                      ))}
+                <div className="p-6 sm:p-7 space-y-4">
+                  {/* Top Header: Icon & Badge */}
+                  <div className="flex items-start justify-between gap-3">
+                    <div className={`h-12 w-12 rounded-2xl bg-gradient-to-br ${service.iconColor} text-white flex items-center justify-center shadow-md shadow-indigo-500/20 group-hover:scale-110 transition-transform`}>
+                      <Icon className="h-6 w-6" />
                     </div>
-                  </div>
-
-                  <div className="pt-2">
-                    <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1.5">
-                      Education Credentials
-                    </h4>
-                    <p className="text-xs font-medium text-foreground">{currentSample.education}</p>
-                  </div>
-                </div>
-
-                {/* Right Metric Card */}
-                <div className="lg:col-span-4 flex flex-col justify-between p-6 rounded-2xl bg-gradient-to-b from-primary/5 to-transparent border border-primary/20 space-y-4 text-center">
-                  <div>
-                    <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                      ATS Benchmark Score
-                    </span>
-                    <div className="font-heading text-5xl font-extrabold text-cyan-500 mt-2">
-                      {currentSample.atsScore}%
-                    </div>
-                    <Badge className="bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-0 mt-2 font-semibold">
-                      {currentSample.matchRate}
+                    
+                    <Badge 
+                      variant="outline" 
+                      className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full ${
+                        service.badgeVariant === 'indigo'
+                          ? 'border-indigo-500/30 text-indigo-600 dark:text-indigo-400 bg-indigo-500/10'
+                          : service.badgeVariant === 'emerald'
+                          ? 'border-emerald-500/30 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10'
+                          : service.badgeVariant === 'purple'
+                          ? 'border-purple-500/30 text-purple-600 dark:text-purple-400 bg-purple-500/10'
+                          : service.badgeVariant === 'pink'
+                          ? 'border-pink-500/30 text-pink-600 dark:text-pink-400 bg-pink-500/10'
+                          : 'border-violet-500/30 text-violet-600 dark:text-violet-400 bg-violet-500/10'
+                      }`}
+                    >
+                      {service.badge}
                     </Badge>
                   </div>
 
-                  <div className="space-y-2 text-xs text-left pt-4 border-t border-border/60">
-                    <div className="flex justify-between text-muted-foreground">
-                      <span>Keywords Matched:</span>
-                      <span className="font-semibold text-foreground">94%</span>
-                    </div>
-                    <div className="flex justify-between text-muted-foreground">
-                      <span>Format Compatibility:</span>
-                      <span className="font-semibold text-foreground">100%</span>
-                    </div>
-                    <div className="flex justify-between text-muted-foreground">
-                      <span>Contact Info OCR:</span>
-                      <span className="font-semibold text-emerald-500">Verified</span>
-                    </div>
+                  {/* Title & Description */}
+                  <div>
+                    <h3 className="font-heading text-xl font-bold tracking-tight text-foreground group-hover:text-primary transition-colors flex items-center justify-between">
+                      <span>{service.title}</span>
+                      <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all shrink-0" />
+                    </h3>
+                    <p className="text-xs sm:text-sm text-muted-foreground mt-2 leading-relaxed">
+                      {service.description}
+                    </p>
+                  </div>
+
+                  {/* Workflow / Steps bullets */}
+                  <div className="pt-2 space-y-1.5 border-t border-border/60">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                      Service Workflow:
+                    </span>
+                    {service.workflow.map((step, idx) => (
+                      <div key={idx} className="flex items-center gap-2 text-xs text-foreground/80">
+                        <Check className="h-3.5 w-3.5 text-indigo-500 shrink-0" />
+                        <span>{step}</span>
+                      </div>
+                    ))}
                   </div>
                 </div>
 
-              </div>
-            )}
-          </div>
-
-        </div>
-      </section>
-
-      {/* Features Grid */}
-      <section id="features" className="relative z-10 py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
-        <div className="text-center mb-16">
-          <Badge variant="outline" className="px-3 py-1 text-xs border-cyan-500/30 text-cyan-600 dark:text-cyan-400 bg-cyan-500/10 mb-3">
-            Core Architecture
-          </Badge>
-          <h2 className="font-heading text-3xl sm:text-4xl font-bold tracking-tight text-foreground">
-            Engineered for High-Speed Talent Workflows
-          </h2>
-          <p className="text-sm sm:text-base text-muted-foreground mt-2 max-w-2xl mx-auto">
-            Everything you need to automate candidate intake, extract structured schemas, and power hiring portals.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          
-          <Card className="hover:shadow-lg transition-all duration-200 border-border/80 bg-card/75 backdrop-blur-md">
-            <CardContent className="p-6 space-y-3">
-              <div className="h-10 w-10 flex items-center justify-center rounded-xl bg-cyan-500/10 text-cyan-500 border border-cyan-500/20">
-                <Cpu className="h-5 w-5" />
-              </div>
-              <h3 className="font-heading font-bold text-lg text-foreground">Groq LPU Acceleration</h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                Sub-second inference that parses complete multi-page resumes and extracts 40+ attributes in under 850 milliseconds.
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="hover:shadow-lg transition-all duration-200 border-border/80 bg-card/75 backdrop-blur-md">
-            <CardContent className="p-6 space-y-3">
-              <div className="h-10 w-10 flex items-center justify-center rounded-xl bg-blue-500/10 text-blue-500 border border-blue-500/20">
-                <BarChart3 className="h-5 w-5" />
-              </div>
-              <h3 className="font-heading font-bold text-lg text-foreground">ATS Gap & Keyword Scoring</h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                Automated comparison against target job descriptions with actionable missing skill recommendations.
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="hover:shadow-lg transition-all duration-200 border-border/80 bg-card/75 backdrop-blur-md">
-            <CardContent className="p-6 space-y-3">
-              <div className="h-10 w-10 flex items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
-                <Code2 className="h-5 w-5" />
-              </div>
-              <h3 className="font-heading font-bold text-lg text-foreground">Strict JSON Schemas</h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                Deterministic, schema-validated JSON outputs that plug directly into PostgreSQL, MySQL, or webhooks.
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="hover:shadow-lg transition-all duration-200 border-border/80 bg-card/75 backdrop-blur-md">
-            <CardContent className="p-6 space-y-3">
-              <div className="h-10 w-10 flex items-center justify-center rounded-xl bg-indigo-500/10 text-indigo-500 border border-indigo-500/20">
-                <Layers className="h-5 w-5" />
-              </div>
-              <h3 className="font-heading font-bold text-lg text-foreground">Multi-Format Document OCR</h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                Flawless text and layout extraction from PDF, DOCX, TXT, scanned images, and multi-column formats.
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="hover:shadow-lg transition-all duration-200 border-border/80 bg-card/75 backdrop-blur-md">
-            <CardContent className="p-6 space-y-3">
-              <div className="h-10 w-10 flex items-center justify-center rounded-xl bg-amber-500/10 text-amber-500 border border-amber-500/20">
-                <ShieldCheck className="h-5 w-5" />
-              </div>
-              <h3 className="font-heading font-bold text-lg text-foreground">Privacy & Enterprise Security</h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                Zero training on customer document data. Encrypted in-transit and at-rest with strict data retention rules.
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="hover:shadow-lg transition-all duration-200 border-border/80 bg-card/75 backdrop-blur-md">
-            <CardContent className="p-6 space-y-3">
-              <div className="h-10 w-10 flex items-center justify-center rounded-xl bg-pink-500/10 text-pink-500 border border-pink-500/20">
-                <Activity className="h-5 w-5" />
-              </div>
-              <h3 className="font-heading font-bold text-lg text-foreground">Real-Time Admin Telemetry</h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                Live monitoring dashboard with AI request token meters, user growth analytics, and subscription tracking.
-              </p>
-            </CardContent>
-          </Card>
-
-        </div>
-      </section>
-
-      {/* How It Works */}
-      <section id="how-it-works" className="relative z-10 py-16 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto">
-        <div className="text-center mb-14">
-          <Badge variant="outline" className="px-3 py-1 text-xs border-cyan-500/30 text-cyan-600 dark:text-cyan-400 bg-cyan-500/10 mb-3">
-            Workflow
-          </Badge>
-          <h2 className="font-heading text-3xl sm:text-4xl font-bold tracking-tight text-foreground">
-            How Extractor Works in 3 Simple Steps
-          </h2>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div className="text-center space-y-3 p-6 rounded-2xl bg-card border border-border/60">
-            <div className="h-12 w-12 rounded-2xl bg-blue-600 text-white font-heading font-bold text-xl flex items-center justify-center mx-auto shadow-md shadow-blue-500/20">
-              1
-            </div>
-            <h3 className="font-heading font-bold text-lg text-foreground">Upload Document</h3>
-            <p className="text-xs text-muted-foreground leading-relaxed">
-              Drop resumes or invoices in PDF/DOCX format via API or web studio.
-            </p>
-          </div>
-
-          <div className="text-center space-y-3 p-6 rounded-2xl bg-card border border-border/60">
-            <div className="h-12 w-12 rounded-2xl bg-cyan-500 text-white font-heading font-bold text-xl flex items-center justify-center mx-auto shadow-md shadow-cyan-500/20">
-              2
-            </div>
-            <h3 className="font-heading font-bold text-lg text-foreground">AI Schema Extraction</h3>
-            <p className="text-xs text-muted-foreground leading-relaxed">
-              Groq LPU parses entities, work experience, tech stack, and skills graph.
-            </p>
-          </div>
-
-          <div className="text-center space-y-3 p-6 rounded-2xl bg-card border border-border/60">
-            <div className="h-12 w-12 rounded-2xl bg-emerald-500 text-white font-heading font-bold text-xl flex items-center justify-center mx-auto shadow-md shadow-emerald-500/20">
-              3
-            </div>
-            <h3 className="font-heading font-bold text-lg text-foreground">Export & Match</h3>
-            <p className="text-xs text-muted-foreground leading-relaxed">
-              Receive structured JSON, candidate score, and automatic pipeline placement.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* Pricing Section */}
-      <section id="pricing" className="relative z-10 py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
-        <div className="text-center mb-16">
-          <Badge variant="outline" className="px-3 py-1 text-xs border-cyan-500/30 text-cyan-600 dark:text-cyan-400 bg-cyan-500/10 mb-3">
-            Pricing Plans
-          </Badge>
-          <h2 className="font-heading text-3xl sm:text-4xl font-bold tracking-tight text-foreground">
-            Simple, Transparent Pricing
-          </h2>
-          <p className="text-sm sm:text-base text-muted-foreground mt-2 max-w-xl mx-auto">
-            Choose the plan that fits your candidate extraction scale. Upgrade or cancel anytime.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {pricingPlans.map((plan, idx) => (
-            <Card 
-              key={idx} 
-              className={`flex flex-col justify-between transition-all duration-200 ${
-                plan.popular 
-                  ? 'border-2 border-primary shadow-xl shadow-cyan-500/10 scale-[1.03] bg-card' 
-                  : 'border-border/80 bg-card/80'
-              }`}
-            >
-              <CardContent className="p-6 space-y-5">
-                {plan.popular && (
-                  <Badge className="bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-semibold text-[10px] uppercase tracking-wider">
-                    Most Popular
-                  </Badge>
-                )}
-                <div>
-                  <h3 className="font-heading font-bold text-xl text-foreground">{plan.name}</h3>
-                  <div className="mt-3 flex items-baseline gap-1">
-                    <span className="font-heading text-3xl font-extrabold text-foreground">{plan.price}</span>
-                    <span className="text-xs text-muted-foreground">/{plan.period}</span>
+                {/* Footer Action Button */}
+                <div className="p-6 sm:p-7 pt-0">
+                  <div 
+                    className={`w-full h-11 rounded-xl text-xs font-bold gap-2 flex items-center justify-center transition-all ${
+                      service.isPrimary 
+                        ? "bg-gradient-to-r from-indigo-600 via-purple-600 to-violet-600 text-white shadow-md shadow-indigo-500/25 group-hover:shadow-indigo-500/40" 
+                        : "border border-border/80 bg-background/60 text-foreground group-hover:bg-primary group-hover:text-primary-foreground group-hover:border-primary"
+                    }`}
+                  >
+                    <span>{service.ctaText}</span>
+                    <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-1 transition-transform" />
                   </div>
-                  <p className="text-xs text-muted-foreground mt-2 leading-relaxed">
-                    {plan.description}
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* ========================================================================= */}
+      {/* 📊 LIVE INTERACTIVE RESUME & ATS SCORE VISUAL */}
+      {/* ========================================================================= */}
+      <section className="relative z-10 py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+        <div className="rounded-3xl border border-border/80 bg-gradient-to-b from-card/90 via-card/60 to-background p-6 sm:p-10 lg:p-12 shadow-2xl backdrop-blur-2xl">
+          
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-8 border-b border-border/60">
+            <div>
+              <Badge variant="outline" className="text-xs border-indigo-500/30 text-indigo-500 bg-indigo-500/10 mb-2">
+                Live Interactive Diagnostic
+              </Badge>
+              <h2 className="font-heading text-2xl sm:text-3xl font-extrabold text-foreground">
+                See How Extractor Scores Your Resume
+              </h2>
+              <p className="text-xs sm:text-sm text-muted-foreground mt-1">
+                Recruiters use ATS algorithms. Extractor gives you the exact formula to score 95%+.
+              </p>
+            </div>
+
+            {/* Candidate Role Switcher */}
+            <div className="flex flex-wrap items-center gap-2 bg-muted/40 p-1.5 rounded-2xl border border-border/50">
+              {samplePreviewResumes.map((sample, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => setSelectedSample(idx)}
+                  className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+                    selectedSample === idx 
+                      ? 'bg-primary text-primary-foreground shadow-sm' 
+                      : 'text-muted-foreground hover:text-foreground hover:bg-muted/60'
+                  }`}
+                >
+                  {sample.role.split(' ')[0]} {sample.role.split(' ')[1]}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 pt-8">
+            
+            {/* Left Column: Simulated Resume Sheet */}
+            <div className="lg:col-span-7 rounded-2xl bg-card border border-border/80 p-6 sm:p-8 space-y-5 shadow-lg relative">
+              <div className="flex items-start justify-between border-b border-border/60 pb-4">
+                <div>
+                  <h3 className="font-heading text-xl font-bold text-foreground">
+                    {currentSample.name}
+                  </h3>
+                  <p className="text-xs font-semibold text-primary mt-0.5">
+                    {currentSample.role}
                   </p>
                 </div>
+                <Badge className="bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 font-bold text-xs">
+                  {currentSample.matchRate}
+                </Badge>
+              </div>
 
-                <div className="space-y-2.5 pt-4 border-t border-border/60">
-                  {plan.features.map((feat, i) => (
-                    <div key={i} className="flex items-start gap-2 text-xs">
-                      <CheckCircle2 className="h-4 w-4 text-cyan-500 shrink-0 mt-0.5" />
-                      <span className="text-foreground/90">{feat}</span>
-                    </div>
+              <div className="space-y-2">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                  AI-Optimized Executive Summary
+                </span>
+                <p className="text-xs sm:text-sm text-foreground/90 leading-relaxed bg-muted/30 p-3 rounded-xl border border-border/40">
+                  {currentSample.summary}
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                  High-Impact Experience Bullet (Groq Analyzed)
+                </span>
+                <div className="flex items-start gap-2.5 text-xs sm:text-sm text-foreground/90 bg-primary/5 p-3 rounded-xl border border-primary/20">
+                  <Sparkles className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                  <span>{currentSample.experience}</span>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                  Extracted Tech Stack & Keywords
+                </span>
+                <div className="flex flex-wrap gap-1.5">
+                  {currentSample.skills.map((skill, i) => (
+                    <span key={i} className="px-2.5 py-1 rounded-lg text-xs font-medium bg-muted/60 text-foreground border border-border/50">
+                      {skill}
+                    </span>
                   ))}
                 </div>
-              </CardContent>
+              </div>
+            </div>
 
-              <div className="p-6 pt-0">
-                <Link to="/register">
-                  <Button 
-                    className={`w-full h-11 rounded-xl text-xs font-bold ${
-                      plan.popular 
-                        ? 'bg-gradient-to-r from-blue-600 to-cyan-500 text-white shadow-md shadow-cyan-500/25' 
-                        : 'border-border hover:bg-accent'
-                    }`}
-                    variant={plan.popular ? "default" : "outline"}
-                  >
-                    {plan.cta}
-                  </Button>
+            {/* Right Column: ATS Score Engine Visual */}
+            <div className="lg:col-span-5 flex flex-col justify-between gap-6 rounded-2xl bg-gradient-to-br from-indigo-950/20 via-background to-purple-950/20 border border-border/80 p-6 sm:p-8">
+              
+              <div className="text-center space-y-2">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-indigo-500">
+                  Overall ATS Compatibility
+                </span>
+                <div className="flex items-baseline justify-center gap-1 font-heading text-6xl font-black text-foreground">
+                  <span>{currentSample.atsScore}</span>
+                  <span className="text-2xl text-indigo-500 font-bold">%</span>
+                </div>
+                <p className="text-xs text-emerald-500 font-semibold flex items-center justify-center gap-1">
+                  <CheckCircle2 className="h-3.5 w-3.5" />
+                  Passes 99.4% of Fortune 500 ATS Filters
+                </p>
+              </div>
+
+              {/* Sub Metrics */}
+              <div className="space-y-3 bg-card/60 p-4 rounded-xl border border-border/60">
+                <div className="space-y-1">
+                  <div className="flex justify-between text-xs font-medium">
+                    <span>Action Verbs & Impact</span>
+                    <span className="text-primary font-bold">98%</span>
+                  </div>
+                  <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
+                    <div className="h-full bg-gradient-to-r from-indigo-600 to-violet-600 rounded-full" style={{ width: '98%' }} />
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <div className="flex justify-between text-xs font-medium">
+                    <span>Hard Skill Keyword Density</span>
+                    <span className="text-emerald-500 font-bold">95%</span>
+                  </div>
+                  <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
+                    <div className="h-full bg-emerald-500 rounded-full" style={{ width: '95%' }} />
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <div className="flex justify-between text-xs font-medium">
+                    <span>OCR Parsing & Layout Simplicity</span>
+                    <span className="text-violet-500 font-bold">100%</span>
+                  </div>
+                  <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
+                    <div className="h-full bg-violet-500 rounded-full" style={{ width: '100%' }} />
+                  </div>
+                </div>
+              </div>
+
+              <Button asChild variant="gradient" className="w-full h-11 rounded-xl text-xs font-bold gap-2">
+                <Link to="/builder">
+                  <Sparkles className="h-3.5 w-3.5" />
+                  <span>Build This Resume in Builder</span>
                 </Link>
+              </Button>
+
+            </div>
+
+          </div>
+
+        </div>
+      </section>
+
+      {/* ========================================================================= */}
+      {/* 🎨 RESUME TEMPLATES SHOWCASE */}
+      {/* ========================================================================= */}
+      <section id="templates" className="relative z-10 py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-10">
+          <div>
+            <Badge variant="outline" className="text-xs border-indigo-500/30 text-indigo-500 bg-indigo-500/10 mb-2">
+              ATS Optimized Designs
+            </Badge>
+            <h2 className="font-heading text-3xl font-extrabold tracking-tight text-foreground">
+              Battle-Tested Resume Templates
+            </h2>
+            <p className="text-sm text-muted-foreground mt-1">
+              Engineered with clean typography, clear section hierarchy, and zero parsing blockers.
+            </p>
+          </div>
+          <Button asChild variant="ghost" className="text-xs font-bold text-primary hover:bg-primary/10 gap-1 self-start sm:self-auto">
+            <Link to="/templates">
+              <span>View All Templates</span>
+              <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+          </Button>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {featuredTemplates.map((tpl) => (
+            <Card key={tpl.id} className="group overflow-hidden rounded-2xl border border-border/80 bg-card hover:border-primary/50 transition-all duration-300 flex flex-col justify-between">
+              <div className="h-56 bg-slate-100 dark:bg-slate-900/90 p-5 relative flex flex-col justify-between overflow-hidden border-b border-border/50">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                    {tpl.category}
+                  </span>
+                  <Badge className="bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 font-bold text-[10px]">
+                    ATS Score {tpl.atsScore}
+                  </Badge>
+                </div>
+                
+                {/* Mini Resume Representation */}
+                <div className="bg-card p-4 rounded-xl border border-border/70 shadow-md space-y-2.5">
+                  <div className="h-3 w-1/3 rounded-sm" style={{ backgroundColor: tpl.accent }} />
+                  <div className="h-2 w-3/4 bg-muted rounded-xs" />
+                  <div className="space-y-1 pt-1">
+                    <div className="h-1.5 w-full bg-muted/60 rounded-xs" />
+                    <div className="h-1.5 w-5/6 bg-muted/60 rounded-xs" />
+                  </div>
+                </div>
+
+                <div className="absolute inset-0 bg-primary/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-[2px]">
+                  <Button asChild size="sm" variant="gradient" className="rounded-xl text-xs font-bold gap-1 shadow-lg">
+                    <Link to={`/builder?template=${tpl.id}`}>
+                      <span>Use Template</span>
+                      <ArrowRight className="h-3 w-3" />
+                    </Link>
+                  </Button>
+                </div>
+              </div>
+
+              <div className="p-5 space-y-2">
+                <h4 className="font-heading font-bold text-base text-foreground">
+                  {tpl.name}
+                </h4>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  {tpl.desc}
+                </p>
               </div>
             </Card>
           ))}
         </div>
       </section>
 
-      {/* Bottom Final CTA */}
-      <section className="relative z-10 py-20 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto text-center">
-        <div className="p-10 sm:p-14 rounded-3xl border border-border/80 bg-gradient-to-b from-primary/10 via-card/80 to-card shadow-2xl backdrop-blur-xl">
+      {/* ========================================================================= */}
+      {/* ⚡ HOW EXTRACTOR WORKS */}
+      {/* ========================================================================= */}
+      <section className="relative z-10 py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+        <div className="text-center space-y-3 mb-12">
+          <Badge variant="outline" className="text-xs border-indigo-500/30 text-indigo-500 bg-indigo-500/10">
+            Intelligent Workflow
+          </Badge>
           <h2 className="font-heading text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground">
-            Ready to Automate Your Document Intake?
+            How Extractor Works
           </h2>
-          <p className="mt-3 text-sm sm:text-base text-muted-foreground max-w-xl mx-auto leading-relaxed">
-            Join forward-thinking hiring teams using Extractor for intelligent talent schema parsing.
+          <p className="text-xs sm:text-sm text-muted-foreground max-w-xl mx-auto">
+            From raw draft to interview-ready application in 3 intuitive steps.
           </p>
-          <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link to="/register">
-              <Button size="lg" className="h-12 px-8 rounded-xl font-bold text-sm bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white shadow-lg shadow-cyan-500/25">
-                Create Free Account
-              </Button>
-            </Link>
-            <a 
-              href="http://localhost:5174" 
-              target="_blank" 
-              rel="noreferrer"
-            >
-              <Button size="lg" variant="outline" className="h-12 px-6 rounded-xl font-semibold text-sm border-border/80">
-                Launch Admin Portal
-              </Button>
-            </a>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">
+          <div className="p-6 rounded-2xl bg-card border border-border/80 space-y-3 text-center">
+            <div className="h-12 w-12 rounded-2xl bg-indigo-600/15 text-indigo-600 dark:text-indigo-400 font-heading font-extrabold text-lg flex items-center justify-center mx-auto border border-indigo-500/20">
+              1
+            </div>
+            <h3 className="font-heading font-bold text-base text-foreground">Create or Upload</h3>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Start building directly in the browser or upload your existing resume to extract structured history.
+            </p>
+          </div>
+
+          <div className="p-6 rounded-2xl bg-card border border-border/80 space-y-3 text-center">
+            <div className="h-12 w-12 rounded-2xl bg-purple-600/15 text-purple-600 dark:text-purple-400 font-heading font-extrabold text-lg flex items-center justify-center mx-auto border border-purple-500/20">
+              2
+            </div>
+            <h3 className="font-heading font-bold text-base text-foreground">AI Diagnostics & Scoring</h3>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Scan for missing keywords, format errors, weak action verbs, and calculate comprehensive ATS match scores.
+            </p>
+          </div>
+
+          <div className="p-6 rounded-2xl bg-card border border-border/80 space-y-3 text-center">
+            <div className="h-12 w-12 rounded-2xl bg-violet-600/15 text-violet-600 dark:text-violet-400 font-heading font-extrabold text-lg flex items-center justify-center mx-auto border border-violet-500/20">
+              3
+            </div>
+            <h3 className="font-heading font-bold text-base text-foreground">Export & Apply</h3>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Save your resume to your account, download pixel-perfect PDFs, and generate matching cover letters.
+            </p>
           </div>
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="relative z-10 border-t border-border/80 bg-background/90 py-10 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-muted-foreground">
-          <div className="flex items-center gap-2.5">
-            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-r from-blue-600 to-cyan-500 text-white shadow-xs">
-              <Zap className="h-3.5 w-3.5 fill-current" />
-            </div>
-            <span className="font-heading text-sm font-bold text-foreground">Extractor Inc.</span>
+      {/* ========================================================================= */}
+      {/* ❓ FREQUENTLY ASKED QUESTIONS */}
+      {/* ========================================================================= */}
+      <section className="relative z-10 py-16 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto">
+        <div className="text-center space-y-2 mb-10">
+          <Badge variant="outline" className="text-xs border-indigo-500/30 text-indigo-500 bg-indigo-500/10">
+            Got Questions?
+          </Badge>
+          <h2 className="font-heading text-3xl font-extrabold text-foreground">
+            Frequently Asked Questions
+          </h2>
+        </div>
+
+        <div className="space-y-4">
+          <div className="p-5 rounded-2xl bg-card border border-border/80 space-y-2">
+            <h4 className="font-heading font-bold text-sm text-foreground flex items-center gap-2">
+              <HelpCircle className="h-4 w-4 text-primary shrink-0" />
+              Do I need an account to start building my resume?
+            </h4>
+            <p className="text-xs text-muted-foreground leading-relaxed pl-6">
+              No! You can freely explore the resume builder, customize sections, and preview templates without creating an account. When you're ready to save your resume to the cloud or export, you can sign up in 10 seconds.
+            </p>
           </div>
-          <div>
-            © 2026 Extractor. All rights reserved. Sub-second Groq LPU Document Intelligence.
+
+          <div className="p-5 rounded-2xl bg-card border border-border/80 space-y-2">
+            <h4 className="font-heading font-bold text-sm text-foreground flex items-center gap-2">
+              <HelpCircle className="h-4 w-4 text-primary shrink-0" />
+              What makes Extractor templates ATS-friendly?
+            </h4>
+            <p className="text-xs text-muted-foreground leading-relaxed pl-6">
+              Our templates avoid multi-column tables, floating text boxes, and complex graphics that confuse ATS parsers like Workday, Greenhouse, and Taleo. They are 100% readable by OCR scanners.
+            </p>
           </div>
-          <div className="flex items-center gap-4">
-            <a href="http://localhost:5174" target="_blank" rel="noreferrer" className="hover:text-foreground">Admin Portal (5174)</a>
-            <Link to="/login" className="hover:text-foreground">Sign In</Link>
-            <Link to="/register" className="hover:text-foreground">Register</Link>
+
+          <div className="p-5 rounded-2xl bg-card border border-border/80 space-y-2">
+            <h4 className="font-heading font-bold text-sm text-foreground flex items-center gap-2">
+              <HelpCircle className="h-4 w-4 text-primary shrink-0" />
+              How does the ATS Resume Checker calculate score match?
+            </h4>
+            <p className="text-xs text-muted-foreground leading-relaxed pl-6">
+              Our Groq LPU engine compares your resume against the target job description to measure hard skill presence, job title relevance, impact metrics, and keyword frequency.
+            </p>
           </div>
         </div>
-      </footer>
+      </section>
+
+      {/* ========================================================================= */}
+      {/* 🚀 BOTTOM CONVERSION CALL TO ACTION */}
+      {/* ========================================================================= */}
+      <section className="relative z-10 py-16 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto text-center">
+        <div className="p-8 sm:p-12 rounded-3xl border border-border/80 bg-gradient-to-b from-indigo-950/20 via-card to-card shadow-2xl backdrop-blur-xl space-y-6">
+          <div className="inline-flex items-center justify-center h-14 w-14 rounded-2xl bg-gradient-to-tr from-indigo-600 via-purple-600 to-violet-600 text-white shadow-xl shadow-indigo-500/25">
+            <Zap className="h-7 w-7" />
+          </div>
+          
+          <div className="space-y-2 max-w-2xl mx-auto">
+            <h2 className="font-heading text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground">
+              Ready to Land Your Next Dream Opportunity?
+            </h2>
+            <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
+              Join thousands of tech candidates using Extractor to craft high-converting, ATS-proof resumes and cover letters.
+            </p>
+          </div>
+
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+            <Button asChild size="lg" variant="gradient" className="w-full sm:w-auto h-12 px-8 rounded-xl font-bold text-xs shadow-lg shadow-indigo-500/25 gap-2">
+              <Link to="/builder">
+                <Sparkles className="h-4 w-4" />
+                <span>Start Building for Free</span>
+              </Link>
+            </Button>
+            <Button 
+              type="button" 
+              size="lg" 
+              variant="outline" 
+              onClick={() => openAuthModal('login')}
+              className="w-full sm:w-auto h-12 px-6 rounded-xl font-semibold text-xs border-border/80 hover:bg-accent gap-2 cursor-pointer"
+            >
+              <LogIn className="h-4 w-4 text-primary" />
+              <span>Sign In to Account</span>
+            </Button>
+          </div>
+        </div>
+      </section>
 
     </div>
   );
-};
-
-export default LandingPage;
+}

@@ -1,8 +1,16 @@
 import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom';
 import { ProtectedRoute, GuestRoute } from './Guards';
 
-// Public Landing Page
+// Public Layout & Pages
+import PublicLayout from '../components/layout/PublicLayout';
 import LandingPage from '../pages/LandingPage';
+import ResumeBuilderPage from '../pages/public/ResumeBuilderPage';
+import ResumeAnalyzerPage from '../pages/public/ResumeAnalyzerPage';
+import AtsCheckerPage from '../pages/public/AtsCheckerPage';
+import TemplatesPage from '../pages/public/TemplatesPage';
+import CoverLetterPage from '../pages/public/CoverLetterPage';
+import InterviewPrepPage from '../pages/public/InterviewPrepPage';
+import PricingPage from '../pages/public/PricingPage';
 
 // Auth pages
 import LoginPage from '../pages/auth/LoginPage';
@@ -23,8 +31,19 @@ import TestTakingPage from '../pages/candidate/TestTakingPage';
 import CandidateLayout from '../components/layout/CandidateLayout';
 
 const router = createBrowserRouter([
-  // Public Landing Page
-  { path: '/', element: <LandingPage /> },
+  // Public Marketing & Tool Routes
+  {
+    element: <PublicLayout />,
+    children: [
+      { path: '/', element: <LandingPage /> },
+      { path: '/builder', element: <ResumeBuilderPage /> },
+      { path: '/analyze', element: <ResumeAnalyzerPage /> },
+      { path: '/ats-checker', element: <AtsCheckerPage /> },
+      { path: '/templates', element: <TemplatesPage /> },
+      { path: '/cover-letter', element: <CoverLetterPage /> },
+      { path: '/interview-prep', element: <InterviewPrepPage /> },
+    ],
+  },
 
   // Guest-only routes
   {
@@ -40,7 +59,7 @@ const router = createBrowserRouter([
   { path: '/verify-email', element: <VerifyEmailPage /> },
   { path: '/reset-password', element: <ResetPasswordPage /> },
 
-  // Protected Candidate / User routes
+  // Protected Candidate / User routes (Login Required)
   {
     element: <ProtectedRoute />,
     children: [
@@ -48,6 +67,7 @@ const router = createBrowserRouter([
         element: <CandidateLayout />,
         children: [
           { path: '/dashboard', element: <CandidateDashboardPage /> },
+          { path: '/pricing', element: <PricingPage /> },
           { path: '/jobs', element: <JobListPage /> },
           { path: '/jobs/:id', element: <JobDetailPage /> },
           { path: '/applications', element: <CandidateApplicationsPage /> },

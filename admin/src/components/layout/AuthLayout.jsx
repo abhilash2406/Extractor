@@ -9,7 +9,7 @@ const AuthLayout = ({ children, title, subtitle, badgeText = "Next-Gen AI Extrac
       
       {/* Ambient background glow effects */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
-        <div className="absolute -top-32 -left-32 h-[500px] w-[500px] rounded-full bg-blue-600/15 dark:bg-blue-600/20 blur-[120px]" />
+        <div className="absolute -top-32 -left-32 h-[500px] w-[500px] rounded-full bg-indigo-600/15 dark:bg-indigo-600/20 blur-[120px]" />
         <div className="absolute top-1/3 -right-32 h-[500px] w-[500px] rounded-full bg-purple-500/15 dark:bg-purple-500/15 blur-[140px]" />
         <div className="absolute -bottom-32 left-1/3 h-[400px] w-[400px] rounded-full bg-indigo-600/15 dark:bg-indigo-600/15 blur-[120px]" />
         <div 
@@ -20,7 +20,7 @@ const AuthLayout = ({ children, title, subtitle, badgeText = "Next-Gen AI Extrac
       {/* Top Floating Header */}
       <header className="relative z-20 w-full px-6 py-5 flex items-center justify-between max-w-7xl mx-auto">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md shadow-indigo-500/25">
+          <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-r from-indigo-600 via-purple-600 to-violet-600 text-white shadow-md shadow-indigo-500/25">
             <Zap className="h-5 w-5 fill-current" />
           </div>
           <span className="font-heading text-xl font-bold tracking-tight text-foreground">
@@ -43,7 +43,7 @@ const AuthLayout = ({ children, title, subtitle, badgeText = "Next-Gen AI Extrac
                 <Sparkles className="h-3.5 w-3.5 animate-pulse" /> {badgeText}
               </div>
               <h1 className="font-heading text-4xl sm:text-5xl font-extrabold tracking-tight text-foreground leading-[1.15]">
-                Intelligent Document & <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">Talent Platform</span>
+                Intelligent Document & <span className="bg-gradient-to-r from-indigo-500 via-purple-500 to-violet-500 bg-clip-text text-transparent">Talent Platform</span>
               </h1>
               <p className="text-base text-muted-foreground leading-relaxed max-w-lg">
                 Extract structured JSON schemas from resumes and invoices with instant Groq LPU inference and ATS optimization.
@@ -104,7 +104,7 @@ const AuthLayout = ({ children, title, subtitle, badgeText = "Next-Gen AI Extrac
               {/* Card Header */}
               <div className="space-y-2 mb-6">
                 <div className="flex items-center gap-2">
-                  <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-xs">
+                  <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-r from-indigo-600 via-purple-600 to-violet-600 text-white shadow-xs">
                     <Zap className="h-3.5 w-3.5 fill-current" />
                   </div>
                   <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">

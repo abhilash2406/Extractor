@@ -105,7 +105,7 @@ const aiUsageBreakdown = [
     name: 'Optimization', 
     count: '2,680 requests', 
     percentage: 54, 
-    color: 'bg-blue-600',
+    color: 'bg-purple-600',
     description: 'ATS keyword matching and gap score optimization'
   },
   { 
@@ -167,7 +167,7 @@ const DashboardPage = () => {
       value: '5,823',
       growth: '+15.4%',
       icon: FileText,
-      iconBg: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
+      iconBg: 'bg-purple-500/10 text-purple-400 border-purple-500/20',
     },
     {
       title: 'Revenue',

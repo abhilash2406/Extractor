@@ -25,6 +25,7 @@ const navItems = [
   { to: '/jobs', label: 'Browse Jobs', icon: Briefcase, end: false },
   { to: '/applications', label: 'Applied Jobs', icon: ClipboardCheck, end: true },
   { to: '/tests', label: 'Tests', icon: CheckSquare, end: false },
+  { to: '/pricing', label: 'Plans & Pricing', icon: Zap, end: true },
 ];
 
 const CandidateLayout = () => {
@@ -126,7 +127,7 @@ const CandidateLayout = () => {
           isCollapsed ? "justify-center px-2 flex-col gap-1 py-2" : "justify-between px-4"
         )}>
           <div className="flex items-center gap-3 min-w-0">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 text-white shadow-md shadow-cyan-500/25">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-r from-indigo-600 via-purple-600 to-violet-600 text-white shadow-md shadow-indigo-500/25">
               <Zap className="h-5 w-5 fill-current" />
             </div>
             {!isCollapsed && (
@@ -187,7 +188,7 @@ const CandidateLayout = () => {
       {/* Mobile Top Header Bar */}
       <div className="lg:hidden fixed top-0 left-0 right-0 h-16 border-b border-border/80 bg-background/95 backdrop-blur-md px-4 flex items-center justify-between z-40 shadow-xs">
         <div className="flex items-center gap-2.5">
-          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 text-white shadow-xs">
+          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-r from-indigo-600 via-purple-600 to-violet-600 text-white shadow-xs">
             <Zap className="h-4 w-4 fill-current" />
           </div>
           <span className="font-heading text-base font-bold tracking-tight text-foreground">
@@ -211,7 +212,7 @@ const CandidateLayout = () => {
               {/* Drawer Header */}
               <div className="h-16 px-5 border-b border-border/60 flex items-center justify-between bg-card/50">
                 <div className="flex items-center gap-2.5">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 text-white shadow-xs">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-r from-indigo-600 via-purple-600 to-violet-600 text-white shadow-xs">
                     <Zap className="h-4 w-4 fill-current" />
                   </div>
                   <span className="font-heading text-base font-bold tracking-tight text-foreground">
@@ -224,7 +225,7 @@ const CandidateLayout = () => {
               <div className="p-4 border-b border-border/60 bg-muted/20">
                 <div className="flex items-center gap-3">
                   <Avatar className="h-11 w-11 border-2 border-primary/20 shadow-xs">
-                    <AvatarFallback className="bg-gradient-to-tr from-blue-600 to-cyan-500 text-white font-bold text-base">
+                    <AvatarFallback className="bg-gradient-to-tr from-indigo-600 via-purple-600 to-violet-600 text-white font-bold text-base">
                       {userInitials}
                     </AvatarFallback>
                   </Avatar>

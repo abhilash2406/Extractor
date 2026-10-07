@@ -29,9 +29,9 @@ const LoginPage = () => {
 
   return (
     <AuthLayout 
-      title="Welcome back" 
-      subtitle="Please enter your details to sign in to your account."
-      badgeText="Secure Cloud Authentication"
+      title="Admin Portal Login" 
+      subtitle="Enter your administrative credentials to access the Extractor Admin Console."
+      badgeText="Restricted Admin Access"
     >
       <form onSubmit={handleSubmit((data) => login(data))} className="space-y-4">
         
@@ -44,7 +44,7 @@ const LoginPage = () => {
             <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground transition-colors" />
             <Input 
               type="email" 
-              placeholder="name@company.com" 
+              placeholder="admin@company.com" 
               className={`pl-10 h-11 bg-background/50 border-border/80 focus-visible:ring-primary ${errors.email ? 'border-destructive focus-visible:ring-destructive' : ''}`}
               {...register('email')} 
             />
@@ -58,14 +58,9 @@ const LoginPage = () => {
         
         {/* Password */}
         <div className="space-y-1.5">
-          <div className="flex items-center justify-between">
-            <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-              Password
-            </label>
-            <Link to="/forgot-password" className="text-xs font-semibold text-primary hover:underline">
-              Forgot password?
-            </Link>
-          </div>
+          <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+            Password
+          </label>
           <div className="relative">
             <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground transition-colors" />
             <Input 
@@ -106,29 +101,21 @@ const LoginPage = () => {
         <Button 
           type="submit" 
           disabled={isPending}
-          className="w-full h-12 rounded-xl text-sm font-bold tracking-wide bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white shadow-lg shadow-indigo-500/25 transition-all duration-200 active:scale-[0.99] gap-2 mt-2"
+          className="w-full h-12 rounded-xl text-sm font-semibold tracking-wide bg-primary text-primary-foreground hover:bg-primary/90 shadow-xs transition-all duration-200 active:scale-[0.99] gap-2 mt-3"
         >
           {isPending ? (
             <>
               <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-              <span>Signing in...</span>
+              <span>Verifying credentials...</span>
             </>
           ) : (
             <>
-              <span>Sign in to account</span>
+              <span>Sign in as Administrator</span>
               <ArrowRight className="h-4 w-4" />
             </>
           )}
         </Button>
       </form>
-      
-      {/* Footer Switch */}
-      <div className="mt-6 pt-4 border-t border-border/60 text-center text-xs text-muted-foreground">
-        Don't have an account?{' '}
-        <Link to="/register" className="font-bold text-primary hover:underline">
-          Register here
-        </Link>
-      </div>
     </AuthLayout>
   );
 };

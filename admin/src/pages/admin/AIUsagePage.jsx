@@ -52,7 +52,7 @@ const AIUsagePage = () => {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Today's Tokens</span>
-              <div className="h-9 w-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+              <div className="h-9 w-9 rounded-xl bg-indigo-50 dark:bg-indigo-950/40 text-primary flex items-center justify-center">
                 <Flame className="h-5 w-5" />
               </div>
             </div>

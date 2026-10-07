@@ -258,7 +258,7 @@ const UsersPage = () => {
             <div className="lg:col-span-5 space-y-4">
               <div className="flex flex-col items-center text-center p-6 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-border/80">
                 <Avatar className="h-20 w-20 ring-4 ring-primary/10 mb-3">
-                  <AvatarFallback className="text-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white font-bold">
+                  <AvatarFallback className="text-2xl bg-primary text-primary-foreground font-bold">
                     {(detailedUser.username || 'U').charAt(0).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>

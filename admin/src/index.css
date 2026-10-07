@@ -23,9 +23,9 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
 
-    /* Primary: #0284C7 (Sky 600), Primary Hover: #0369A1 */
-    --primary: 199 89% 48%;
-    --primary-hover: 201 96% 32%;
+    /* Primary: #4F46E5 (Indigo 600), Primary Hover: #4338CA */
+    --primary: 243.4 75.4% 58.6%;
+    --primary-hover: 244.5 57.9% 50.6%;
     --primary-foreground: 0 0% 100%;
 
     --secondary: 210 40% 96.1%;
@@ -47,7 +47,7 @@
     /* Border: #E2E8F0, Input Border: #CBD5E1 */
     --border: 214.3 31.8% 91.4%;
     --input: 212.8 26.8% 83.9%;
-    --ring: 199 89% 48%;
+    --ring: 243.4 75.4% 58.6%;
 
     --radius: 0.75rem;
   }

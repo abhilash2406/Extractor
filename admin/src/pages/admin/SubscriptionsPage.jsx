@@ -97,7 +97,7 @@ const SubscriptionsPage = () => {
           >
             {plan.popular && (
               <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                <Badge variant="default" className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold shadow-xs">
+                <Badge variant="default" className="bg-primary text-primary-foreground font-semibold shadow-xs">
                   <Sparkles className="h-3 w-3 mr-1" /> Most Popular
                 </Badge>
               </div>

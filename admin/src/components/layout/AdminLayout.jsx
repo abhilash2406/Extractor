@@ -55,7 +55,7 @@ const AdminLayout = () => {
   const renderNavLinks = (onItemClick = () => {}, collapsed = false) => (
     <div className={cn("flex flex-col gap-1 flex-1", collapsed ? "px-2 py-2 items-center" : "px-3 py-2")}>
       {!collapsed ? (
-        <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-500">
+        <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
           Menu
         </div>
       ) : (
@@ -78,19 +78,19 @@ const AdminLayout = () => {
                   ? "h-10 w-10 justify-center rounded-xl mx-auto"
                   : "gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium",
                 isActive
-                  ? "bg-indigo-950/40 text-indigo-400 font-semibold shadow-xs ring-1 ring-indigo-500/25"
-                  : "text-slate-400 hover:bg-slate-800/40 hover:text-slate-200"
+                  ? "bg-primary/10 text-primary font-semibold shadow-xs border border-primary/20 dark:bg-indigo-950/40 dark:text-indigo-400 dark:border-transparent dark:ring-1 dark:ring-indigo-500/25"
+                  : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/40 hover:text-slate-900 dark:hover:text-slate-200"
               )
             }
           >
             {({ isActive }) => (
               <>
-                <Icon className={cn(collapsed ? "h-5 w-5" : "h-4 w-4", "shrink-0 transition-transform group-hover:scale-110", isActive ? "text-indigo-400" : "text-slate-400 group-hover:text-slate-200")} />
+                <Icon className={cn(collapsed ? "h-5 w-5" : "h-4 w-4", "shrink-0 transition-transform group-hover:scale-110", isActive ? "text-primary dark:text-indigo-400" : "text-slate-500 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-slate-200")} />
                 {!collapsed && (
                   <>
                     <span>{item.label}</span>
                     {isActive && (
-                      <span className="ml-auto h-1.5 w-1.5 rounded-full bg-indigo-500 shadow-sm shadow-indigo-500/50" />
+                      <span className="ml-auto h-1.5 w-1.5 rounded-full bg-primary dark:bg-indigo-500 shadow-sm shadow-indigo-500/50" />
                     )}
                   </>
                 )}
@@ -125,7 +125,7 @@ const AdminLayout = () => {
       {/* Desktop Sidebar */}
       <aside 
         className={cn(
-          "hidden lg:flex flex-col border-r border-slate-800/80 bg-sidebar h-screen sticky top-0 z-30 shrink-0 shadow-xs transition-all duration-300 ease-in-out",
+          "hidden lg:flex flex-col border-r border-border/80 bg-sidebar h-screen sticky top-0 z-30 shrink-0 shadow-xs transition-all duration-300 ease-in-out",
           isCollapsed ? "w-[72px]" : "w-64"
         )}
       >
@@ -135,7 +135,7 @@ const AdminLayout = () => {
           isCollapsed ? "justify-center px-2 flex-col gap-1 py-3" : "justify-between px-4 pt-3 pb-1"
         )}>
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md shadow-indigo-500/25">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-gradient-to-r from-indigo-600 via-purple-600 to-violet-600 text-white shadow-md shadow-indigo-500/25">
               <Zap className="h-4.5 w-4.5 fill-current" />
             </div>
             {!isCollapsed && (
@@ -146,7 +146,7 @@ const AdminLayout = () => {
           </div>
 
           <div className="flex items-center gap-1">
-            <ThemeToggle className="h-8 w-8 text-amber-400 hover:bg-slate-800/50" />
+            <ThemeToggle className="h-8 w-8 text-foreground hover:bg-accent" />
           </div>
         </div>
 
@@ -170,13 +170,13 @@ const AdminLayout = () => {
                       cn(
                         "group inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition-all duration-200 mx-auto",
                         isActive
-                          ? "bg-indigo-950/40 text-indigo-400 font-semibold shadow-xs ring-1 ring-indigo-500/25"
-                          : "text-slate-400 hover:bg-slate-800/40 hover:text-slate-200"
+                          ? "bg-primary/10 text-primary font-semibold shadow-xs border border-primary/20 dark:bg-indigo-950/40 dark:text-indigo-400 dark:border-transparent dark:ring-1 dark:ring-indigo-500/25"
+                          : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/40 hover:text-slate-900 dark:hover:text-slate-200"
                       )
                     }
                   >
                     {({ isActive }) => (
-                      <Settings className={cn("h-5 w-5 shrink-0 transition-transform group-hover:scale-110", isActive ? "text-indigo-400" : "text-slate-400")} />
+                      <Settings className={cn("h-5 w-5 shrink-0 transition-transform group-hover:scale-110", isActive ? "text-primary dark:text-indigo-400" : "text-slate-500 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-slate-200")} />
                     )}
                   </NavLink>
                 </TooltipTrigger>
@@ -192,14 +192,14 @@ const AdminLayout = () => {
                 cn(
                   "group flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium transition-all duration-200",
                   isActive
-                    ? "bg-indigo-950/40 text-indigo-400 font-semibold shadow-xs ring-1 ring-indigo-500/25"
-                    : "text-slate-400 hover:bg-slate-800/40 hover:text-slate-200"
+                    ? "bg-primary/10 text-primary font-semibold shadow-xs border border-primary/20 dark:bg-indigo-950/40 dark:text-indigo-400 dark:border-transparent dark:ring-1 dark:ring-indigo-500/25"
+                    : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/40 hover:text-slate-900 dark:hover:text-slate-200"
                 )
               }
             >
               {({ isActive }) => (
                 <>
-                  <Settings className={cn("h-4 w-4 shrink-0 transition-transform group-hover:scale-110", isActive ? "text-indigo-400" : "text-slate-400 group-hover:text-slate-200")} />
+                  <Settings className={cn("h-4 w-4 shrink-0 transition-transform group-hover:scale-110", isActive ? "text-primary dark:text-indigo-400" : "text-slate-500 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-slate-200")} />
                   <span>Settings</span>
                 </>
               )}
@@ -213,7 +213,7 @@ const AdminLayout = () => {
       {/* Mobile App Top Header Bar */}
       <div className="lg:hidden fixed top-0 left-0 right-0 h-16 border-b border-border/80 bg-background/95 backdrop-blur-md px-4 flex items-center justify-between z-40 shadow-xs">
         <div className="flex items-center gap-2.5">
-          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-xs">
+          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-r from-indigo-600 via-purple-600 to-violet-600 text-white shadow-xs">
             <Zap className="h-4 w-4 fill-current" />
           </div>
           <span className="font-heading text-base font-bold tracking-tight text-foreground">
@@ -237,7 +237,7 @@ const AdminLayout = () => {
               {/* Drawer Top Header */}
               <div className="h-16 px-5 border-b border-border/60 flex items-center justify-between bg-card/50">
                 <div className="flex items-center gap-2.5">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-xs">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-r from-indigo-600 via-purple-600 to-violet-600 text-white shadow-xs">
                     <Zap className="h-4 w-4 fill-current" />
                   </div>
                   <span className="font-heading text-base font-bold tracking-tight text-foreground">
@@ -250,7 +250,7 @@ const AdminLayout = () => {
               <div className="p-4 border-b border-border/60 bg-muted/20">
                 <div className="flex items-center gap-3">
                   <Avatar className="h-11 w-11 border-2 border-primary/20 shadow-xs">
-                    <AvatarFallback className="bg-gradient-to-tr from-blue-600 to-indigo-600 text-white font-bold text-base">
+                    <AvatarFallback className="bg-gradient-to-tr from-indigo-600 via-purple-600 to-violet-600 text-white font-bold text-base">
                       {userInitials}
                     </AvatarFallback>
                   </Avatar>
