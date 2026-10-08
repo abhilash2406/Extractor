@@ -4,10 +4,15 @@ import { useAuthStore } from '../store/authStore';
 const axiosInstance = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1',
   withCredentials: true,
+  headers: {
+    'X-Portal': 'user',
+  },
 });
 
-// Clean up empty parameters globally
+// Clean up empty parameters globally and attach portal header
 axiosInstance.interceptors.request.use((config) => {
+  config.headers = config.headers || {};
+  config.headers['X-Portal'] = 'user';
   if (config.params) {
     Object.keys(config.params).forEach((key) => {
       if (config.params[key] === '' || config.params[key] === null || config.params[key] === undefined) {
@@ -31,3 +36,4 @@ axiosInstance.interceptors.response.use(
 );
 
 export default axiosInstance;
+

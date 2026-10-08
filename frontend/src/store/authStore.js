@@ -18,7 +18,7 @@ export const useAuthStore = create(
       setUser: (user) => set({ user }),
     }),
     {
-      name: 'auth-storage', // saves only user profile info in localStorage for seamless UI render
+      name: 'user-auth-storage', // saves only user profile info in localStorage for seamless UI render
     }
   )
 );

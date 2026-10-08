@@ -1,7 +1,41 @@
-export const cookieNamesFor = (_audience) => ({
-  access: 'access_token',
-  refresh: 'refresh_token',
-});
+/**
+ * Determines client audience ('admin' or 'user') from request headers, body, or origin.
+ * @param {import('express').Request} req - The Express request object.
+ * @returns {'admin' | 'user'}
+ */
+export const getAudience = (req) => {
+  if (!req) return 'user';
+  const portalHeader = (
+    req.headers?.['x-portal'] ||
+    req.headers?.['x-app-portal'] ||
+    req.headers?.['x-portal-type'] ||
+    ''
+  )
+    .toString()
+    .trim()
+    .toLowerCase();
+
+  if (portalHeader === 'admin') return 'admin';
+  if (portalHeader === 'user') return 'user';
+
+  if (req.body?.portal === 'admin' || req.query?.portal === 'admin') return 'admin';
+  if (req.body?.portal === 'user' || req.query?.portal === 'user') return 'user';
+
+  const origin = (req.headers?.origin || req.headers?.referer || '').toString().toLowerCase();
+  if (origin.includes(':5174') || origin.includes('/admin') || origin.includes('admin.')) {
+    return 'admin';
+  }
+
+  return 'user';
+};
+
+export const cookieNamesFor = (audience) => {
+  const isAdmin = audience === 'admin';
+  return {
+    access: isAdmin ? 'admin_access_token' : 'user_access_token',
+    refresh: isAdmin ? 'admin_refresh_token' : 'user_refresh_token',
+  };
+};
 
 const baseCookieOptions = () => ({
   httpOnly: true,
@@ -39,4 +73,11 @@ export const clearAuthCookies = (res, audience) => {
   const base = baseCookieOptions();
   res.clearCookie(names.access, base);
   res.clearCookie(names.refresh, base);
+
+  // Clear legacy cookie names if applicable
+  if (audience === 'user') {
+    res.clearCookie('access_token', base);
+    res.clearCookie('refresh_token', base);
+  }
 };
+

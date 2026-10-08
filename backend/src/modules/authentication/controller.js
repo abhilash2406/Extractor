@@ -1,4 +1,4 @@
-import { setAuthCookies, clearAuthCookies } from '../../utils/cookies.js';
+import { setAuthCookies, clearAuthCookies, getAudience } from '../../utils/cookies.js';
 import { goodResponse, failedResponse } from '../../common/response.js';
 import {
   loginUser,
@@ -13,9 +13,9 @@ import {
 /** Read a named cookie off the request without tripping the `any` from cookie-parser. */
 const readCookie = (req, name) => req.cookies?.[name];
 
-/** Persist an issued token pair as the user auth cookies. */
-const applyAuthCookies = (res, tokens) => {
-  setAuthCookies(res, 'user', {
+/** Persist an issued token pair as the audience auth cookies. */
+const applyAuthCookies = (res, audience, tokens) => {
+  setAuthCookies(res, audience, {
     accessToken: tokens.accessToken,
     refreshToken: tokens.refreshToken,
     accessTtlMs: tokens.accessTtlMs,
@@ -46,8 +46,9 @@ export const resendVerification = async (req, res, next) => {
 export const verifyEmail = async (req, res, next) => {
   try {
     const data = await verifyEmailService(req.body);
+    const audience = getAudience(req);
 
-    applyAuthCookies(res, {
+    applyAuthCookies(res, audience, {
       accessToken: data.accessToken,
       refreshToken: data.refreshToken,
       accessTtlMs: (process.env.ACCESS_TOKEN_TTL_SECONDS || 900) * 1000,
@@ -73,8 +74,9 @@ export const verifyEmail = async (req, res, next) => {
 export const Login = async (req, res, next) => {
   try {
     const data = await loginUser(req.body);
+    const audience = getAudience(req);
 
-    applyAuthCookies(res, {
+    applyAuthCookies(res, audience, {
       accessToken: data.accessToken,
       refreshToken: data.refreshToken,
       accessTtlMs: (process.env.ACCESS_TOKEN_TTL_SECONDS || 900) * 1000,
@@ -155,9 +157,10 @@ export const resetPassword = async (req, res, next) => {
 export const changePassword = async (req, res, next) => {
   try {
     const data = await changePasswordService(req.user.id, req.body);
+    const audience = getAudience(req);
 
     if (data.accessToken) {
-      applyAuthCookies(res, {
+      applyAuthCookies(res, audience, {
         accessToken: data.accessToken,
         refreshToken: data.refreshToken,
         accessTtlMs: (process.env.ACCESS_TOKEN_TTL_SECONDS || 900) * 1000,
@@ -180,11 +183,13 @@ export const changePassword = async (req, res, next) => {
  */
 export const logout = async (req, res, next) => {
   try {
-    clearAuthCookies(res, 'user');
+    const audience = getAudience(req);
+    clearAuthCookies(res, audience);
     return res.json(goodResponse({}, 'Logged out successfully'));
   } catch (e) {
     const status = e.statusCode || e.status || 400;
     return res.status(status).json(failedResponse(e.message, status, e.name || 'BadRequest'));
   }
 };
+
 
