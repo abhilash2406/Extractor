@@ -6,6 +6,7 @@ import sequelize from '../../config/sequelize-config.js';
 import { logger } from '../../config/winston-config.js';
 import BadRequest from '../../common/exceptions/badRequest.js';
 import crypto from 'crypto';
+import dayjs from 'dayjs';
 import { isDisposableEmail } from '../../utils/disposableEmail.js';
 import { generateOtp } from '../../utils/otp.js';
 
@@ -211,6 +212,31 @@ export const registerUser = async (data) => {
       if (user.status === EntityType.BLOCKED) {
         throw new BadRequest('This account is blocked. Please contact support.');
       }
+      if (!user.is_verified) {
+        // User already registered previously but has not verified yet.
+        // Update credentials in case they provided updated details, and send a fresh OTP.
+        await user.update(
+          {
+            username: name,
+            password,
+          },
+          { transaction: t }
+        );
+
+        await AuthToken.update(
+          { status: EntityType.DELETED },
+          { where: { user_id: user.id, type: 'verify_email', status: EntityType.ACTIVE }, transaction: t }
+        );
+
+        await sendVerificationEmail(user.id, email, name, t);
+
+        return {
+          id: user.id,
+          email: user.email,
+          name: user.username,
+          isExistingUnverified: true,
+        };
+      }
       throw new BadRequest('This account already exists');
     }
 
@@ -231,6 +257,39 @@ export const registerUser = async (data) => {
       name: newUser.username,
     };
   });
+};
+
+/**
+ * Resends email verification code (OTP) for an unverified account.
+ */
+export const resendVerificationService = async (data) => {
+  const { email } = data;
+  if (!email) {
+    throw new BadRequest('Email is required');
+  }
+
+  const user = await User.findOne({ where: { email } });
+  if (!user) {
+    throw new BadRequest('No account found with this email address');
+  }
+
+  if (user.is_verified) {
+    throw new BadRequest('This email is already verified. Please sign in.');
+  }
+
+  if (user.status === EntityType.BLOCKED) {
+    throw new BadRequest('This account is blocked. Please contact support.');
+  }
+
+  // Invalidate previous active verify_email tokens
+  await AuthToken.update(
+    { status: EntityType.DELETED },
+    { where: { user_id: user.id, type: 'verify_email', status: EntityType.ACTIVE } }
+  );
+
+  await sendVerificationEmail(user.id, user.email, user.username);
+
+  return { message: 'A new 6-digit verification code has been sent to your email' };
 };
 
 /**
@@ -310,6 +369,25 @@ export const resetPasswordService = async (data) => {
   await user.update({ password: newPassword });
   await authToken.update({ status: EntityType.DELETED });
 
+  // Send security notification email
+  sendEmails({
+    mailOptions: {
+      to: user.email,
+      subject: 'Security Alert: Your Extractor Password Was Reset 🔒',
+    },
+    fileName: 'password-updated.ejs',
+    contentVariables: {
+      name: user.username,
+      email: user.email,
+      updatedAt: dayjs().format('MMMM D, YYYY [at] h:mm A'),
+    },
+  }).catch((err) => {
+    logger.warn('Failed to send password reset confirmation email', {
+      user_id: user.id,
+      error: err.message,
+    });
+  });
+
   return { message: 'Password reset successfully' };
 };
 
@@ -325,9 +403,40 @@ export const changePasswordService = async (userId, data) => {
   }
 
   if (!(await user.verifyPassword(oldPassword))) {
-    throw new BadRequest('Incorrect old password');
+    throw new BadRequest('Incorrect current password');
+  }
+
+  if (oldPassword === newPassword) {
+    throw new BadRequest('New password must be different from your current password');
   }
 
   await user.update({ password: newPassword });
-  return { message: 'Password changed successfully' };
+
+  const accessToken = user.generateAuthToken();
+  const refreshToken = user.generateAuthToken(true);
+
+  // Send security notification email
+  sendEmails({
+    mailOptions: {
+      to: user.email,
+      subject: 'Security Alert: Your Extractor Password Was Changed 🔒',
+    },
+    fileName: 'password-updated.ejs',
+    contentVariables: {
+      name: user.username,
+      email: user.email,
+      updatedAt: dayjs().format('MMMM D, YYYY [at] h:mm A'),
+    },
+  }).catch((err) => {
+    logger.warn('Failed to send password update confirmation email', {
+      user_id: user.id,
+      error: err.message,
+    });
+  });
+
+  return {
+    message: 'Password changed successfully',
+    accessToken,
+    refreshToken,
+  };
 };

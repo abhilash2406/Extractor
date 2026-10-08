@@ -4,6 +4,7 @@ import {
   loginUser,
   registerUser,
   verifyEmailService,
+  resendVerificationService,
   forgotPasswordService,
   resetPasswordService,
   changePasswordService,
@@ -20,6 +21,19 @@ const applyAuthCookies = (res, tokens) => {
     accessTtlMs: tokens.accessTtlMs,
     refreshTtlMs: tokens.refreshTtlMs,
   });
+};
+
+/**
+ * Handles resending email verification OTP.
+ */
+export const resendVerification = async (req, res, next) => {
+  try {
+    const data = await resendVerificationService(req.body);
+    return res.json(goodResponse({}, data.message || 'Verification code resent successfully'));
+  } catch (e) {
+    const status = e.statusCode || e.status || 400;
+    return res.status(status).json(failedResponse(e.message, status, e.name || 'BadRequest'));
+  }
 };
 
 /**
@@ -141,6 +155,16 @@ export const resetPassword = async (req, res, next) => {
 export const changePassword = async (req, res, next) => {
   try {
     const data = await changePasswordService(req.user.id, req.body);
+
+    if (data.accessToken) {
+      applyAuthCookies(res, {
+        accessToken: data.accessToken,
+        refreshToken: data.refreshToken,
+        accessTtlMs: (process.env.ACCESS_TOKEN_TTL_SECONDS || 900) * 1000,
+        refreshTtlMs: (process.env.REFRESH_TOKEN_TTL_SECONDS || 2592000) * 1000,
+      });
+    }
+
     return res.json(goodResponse({}, data.message || 'Password changed successfully'));
   } catch (e) {
     const status = e.statusCode || e.status || 400;

@@ -20,7 +20,8 @@ import {
   LogOut,
   BrainCircuit,
   User,
-  KeyRound
+  KeyRound,
+  ExternalLink
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { Button } from '@/components/ui/button';
@@ -185,20 +186,48 @@ export const PublicNavbar = () => {
                   </button>
                 </DropdownMenuTrigger>
 
-                <DropdownMenuContent align="end" className="w-52 p-1.5 rounded-2xl bg-card/95 backdrop-blur-xl border border-border/80 shadow-2xl">
+                <DropdownMenuContent align="end" className="w-56 p-1.5 rounded-2xl bg-card/95 backdrop-blur-xl border border-border/80 shadow-2xl">
                   {/* User Info Header */}
-                  <div className="px-3 py-2">
-                    <p className="text-xs font-bold text-foreground truncate">
-                      {getDisplayName(user)}
-                    </p>
-                    {user?.email && (
-                      <p className="text-[11px] text-muted-foreground truncate mt-0.5">
-                        {user.email}
+                  <div className="px-3 py-2 flex items-center justify-between gap-2">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-bold text-foreground truncate">
+                        {getDisplayName(user)}
                       </p>
+                      {user?.email && (
+                        <p className="text-[11px] text-muted-foreground truncate mt-0.5">
+                          {user.email}
+                        </p>
+                      )}
+                    </div>
+                    {user?.role === 'ADMIN' && (
+                      <Badge variant="outline" className="text-[9px] font-bold px-1.5 py-0.5 uppercase bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/30 shrink-0">
+                        Admin
+                      </Badge>
                     )}
                   </div>
 
                   <DropdownMenuSeparator className="my-1 bg-border/60" />
+
+                  {/* Admin Console Shortcut for Admins */}
+                  {user?.role === 'ADMIN' && (
+                    <>
+                      <DropdownMenuItem asChild>
+                        <a
+                          href={import.meta.env.VITE_ADMIN_URL || 'http://localhost:5174'}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="flex items-center justify-between px-2.5 py-2 text-xs font-semibold rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-500/20 cursor-pointer transition-colors"
+                        >
+                          <div className="flex items-center gap-2.5">
+                            <ShieldCheck className="h-4 w-4 text-indigo-500" />
+                            <span>Admin Console</span>
+                          </div>
+                          <ExternalLink className="h-3.5 w-3.5 opacity-70" />
+                        </a>
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator className="my-1 bg-border/60" />
+                    </>
+                  )}
 
                   {/* Account Actions */}
                   <DropdownMenuItem asChild>
@@ -271,25 +300,32 @@ export const PublicNavbar = () => {
 
               {/* Mobile User Profile Section */}
               {isAuthenticated && (
-                <div className="my-4 p-3 bg-muted/60 dark:bg-card/70 rounded-2xl border border-border/60 flex items-center gap-3">
-                  <Avatar className="h-10 w-10 ring-2 ring-primary/20">
-                    {user?.profile_pic ? (
-                      <AvatarImage src={user.profile_pic} alt={getDisplayName(user)} />
-                    ) : null}
-                    <AvatarFallback className="bg-gradient-to-tr from-indigo-600 to-violet-600 text-white font-bold text-xs">
-                      {getUserInitials(user)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex flex-col min-w-0 flex-1">
-                    <span className="text-xs font-bold text-foreground truncate">
-                      {getDisplayName(user)}
-                    </span>
-                    {user?.email && (
-                      <span className="text-[11px] text-muted-foreground truncate">
-                        {user.email}
+                <div className="my-4 p-3 bg-muted/60 dark:bg-card/70 rounded-2xl border border-border/60 flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3 min-w-0 flex-1">
+                    <Avatar className="h-10 w-10 ring-2 ring-primary/20 shrink-0">
+                      {user?.profile_pic ? (
+                        <AvatarImage src={user.profile_pic} alt={getDisplayName(user)} />
+                      ) : null}
+                      <AvatarFallback className="bg-gradient-to-tr from-indigo-600 to-violet-600 text-white font-bold text-xs">
+                        {getUserInitials(user)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex flex-col min-w-0 flex-1">
+                      <span className="text-xs font-bold text-foreground truncate">
+                        {getDisplayName(user)}
                       </span>
-                    )}
+                      {user?.email && (
+                        <span className="text-[11px] text-muted-foreground truncate">
+                          {user.email}
+                        </span>
+                      )}
+                    </div>
                   </div>
+                  {user?.role === 'ADMIN' && (
+                    <Badge variant="outline" className="text-[9px] font-bold px-1.5 py-0.5 uppercase bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/30 shrink-0">
+                      Admin
+                    </Badge>
+                  )}
                 </div>
               )}
 
@@ -338,6 +374,21 @@ export const PublicNavbar = () => {
                     <div className="pt-3 px-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
                       Account & Security
                     </div>
+                    {user?.role === 'ADMIN' && (
+                      <a
+                        href={import.meta.env.VITE_ADMIN_URL || 'http://localhost:5174'}
+                        target="_blank"
+                        rel="noreferrer"
+                        onClick={() => setMobileMenuOpen(false)}
+                        className="flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-sm font-semibold bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-500/20 transition-all border border-indigo-500/20"
+                      >
+                        <div className="flex items-center gap-3">
+                          <ShieldCheck className="h-4 w-4 text-indigo-500" />
+                          <span>Admin Console</span>
+                        </div>
+                        <ExternalLink className="h-4 w-4 opacity-70" />
+                      </a>
+                    )}
                     <NavLink
                       to="/profile"
                       onClick={() => setMobileMenuOpen(false)}

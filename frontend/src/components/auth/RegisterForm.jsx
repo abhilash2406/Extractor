@@ -50,7 +50,12 @@ export default function RegisterForm() {
 
       setEmail(data.email);
       setMode('otp');
-      toast.success('Account created! Please enter the 6-digit OTP sent to your email.');
+      
+      if (res?.data?.isExistingUnverified) {
+        toast.success('Unverified account found! A new 6-digit code was sent to your email.');
+      } else {
+        toast.success('Account created! Please enter the 6-digit OTP sent to your email.');
+      }
     } catch (err) {
       toast.error(err.response?.data?.message || err.message || 'Registration failed');
     } finally {
@@ -70,6 +75,7 @@ export default function RegisterForm() {
           <Input
             type="text"
             placeholder="Alex Rivera"
+            autoComplete="name"
             className={`pl-10 h-11 bg-background/60 border-border/80 rounded-xl focus-visible:ring-primary ${
               errors.name ? 'border-destructive focus-visible:ring-destructive' : ''
             }`}
@@ -93,6 +99,7 @@ export default function RegisterForm() {
           <Input
             type="email"
             placeholder="you@example.com"
+            autoComplete="email"
             className={`pl-10 h-11 bg-background/60 border-border/80 rounded-xl focus-visible:ring-primary ${
               errors.email ? 'border-destructive focus-visible:ring-destructive' : ''
             }`}
@@ -116,6 +123,7 @@ export default function RegisterForm() {
           <Input
             type={showPassword ? 'text' : 'password'}
             placeholder="••••••••"
+            autoComplete="new-password"
             className={`pl-10 pr-10 h-11 bg-background/60 border-border/80 rounded-xl focus-visible:ring-primary ${
               errors.password ? 'border-destructive focus-visible:ring-destructive' : ''
             }`}
@@ -146,6 +154,7 @@ export default function RegisterForm() {
           <Input
             type={showPassword ? 'text' : 'password'}
             placeholder="••••••••"
+            autoComplete="new-password"
             className={`pl-10 pr-10 h-11 bg-background/60 border-border/80 rounded-xl focus-visible:ring-primary ${
               errors.confirmPassword ? 'border-destructive focus-visible:ring-destructive' : ''
             }`}

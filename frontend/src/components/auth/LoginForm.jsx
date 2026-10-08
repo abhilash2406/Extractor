@@ -16,7 +16,7 @@ const loginSchema = yup.object({
 });
 
 export default function LoginForm() {
-  const { setMode, closeAuthModal, onSuccess } = useAuthModalStore();
+  const { setMode, openAuthModal, closeAuthModal, onSuccess } = useAuthModalStore();
   const { login: setAuthUser } = useAuthStore();
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
@@ -52,7 +52,13 @@ export default function LoginForm() {
       closeAuthModal();
       reset();
     } catch (err) {
-      toast.error(err.response?.data?.message || err.message || 'Invalid credentials');
+      const errMsg = err.response?.data?.message || err.message || 'Invalid credentials';
+      if (errMsg.toLowerCase().includes('verify your email')) {
+        toast.error('Your account is not verified yet. Please enter your verification code.');
+        openAuthModal('verify-otp', { email: data.email });
+        return;
+      }
+      toast.error(errMsg);
     } finally {
       setIsSubmitting(false);
     }
@@ -70,6 +76,7 @@ export default function LoginForm() {
           <Input
             type="email"
             placeholder="you@example.com"
+            autoComplete="email"
             className={`pl-10 h-11 bg-background/60 border-border/80 rounded-xl focus-visible:ring-primary ${
               errors.email ? 'border-destructive focus-visible:ring-destructive' : ''
             }`}
@@ -102,6 +109,7 @@ export default function LoginForm() {
           <Input
             type={showPassword ? 'text' : 'password'}
             placeholder="••••••••"
+            autoComplete="current-password"
             className={`pl-10 pr-10 h-11 bg-background/60 border-border/80 rounded-xl focus-visible:ring-primary ${
               errors.password ? 'border-destructive focus-visible:ring-destructive' : ''
             }`}

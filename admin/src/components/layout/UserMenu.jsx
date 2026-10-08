@@ -15,7 +15,9 @@ import {
   Shield, 
   Phone, 
   Mail, 
-  AlertTriangle
+  AlertTriangle,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -58,6 +60,9 @@ const UserMenu = ({ roleLabel = 'User', isMobile = false, isCollapsed = false })
     newPassword: '',
     confirmPassword: ''
   });
+  const [showOldPass, setShowOldPass] = useState(false);
+  const [showNewPass, setShowNewPass] = useState(false);
+  const [showConfirmPass, setShowConfirmPass] = useState(false);
 
   const { data: profile } = useQuery({
     queryKey: ['profile'],
@@ -92,7 +97,7 @@ const UserMenu = ({ roleLabel = 'User', isMobile = false, isCollapsed = false })
   const changePasswordMutation = useMutation({
     mutationFn: (data) => changePassword(data),
     onSuccess: () => {
-      toast.success('Password changed successfully!');
+      toast.success('Password changed successfully! A security confirmation email was sent.');
       setPasswordData({ oldPassword: '', newPassword: '', confirmPassword: '' });
       setIsPasswordOpen(false);
     },
@@ -288,33 +293,69 @@ const UserMenu = ({ roleLabel = 'User', isMobile = false, isCollapsed = false })
           <form onSubmit={handlePasswordSubmit} className="space-y-4 py-2">
             <div className="space-y-1.5">
               <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Current Password</label>
-              <Input 
-                type="password"
-                value={passwordData.oldPassword} 
-                onChange={(e) => setPasswordData({ ...passwordData, oldPassword: e.target.value })} 
-                required 
-                minLength={6}
-              />
+              <div className="relative">
+                <Input 
+                  type={showOldPass ? 'text' : 'password'}
+                  placeholder="••••••••"
+                  autoComplete="current-password"
+                  value={passwordData.oldPassword} 
+                  onChange={(e) => setPasswordData({ ...passwordData, oldPassword: e.target.value })} 
+                  required 
+                  minLength={6}
+                  className="pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowOldPass(!showOldPass)}
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground focus:outline-none transition-colors cursor-pointer"
+                >
+                  {showOldPass ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
             </div>
             <div className="space-y-1.5">
               <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">New Password</label>
-              <Input 
-                type="password"
-                value={passwordData.newPassword} 
-                onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })} 
-                required 
-                minLength={6}
-              />
+              <div className="relative">
+                <Input 
+                  type={showNewPass ? 'text' : 'password'}
+                  placeholder="••••••••"
+                  autoComplete="new-password"
+                  value={passwordData.newPassword} 
+                  onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })} 
+                  required 
+                  minLength={6}
+                  className="pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowNewPass(!showNewPass)}
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground focus:outline-none transition-colors cursor-pointer"
+                >
+                  {showNewPass ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
             </div>
             <div className="space-y-1.5">
               <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Confirm New Password</label>
-              <Input 
-                type="password"
-                value={passwordData.confirmPassword} 
-                onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })} 
-                required 
-                minLength={6}
-              />
+              <div className="relative">
+                <Input 
+                  type={showConfirmPass ? 'text' : 'password'}
+                  placeholder="••••••••"
+                  autoComplete="new-password"
+                  value={passwordData.confirmPassword} 
+                  onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })} 
+                  required 
+                  minLength={6}
+                  className="pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPass(!showConfirmPass)}
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground focus:outline-none transition-colors cursor-pointer"
+                >
+                  {showConfirmPass ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
             </div>
 
             <DialogFooter className="pt-2">

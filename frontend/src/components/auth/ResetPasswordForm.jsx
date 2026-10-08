@@ -103,6 +103,8 @@ export default function ResetPasswordForm() {
             type="text"
             maxLength={6}
             placeholder="123456"
+            autoComplete="one-time-code"
+            inputMode="numeric"
             className={`pl-10 h-11 text-center text-lg tracking-widest font-mono font-bold bg-background/60 border-border/80 rounded-xl focus-visible:ring-primary ${
               errors.otp ? 'border-destructive focus-visible:ring-destructive' : ''
             }`}
@@ -127,6 +129,7 @@ export default function ResetPasswordForm() {
           <Input
             type={showNewPassword ? 'text' : 'password'}
             placeholder="••••••••"
+            autoComplete="new-password"
             className={`pl-10 pr-10 h-11 bg-background/60 border-border/80 rounded-xl focus-visible:ring-primary ${
               errors.newPassword ? 'border-destructive focus-visible:ring-destructive' : ''
             }`}
@@ -157,6 +160,7 @@ export default function ResetPasswordForm() {
           <Input
             type={showConfirmPassword ? 'text' : 'password'}
             placeholder="••••••••"
+            autoComplete="new-password"
             className={`pl-10 pr-10 h-11 bg-background/60 border-border/80 rounded-xl focus-visible:ring-primary ${
               errors.confirmPassword ? 'border-destructive focus-visible:ring-destructive' : ''
             }`}

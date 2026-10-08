@@ -12,6 +12,7 @@ export default function OtpVerificationForm() {
   const { login: setAuthUser } = useAuthStore();
   const [otpCode, setOtpCode] = useState(initialOtp || '');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isResending, setIsResending] = useState(false);
 
   useEffect(() => {
     if (initialOtp) {
@@ -57,6 +58,22 @@ export default function OtpVerificationForm() {
     }
   };
 
+  const onResendOtp = async () => {
+    if (!email) {
+      return toast.error('Please enter your email to resend verification code');
+    }
+
+    setIsResending(true);
+    try {
+      await authApi.resendVerification({ email });
+      toast.success('New 6-digit verification code sent to your email!');
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to resend verification code');
+    } finally {
+      setIsResending(false);
+    }
+  };
+
   return (
     <form onSubmit={onVerifyOtp} className="space-y-4">
       {/* Visual icon & recipient note */}
@@ -72,9 +89,19 @@ export default function OtpVerificationForm() {
 
       {/* 6-Digit OTP input field */}
       <div className="space-y-1.5">
-        <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-          Enter 6-Digit Code
-        </label>
+        <div className="flex items-center justify-between">
+          <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+            Enter 6-Digit Code
+          </label>
+          <button
+            type="button"
+            disabled={isResending}
+            onClick={onResendOtp}
+            className="text-xs font-semibold text-primary hover:underline cursor-pointer disabled:opacity-50"
+          >
+            {isResending ? 'Sending...' : 'Resend Code'}
+          </button>
+        </div>
         <div className="relative">
           <KeyRound className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
@@ -85,6 +112,8 @@ export default function OtpVerificationForm() {
             onChange={(e) => setOtpCode(e.target.value)}
             className="pl-10 h-12 text-center text-xl tracking-widest font-mono font-bold bg-background/60 border-border/80 rounded-xl focus-visible:ring-primary"
             autoFocus
+            autoComplete="one-time-code"
+            inputMode="numeric"
             required
           />
         </div>
@@ -114,14 +143,14 @@ export default function OtpVerificationForm() {
         <button
           type="button"
           onClick={() => setMode('register')}
-          className="text-muted-foreground hover:text-foreground font-medium"
+          className="text-muted-foreground hover:text-foreground font-medium cursor-pointer"
         >
           ← Edit Details
         </button>
         <button
           type="button"
           onClick={() => setMode('login')}
-          className="font-bold text-primary hover:underline"
+          className="font-bold text-primary hover:underline cursor-pointer"
         >
           Sign in instead
         </button>

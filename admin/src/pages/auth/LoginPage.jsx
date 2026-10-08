@@ -45,6 +45,7 @@ const LoginPage = () => {
             <Input 
               type="email" 
               placeholder="admin@company.com" 
+              autoComplete="email"
               className={`pl-10 h-11 bg-background/50 border-border/80 focus-visible:ring-primary ${errors.email ? 'border-destructive focus-visible:ring-destructive' : ''}`}
               {...register('email')} 
             />
@@ -66,6 +67,7 @@ const LoginPage = () => {
             <Input 
               type={showPassword ? 'text' : 'password'} 
               placeholder="••••••••" 
+              autoComplete="current-password"
               className={`pl-10 pr-10 h-11 bg-background/50 border-border/80 focus-visible:ring-primary ${errors.password ? 'border-destructive focus-visible:ring-destructive' : ''}`}
               {...register('password')} 
             />

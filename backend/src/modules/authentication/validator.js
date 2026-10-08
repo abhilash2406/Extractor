@@ -95,6 +95,16 @@ export const forgotPasswordValidate = validate(
   })
 );
 
+export const resendVerificationValidate = validate(
+  Joi.object({
+    email: Joi.string().email().trim().lowercase().required().messages({
+      'string.email': 'Please provide a valid email address',
+      'string.empty': 'Email cannot be empty',
+      'any.required': 'Email is required',
+    }),
+  })
+);
+
 export const resetPasswordValidate = validate(
   Joi.object({
     otp: Joi.string().trim().required().messages({

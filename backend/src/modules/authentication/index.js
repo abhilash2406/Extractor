@@ -3,6 +3,7 @@ import {
   Login,
   register,
   verifyEmail,
+  resendVerification,
   forgotPassword,
   resetPassword,
   changePassword,
@@ -12,6 +13,7 @@ import {
   loginValidate,
   registerValidate,
   verifyEmailValidate,
+  resendVerificationValidate,
   forgotPasswordValidate,
   resetPasswordValidate,
   changePasswordValidate,
@@ -134,6 +136,28 @@ router.post('/register', registerValidate, register);
  */
 
 router.post('/verify-email', verifyEmailValidate, verifyEmail);
+
+/**
+ * @swagger
+ * /api/v1/auth/resend-verification:
+ *   post:
+ *     summary: Resend 6-digit email verification OTP
+ *     tags: [Authentication]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [email]
+ *             properties:
+ *               email:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Verification code resent successfully
+ */
+router.post('/resend-verification', resendVerificationValidate, resendVerification);
 
 
 
