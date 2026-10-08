@@ -6,6 +6,8 @@ import sequelize from '../../config/sequelize-config.js';
 import { logger } from '../../config/winston-config.js';
 import BadRequest from '../../common/exceptions/badRequest.js';
 import crypto from 'crypto';
+import { isDisposableEmail } from '../../utils/disposableEmail.js';
+import { generateOtp } from '../../utils/otp.js';
 
 
 /**
@@ -50,26 +52,30 @@ export const loginUser = async (data) => {
 };
 
 /**
- * Verifies a user's email using a token.
+ * Verifies a user's email using an OTP.
  */
 export const verifyEmailService = async (data) => {
-  const { token } = data;
+  const { otp } = data;
+
+  if (!otp) {
+    throw new BadRequest('OTP is required');
+  }
 
   const authToken = await AuthToken.findOne({
-    where: { token, type: 'verify_email', status: EntityType.ACTIVE }
+    where: { otp, type: 'verify_email', status: EntityType.ACTIVE }
   });
 
   if (!authToken || authToken.expires_at < new Date()) {
-    throw new Error('Invalid or expired token');
+    throw new BadRequest('Invalid or expired OTP');
   }
 
   const user = await User.findOne({ where: { id: authToken.user_id } });
   if (!user) {
-    throw new Error('User not found');
+    throw new BadRequest('User not found');
   }
 
   if (user.status === EntityType.BLOCKED) {
-    throw new Error('This account is blocked');
+    throw new BadRequest('This account is blocked');
   }
 
   await user.update({
@@ -79,10 +85,33 @@ export const verifyEmailService = async (data) => {
 
   await authToken.update({ status: EntityType.DELETED });
 
+  // Send welcome email upon successful verification
+  sendEmails({
+    mailOptions: {
+      to: user.email,
+      subject: 'Welcome to Extractor! 🎉 Your Account is Verified',
+    },
+    fileName: 'welcome-email.ejs',
+    contentVariables: {
+      name: user.username,
+    },
+  }).catch((err) => {
+    logger.warn('Failed to send welcome email', {
+      user_id: user.id,
+      email: user.email,
+      error: err instanceof Error ? err.message : String(err),
+    });
+  });
+
   const accessToken = user.generateAuthToken();
   const refreshToken = user.generateAuthToken(true);
 
-  return { accessToken, refreshToken };
+  return {
+    name: user.username,
+    role: user.role,
+    accessToken,
+    refreshToken,
+  };
 };
 
 /**
@@ -121,37 +150,37 @@ export const googleLoginService = async (data) => {
 };
 
 /**
- * Send the verification email with the token.
+ * Send the verification email with the 6-digit OTP.
  */
 const sendVerificationEmail = async (user_id, email, fullName, transaction = null) => {
-  let token = crypto.randomBytes(32).toString('hex');
-  const expireHours = parseInt(process.env.VERIFICATION_EXPIRE_HOURS || 24, 10);
+  const otp = generateOtp();
+  const expireHours = parseInt(process.env.VERIFICATION_EXPIRE_HOURS || '24', 10);
   const expiresAt = new Date();
   expiresAt.setHours(expiresAt.getHours() + expireHours);
 
   try {
     await AuthToken.create({
-      token,
+      otp,
       user_id,
       type: 'verify_email',
       expires_at: expiresAt,
     }, { transaction });
   } catch (err) {
-    logger.error('Email-verification token store failed', {
+    logger.error('Email-verification OTP store failed', {
       user_id,
       email,
       error: err instanceof Error ? err.message : String(err),
     });
-    return;
+    throw new BadRequest('Failed to generate verification code');
   }
 
   try {
     await sendEmails({
-      mailOptions: { to: email, subject: 'Verify Your Email' },
+      mailOptions: { to: email, subject: 'Verify Your Email - Verification Code' },
       fileName: 'verify-email.ejs',
       contentVariables: {
         name: fullName,
-        token,
+        otp,
         expireHours,
         frontendUrl: process.env.FRONTEND_URL || 'http://localhost:3000',
       },
@@ -162,6 +191,7 @@ const sendVerificationEmail = async (user_id, email, fullName, transaction = nul
       email,
       error: err instanceof Error ? err.message : String(err),
     });
+    throw new BadRequest('Failed to send verification email. Please check email configuration or try again.');
   }
 };
 
@@ -171,13 +201,17 @@ const sendVerificationEmail = async (user_id, email, fullName, transaction = nul
 export const registerUser = async (data) => {
   const { name, email, password } = data;
 
+  if (isDisposableEmail(email)) {
+    throw new BadRequest('Disposable or temporary email addresses are not allowed. Please use a permanent email address.');
+  }
+
   return await sequelize.transaction(async (t) => {
     const user = await User.findOne({ where: { email }, transaction: t });
     if (user) {
       if (user.status === EntityType.BLOCKED) {
-        throw new Error('This account is blocked. Please contact support.');
+        throw new BadRequest('This account is blocked. Please contact support.');
       }
-      throw new Error('This user already exists');
+      throw new BadRequest('This account already exists');
     }
 
     const newUser = await User.create(
@@ -206,16 +240,22 @@ export const forgotPasswordService = async (data) => {
   const { email } = data;
   const user = await User.findOne({ where: { email } });
   if (!user) {
-    throw new BadRequest('User not found');
+    throw new BadRequest('No account found with this email address');
   }
 
-  const token = crypto.randomBytes(32).toString('hex');
+  const otp = generateOtp();
   const expireMinutes = parseInt(process.env.PASSWORD_RESET_EXPIRE_MINUTES || '15', 10);
   const expiresAt = new Date();
   expiresAt.setMinutes(expiresAt.getMinutes() + expireMinutes);
 
+  // Invalidate any existing active reset tokens for this user
+  await AuthToken.update(
+    { status: EntityType.DELETED },
+    { where: { user_id: user.id, type: 'reset_password', status: EntityType.ACTIVE } }
+  );
+
   await AuthToken.create({
-    token,
+    otp,
     user_id: user.id,
     type: 'reset_password',
     expires_at: expiresAt,
@@ -223,38 +263,42 @@ export const forgotPasswordService = async (data) => {
 
   try {
     await sendEmails({
-      mailOptions: { to: email, subject: 'Password Reset Request' },
+      mailOptions: { to: email, subject: 'Password Reset Code - Extractor' },
       fileName: 'forgot-password.ejs',
       contentVariables: {
         name: user.username,
-        token,
+        otp,
         expireMinutes,
       },
     });
   } catch (err) {
     logger.error('Password reset email failed', { user_id: user.id, error: err.message });
-    throw new BadRequest('Failed to send reset email');
+    throw new BadRequest('Failed to send password reset email');
   }
 
-  return { message: 'Password reset link sent to email' };
+  return { message: 'Password reset code sent to your email' };
 };
 
 /**
- * Resets the user's password securely.
+ * Resets the user's password securely using a 6-digit OTP code.
  */
 export const resetPasswordService = async (data) => {
-  const { token, newPassword, confirmPassword } = data;
+  const { otp, newPassword, confirmPassword } = data;
+
+  if (!otp) {
+    throw new BadRequest('Verification code (OTP) is required');
+  }
 
   if (newPassword !== confirmPassword) {
     throw new BadRequest('Passwords do not match');
   }
 
   const authToken = await AuthToken.findOne({
-    where: { token, type: 'reset_password', status: EntityType.ACTIVE }
+    where: { otp: otp.trim(), type: 'reset_password', status: EntityType.ACTIVE }
   });
 
   if (!authToken || authToken.expires_at < new Date()) {
-    throw new BadRequest('Invalid or expired token');
+    throw new BadRequest('Invalid or expired verification code');
   }
 
   const user = await User.findOne({ where: { id: authToken.user_id } });
@@ -262,7 +306,7 @@ export const resetPasswordService = async (data) => {
     throw new BadRequest('User not found');
   }
 
-  // Update password (model hooks should handle hashing)
+  // Update password (User model hook automatically hashes the password)
   await user.update({ password: newPassword });
   await authToken.update({ status: EntityType.DELETED });
 

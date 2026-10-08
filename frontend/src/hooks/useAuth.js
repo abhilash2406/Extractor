@@ -38,7 +38,7 @@ export const useLogout = () => {
     mutationFn: authApi.logout,
     onSettled: () => {
       logout();
-      navigate('/login');
+      navigate('/');
     },
   });
 };
@@ -48,8 +48,8 @@ export const useRegister = () => {
   return useMutation({
     mutationFn: authApi.register,
     onSuccess: () => {
-      toast.success('Registered! Please check your email to verify your account.');
-      navigate('/login');
+      toast.success('Registration successful! Please enter the 6-digit OTP sent to your email.');
+      navigate('/verify-email');
     },
     onError: (err) => {
       toast.error(err.response?.data?.message || 'Registration failed');

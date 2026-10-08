@@ -40,7 +40,9 @@ export const verifyEmail = async (req, res, next) => {
       refreshTtlMs: (process.env.REFRESH_TOKEN_TTL_SECONDS || 2592000) * 1000,
     });
 
-    return res.json(goodResponse({}, 'Email verified'));
+    const { accessToken, refreshToken, ...userData } = data;
+
+    return res.json(goodResponse({ data: userData }, 'Email verified successfully'));
   } catch (e) {
     const status = e.statusCode || e.status || (e.message === 'User not found' ? 404 : e.message.includes('Account') ? 403 : 400);
     return res.status(status).json(failedResponse(e.message, status, e.name || 'BadRequest'));

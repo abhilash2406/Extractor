@@ -7,6 +7,7 @@ import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 
 import { logger } from './config/winston-config.js';
+import logRequest from './common/logRequest.js';
 import swaggerUi from 'swagger-ui-express';
 import swaggerDocument from './config/swagger.js';
 import swaggerAuth from './middlewares/swagger-auth.js';
@@ -17,6 +18,9 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const app = express();
+
+// Request logging (Morgan stream -> Winston)
+await logRequest(app);
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));

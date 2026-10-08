@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
+import { Link, NavLink, Outlet, useLocation, useSearchParams } from 'react-router-dom';
 import { 
   Zap, 
   Sparkles, 
@@ -18,13 +18,23 @@ import {
   Sparkle,
   LogIn,
   LogOut,
-  BrainCircuit
+  BrainCircuit,
+  User,
+  KeyRound
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+} from '@/components/ui/dropdown-menu';
 import { useAuthStore } from '@/store/authStore';
 import { useAuthModalStore } from '@/store/authModalStore';
 import AuthModal from '@/components/auth/AuthModal';
@@ -40,6 +50,24 @@ export const PublicNavbar = () => {
   const handleLogout = () => {
     logout();
     toast.success('Signed out successfully');
+  };
+
+  const getUserInitials = (u) => {
+    const nameStr = (u?.name || u?.username || u?.email || '').trim();
+    if (!nameStr) return 'A';
+    const clean = nameStr.includes('@') ? nameStr.split('@')[0] : nameStr;
+    const parts = clean.split(/[\s._-]+/).filter(Boolean);
+    if (parts.length >= 2 && parts[0] && parts[1]) {
+      return (parts[0][0] + parts[1][0]).toUpperCase();
+    }
+    return clean.substring(0, 2).toUpperCase();
+  };
+
+  const getDisplayName = (u) => {
+    if (u?.name && u.name.trim()) return u.name;
+    if (u?.username && u.username.trim() && u.username.toLowerCase() !== 'user') return u.username;
+    if (u?.email) return u.email.split('@')[0];
+    return u?.username || 'Account';
   };
 
   useEffect(() => {
@@ -126,16 +154,7 @@ export const PublicNavbar = () => {
           <ThemeToggle className="h-9 w-9" />
 
           {isAuthenticated ? (
-            <div className="flex items-center gap-2">
-              <Button 
-                type="button" 
-                variant="outline" 
-                onClick={handleLogout}
-                className="h-9 sm:h-10 px-3.5 sm:px-4 text-xs font-semibold border-border hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30 rounded-xl gap-1.5 transition-colors"
-              >
-                <LogOut className="h-3.5 w-3.5 text-destructive" />
-                <span>Sign Out</span>
-              </Button>
+            <div className="flex items-center gap-2.5">
               <Button asChild className="h-9 sm:h-10 px-3.5 sm:px-4 rounded-xl text-xs font-semibold gap-1.5 shadow-xs">
                 <Link to="/builder">
                   <Sparkles className="h-3.5 w-3.5" />
@@ -143,6 +162,71 @@ export const PublicNavbar = () => {
                   <span className="sm:hidden">Build</span>
                 </Link>
               </Button>
+
+              {/* User Profile Dropdown */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    type="button"
+                    className="flex items-center gap-2 p-1 pl-1.5 pr-2.5 rounded-full border border-border/80 bg-background/60 hover:bg-accent hover:border-primary/40 transition-all outline-none focus-visible:ring-2 focus-visible:ring-primary shadow-xs cursor-pointer"
+                  >
+                    <Avatar className="h-8 w-8 ring-2 ring-primary/20">
+                      {user?.profile_pic ? (
+                        <AvatarImage src={user.profile_pic} alt={getDisplayName(user)} />
+                      ) : null}
+                      <AvatarFallback className="bg-gradient-to-tr from-indigo-600 via-purple-600 to-violet-600 text-white text-xs font-bold">
+                        {getUserInitials(user)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="text-xs font-bold text-foreground max-w-[100px] truncate hidden md:inline-block">
+                      {getDisplayName(user)}
+                    </span>
+                    <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+                  </button>
+                </DropdownMenuTrigger>
+
+                <DropdownMenuContent align="end" className="w-52 p-1.5 rounded-2xl bg-card/95 backdrop-blur-xl border border-border/80 shadow-2xl">
+                  {/* User Info Header */}
+                  <div className="px-3 py-2">
+                    <p className="text-xs font-bold text-foreground truncate">
+                      {getDisplayName(user)}
+                    </p>
+                    {user?.email && (
+                      <p className="text-[11px] text-muted-foreground truncate mt-0.5">
+                        {user.email}
+                      </p>
+                    )}
+                  </div>
+
+                  <DropdownMenuSeparator className="my-1 bg-border/60" />
+
+                  {/* Account Actions */}
+                  <DropdownMenuItem asChild>
+                    <Link to="/profile" className="flex items-center gap-2.5 px-2.5 py-2 text-xs font-semibold rounded-xl text-foreground hover:bg-accent cursor-pointer">
+                      <User className="h-4 w-4 text-primary" />
+                      <span>Profile</span>
+                    </Link>
+                  </DropdownMenuItem>
+
+                  <DropdownMenuItem asChild>
+                    <Link to="/change-password" className="flex items-center gap-2.5 px-2.5 py-2 text-xs font-semibold rounded-xl text-foreground hover:bg-accent cursor-pointer">
+                      <KeyRound className="h-4 w-4 text-primary" />
+                      <span>Change Password</span>
+                    </Link>
+                  </DropdownMenuItem>
+
+                  <DropdownMenuSeparator className="my-1 bg-border/60" />
+
+                  {/* Sign Out Button */}
+                  <DropdownMenuItem
+                    onClick={handleLogout}
+                    className="flex items-center gap-2.5 px-2.5 py-2 text-xs font-semibold rounded-xl text-destructive hover:bg-destructive/10 cursor-pointer focus:bg-destructive/10 focus:text-destructive transition-colors"
+                  >
+                    <LogOut className="h-4 w-4 text-destructive" />
+                    <span>Sign Out</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           ) : (
             <div className="flex items-center gap-2">
@@ -185,7 +269,31 @@ export const PublicNavbar = () => {
                 </div>
               </div>
 
-              <nav className="flex-1 overflow-y-auto py-6 space-y-2">
+              {/* Mobile User Profile Section */}
+              {isAuthenticated && (
+                <div className="my-4 p-3 bg-muted/60 dark:bg-card/70 rounded-2xl border border-border/60 flex items-center gap-3">
+                  <Avatar className="h-10 w-10 ring-2 ring-primary/20">
+                    {user?.profile_pic ? (
+                      <AvatarImage src={user.profile_pic} alt={getDisplayName(user)} />
+                    ) : null}
+                    <AvatarFallback className="bg-gradient-to-tr from-indigo-600 to-violet-600 text-white font-bold text-xs">
+                      {getUserInitials(user)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex flex-col min-w-0 flex-1">
+                    <span className="text-xs font-bold text-foreground truncate">
+                      {getDisplayName(user)}
+                    </span>
+                    {user?.email && (
+                      <span className="text-[11px] text-muted-foreground truncate">
+                        {user.email}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              <nav className="flex-1 overflow-y-auto py-2 space-y-1.5">
                 <div className="px-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
                   Products & Tools
                 </div>
@@ -197,7 +305,7 @@ export const PublicNavbar = () => {
                       to={link.to}
                       onClick={() => setMobileMenuOpen(false)}
                       className={({ isActive }) => cn(
-                        "flex items-center justify-between px-3.5 py-3 rounded-2xl text-sm font-medium transition-all",
+                        "flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-sm font-medium transition-all",
                         isActive 
                           ? "bg-primary/10 text-primary font-semibold border border-primary/20" 
                           : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
@@ -224,6 +332,30 @@ export const PublicNavbar = () => {
                     </NavLink>
                   );
                 })}
+
+                {isAuthenticated && (
+                  <>
+                    <div className="pt-3 px-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                      Account & Security
+                    </div>
+                    <NavLink
+                      to="/profile"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all"
+                    >
+                      <User className="h-4 w-4 text-primary" />
+                      <span>Profile</span>
+                    </NavLink>
+                    <NavLink
+                      to="/change-password"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all"
+                    >
+                      <KeyRound className="h-4 w-4 text-primary" />
+                      <span>Change Password</span>
+                    </NavLink>
+                  </>
+                )}
               </nav>
 
               <div className="pt-4 border-t border-border/60 space-y-2.5">
@@ -370,6 +502,31 @@ export const PublicFooter = () => {
 };
 
 const PublicLayout = () => {
+  const [searchParams] = useSearchParams();
+  const { openAuthModal } = useAuthModalStore();
+
+  useEffect(() => {
+    const otp = searchParams.get('otp');
+    const auth = searchParams.get('auth');
+    const email = searchParams.get('email') || '';
+
+    if (otp) {
+      openAuthModal('otp', { otp, email });
+      const newUrl = window.location.pathname;
+      window.history.replaceState({}, document.title, newUrl);
+    } else if (
+      auth === 'login' ||
+      auth === 'register' ||
+      auth === 'otp' ||
+      auth === 'forgot-password' ||
+      auth === 'reset-password'
+    ) {
+      openAuthModal(auth, { email });
+      const newUrl = window.location.pathname;
+      window.history.replaceState({}, document.title, newUrl);
+    }
+  }, [searchParams, openAuthModal]);
+
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground antialiased selection:bg-indigo-500/20 selection:text-indigo-400">
       <PublicNavbar />

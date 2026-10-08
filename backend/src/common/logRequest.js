@@ -1,6 +1,7 @@
 import morgan from 'morgan';
 import dayjs from 'dayjs';
 import chalk from 'chalk';
+import { logger } from '../config/winston-config.js';
 
 const MethodColors = {
     GET: chalk.green,
@@ -63,55 +64,63 @@ const ResponseSizeFormatter = (responseSize) => {
 
 const defaultColor = chalk.grey;
 
+// Winston stream adapter for Morgan
+const winstonStream = {
+    write: (message) => {
+        logger.info(message.trim());
+    },
+};
+
 const logRequest = async (app) => {
     const onRequest = morgan(
         (tokens, req, res) => {
             const methodColor =
                 MethodColors[req.method] || MethodColors.default;
 
-            return defaultColor(
-                [
-                    chalk.yellow('🡶'),
-                    `[${dayjs().format('hh:mm:ss a')}]`,
-                    methodColor(tokens.method(req, res)),
-                    tokens.url(req, res),
-                ].join(' ')
-            );
+            return [
+                chalk.yellow('🡶'),
+                defaultColor(`[${dayjs().format('hh:mm:ss a')}]`),
+                methodColor(tokens.method(req, res)),
+                defaultColor(tokens.url(req, res)),
+            ].join(' ');
         },
-        { immediate: true }
+        { immediate: true, stream: winstonStream }
     );
 
-    const onResponse = morgan((tokens, req, res) => {
-        const methodColor = MethodColors[req.method] || MethodColors.default;
-        const statusColor =
-            StatusColors.find((c) => c.condition(res.statusCode))?.color ||
-            defaultColor;
-        const responseTimeColor =
-            ResponseTimeColors.find((c) =>
-                c.condition(Number(tokens['response-time'](req, res)))
-            )?.color || defaultColor;
-        const responseSizeColor =
-            ResponseSizeColors.find((c) =>
-                c.condition(Number(tokens.res(req, res, 'content-length')))
-            )?.color || defaultColor;
+    const onResponse = morgan(
+        (tokens, req, res) => {
+            const methodColor = MethodColors[req.method] || MethodColors.default;
+            const statusColor =
+                StatusColors.find((c) => c.condition(res.statusCode))?.color ||
+                defaultColor;
+            const responseTimeColor =
+                ResponseTimeColors.find((c) =>
+                    c.condition(Number(tokens['response-time'](req, res)))
+                )?.color || defaultColor;
+            const responseSizeColor =
+                ResponseSizeColors.find((c) =>
+                    c.condition(Number(tokens.res(req, res, 'content-length')))
+                )?.color || defaultColor;
 
-        return [
-            chalk.blue('🡴'),
-            defaultColor(`[${dayjs().format('hh:mm:ss a')}]`),
-            methodColor(tokens.method(req, res)),
-            defaultColor(tokens.url(req, res)),
-            statusColor(tokens.status(req, res)),
-            responseSizeColor(
-                ResponseSizeFormatter(
-                    Number(tokens.res(req, res, 'content-length') ?? 0)
-                )
-            ),
-            '-',
-            responseTimeColor(
-                ResponseTimeFormatter(Number(tokens['response-time'](req, res)))
-            ),
-        ].join(' ');
-    });
+            return [
+                chalk.blue('🡴'),
+                defaultColor(`[${dayjs().format('hh:mm:ss a')}]`),
+                methodColor(tokens.method(req, res)),
+                defaultColor(tokens.url(req, res)),
+                statusColor(tokens.status(req, res)),
+                responseSizeColor(
+                    ResponseSizeFormatter(
+                        Number(tokens.res(req, res, 'content-length') ?? 0)
+                    )
+                ),
+                defaultColor('-'),
+                responseTimeColor(
+                    ResponseTimeFormatter(Number(tokens['response-time'](req, res)))
+                ),
+            ].join(' ');
+        },
+        { stream: winstonStream }
+    );
 
     app.use(onRequest);
     app.use(onResponse);

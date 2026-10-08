@@ -8,10 +8,9 @@ const AuthToken = sequelize.define('AuthToken', {
     defaultValue: DataTypes.UUIDV4,
     primaryKey: true,
   },
-  token: {
+  otp: {
     type: DataTypes.STRING,
     allowNull: false,
-    unique: true,
   },
   user_id: {
     type: DataTypes.UUID,
