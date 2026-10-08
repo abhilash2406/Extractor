@@ -6,6 +6,7 @@ import {
   forgotPassword,
   resetPassword,
   changePassword,
+  logout,
 } from './controller.js';
 import {
   loginValidate,
@@ -97,8 +98,7 @@ router.post('/register', registerValidate, register);
  *     summary: Verify an email-verification token
  *     description: >
  *       Confirms the token, activates the account, and logs the user in by
- *       returning an access token and setting the httpOnly refresh-token
- *       cookie.
+ *       setting the httpOnly authentication cookies.
  *     tags: [Authentication]
  *     requestBody:
  *       required: true
@@ -112,7 +112,7 @@ router.post('/register', registerValidate, register);
  *                 type: string
  *     responses:
  *       200:
- *         description: Email verified — access token returned, refresh cookie set
+ *         description: Email verified — auth cookies set
  *         content:
  *           application/json:
  *             schema:
@@ -120,7 +120,6 @@ router.post('/register', registerValidate, register);
  *               properties:
  *                 success: { type: boolean, example: true }
  *                 message: { type: string, example: Email verified }
- *                 accessToken: { type: string }
  *       400:
  *         description: Validation error or invalid/expired token
  *       403:
@@ -231,5 +230,19 @@ router.post('/reset-password', resetPasswordValidate, resetPassword);
  *         description: Unauthorized
  */
 router.put('/change-password', auth, changePasswordValidate, changePassword);
+
+/**
+ * @swagger
+ * /api/v1/auth/logout:
+ *   post:
+ *     tags:
+ *       - Authentication
+ *     summary: Logout user
+ *     description: Clears HTTP-only authentication cookies.
+ *     responses:
+ *       '200':
+ *         description: Logged out successfully
+ */
+router.post('/logout', logout);
 
 export default router;

@@ -41,7 +41,6 @@ export const loginUser = async (data) => {
 
   const accessToken = user.generateAuthToken();
   const refreshToken = user.generateAuthToken(true);
-
   return {
     name: user.username,
     role: user.role,
@@ -56,7 +55,7 @@ export const loginUser = async (data) => {
 export const verifyEmailService = async (data) => {
   const { token } = data;
 
-  const authToken = await AuthToken.findOne({ 
+  const authToken = await AuthToken.findOne({
     where: { token, type: 'verify_email', status: EntityType.ACTIVE }
   });
 
@@ -245,12 +244,12 @@ export const forgotPasswordService = async (data) => {
  */
 export const resetPasswordService = async (data) => {
   const { token, newPassword, confirmPassword } = data;
-  
+
   if (newPassword !== confirmPassword) {
     throw new BadRequest('Passwords do not match');
   }
 
-  const authToken = await AuthToken.findOne({ 
+  const authToken = await AuthToken.findOne({
     where: { token, type: 'reset_password', status: EntityType.ACTIVE }
   });
 
@@ -276,7 +275,7 @@ export const resetPasswordService = async (data) => {
 export const changePasswordService = async (userId, data) => {
   const { oldPassword, newPassword } = data;
   const user = await User.findByPk(userId);
-  
+
   if (!user) {
     throw new BadRequest('User not found');
   }

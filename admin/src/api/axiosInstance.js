@@ -6,14 +6,8 @@ const axiosInstance = axios.create({
   withCredentials: true,
 });
 
-// Inject access token from Zustand store into every request
+// Clean up empty parameters globally
 axiosInstance.interceptors.request.use((config) => {
-  const token = useAuthStore.getState().accessToken;
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-
-  // Clean up empty parameters globally
   if (config.params) {
     Object.keys(config.params).forEach((key) => {
       if (config.params[key] === '' || config.params[key] === null || config.params[key] === undefined) {

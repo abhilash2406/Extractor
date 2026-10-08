@@ -11,14 +11,12 @@ export const useLogin = () => {
   return useMutation({
     mutationFn: authApi.login,
     onSuccess: ({ data: res }) => {
-      if (!res?.success || !res?.accessToken) {
+      if (!res?.success) {
         logout();
         toast.error(res?.message || 'Login failed');
         return;
       }
-      // Backend returns: { success, accessToken, data: { name, role } }
-      const user = res.data;
-      const accessToken = res.accessToken;
+      const user = res.data?.user || res.data;
 
       if (user?.role !== 'ADMIN') {
         logout();
@@ -26,12 +24,25 @@ export const useLogin = () => {
         return;
       }
 
-      login(user, accessToken);
+      login(user);
       toast.success('Welcome back, Admin!');
       navigate('/admin');
     },
     onError: (err) => {
       toast.error(err.response?.data?.message || 'Login failed');
+    },
+  });
+};
+
+export const useLogout = () => {
+  const { logout } = useAuthStore();
+  const navigate = useNavigate();
+
+  return useMutation({
+    mutationFn: authApi.logout,
+    onSettled: () => {
+      logout();
+      navigate('/login');
     },
   });
 };
@@ -55,8 +66,9 @@ export const useVerifyEmail = () => {
   const navigate = useNavigate();
   return useMutation({
     mutationFn: authApi.verifyEmail,
-    onSuccess: ({ data }) => {
-      if (data.accessToken) login(null, data.accessToken);
+    onSuccess: ({ data: res }) => {
+      const user = res.data?.user || res.data;
+      if (user) login(user);
       toast.success('Email verified! You can now log in.');
       navigate('/login');
     },

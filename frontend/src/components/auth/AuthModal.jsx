@@ -81,13 +81,12 @@ export default function AuthModal() {
     try {
       const response = await authApi.login(data);
       const res = response.data;
-      if (!res?.success || !res?.accessToken) {
+      if (!res?.success) {
         throw new Error(res?.message || 'Login failed');
       }
-      const user = res.data;
-      const accessToken = res.accessToken;
+      const user = res.data?.user || res.data;
       
-      setAuthUser(user, accessToken);
+      setAuthUser(user);
       toast.success('Welcome back to Extractor!');
       
       if (onSuccess && typeof onSuccess === 'function') {

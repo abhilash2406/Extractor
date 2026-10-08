@@ -5,21 +5,21 @@ export const useAuthStore = create(
   persist(
     (set) => ({
       user: null,
-      accessToken: null,
       isAuthenticated: false,
 
-      login: (user, accessToken) => {
-        if (!accessToken && !user) return;
-        set({ user, accessToken, isAuthenticated: true });
+      login: (user) => {
+        if (!user) return;
+        set({ user, isAuthenticated: true });
       },
 
       logout: () =>
-        set({ user: null, accessToken: null, isAuthenticated: false }),
+        set({ user: null, isAuthenticated: false }),
 
       setUser: (user) => set({ user }),
     }),
     {
-      name: 'auth-storage', // key in localStorage
+      name: 'auth-storage', // saves only user profile info in localStorage
     }
   )
 );
+

@@ -19,8 +19,10 @@ export default async (req, res, next) => {
       req.originalUrl.startsWith('/gallery')
     )
       return next();
+    const cookieToken = req.cookies?.access_token;
     const authHeader = req.header('Authorization');
-    const token = authHeader ? authHeader.replace('Bearer ', '') : null;
+    const headerToken = authHeader ? authHeader.replace('Bearer ', '') : null;
+    const token = cookieToken || headerToken;
 
     if (!token || token === 'undefined' || token === 'null') {
       return res.status(401).send({
