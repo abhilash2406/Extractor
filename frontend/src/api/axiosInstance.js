@@ -19,13 +19,12 @@ axiosInstance.interceptors.request.use((config) => {
   return config;
 });
 
-// Handle 401 globally — clear store and redirect to login
+// Handle 401 globally — clear store without disruptive hard reload
 axiosInstance.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
       useAuthStore.getState().logout();
-      window.location.href = '/login';
     }
     return Promise.reject(error);
   }

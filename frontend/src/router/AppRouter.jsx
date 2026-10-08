@@ -11,6 +11,7 @@ import CoverLetterPage from '../pages/public/CoverLetterPage';
 import InterviewPrepPage from '../pages/public/InterviewPrepPage';
 import PricingPage from '../pages/public/PricingPage';
 import ChangePasswordPage from '../pages/public/ChangePasswordPage';
+import ProfilePage from '../pages/public/ProfilePage';
 
 const router = createBrowserRouter([
   // Public Marketing & Tool Routes
@@ -25,6 +26,7 @@ const router = createBrowserRouter([
       { path: '/cover-letter', element: <CoverLetterPage /> },
       { path: '/interview-prep', element: <InterviewPrepPage /> },
       { path: '/pricing', element: <PricingPage /> },
+      { path: '/profile', element: <ProfilePage /> },
       { path: '/change-password', element: <ChangePasswordPage /> },
       { path: '/dashboard', element: <Navigate to="/" replace /> },
     ],
