@@ -36,3 +36,15 @@ export const useUserResume = (id) =>
     enabled: false,
     retry: false
   });
+
+export const useProfile = (options = {}) => {
+  return useQuery({
+    queryKey: ['profile'],
+    queryFn: async () => {
+      const res = await usersApi.getProfile();
+      return res?.data?.data || res?.data;
+    },
+    staleTime: 1000 * 60 * 5, // 5 minutes cache
+    ...options,
+  });
+};

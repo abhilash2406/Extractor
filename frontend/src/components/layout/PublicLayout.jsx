@@ -39,7 +39,7 @@ import {
 import { useAuthStore } from '@/store/authStore';
 import { useAuthModalStore } from '@/store/authModalStore';
 import AuthModal from '@/components/auth/AuthModal';
-import * as usersApi from '@/api/users.api';
+import { useProfile } from '@/hooks/useUsers';
 import { cn } from '@/lib/utils';
 
 export const PublicNavbar = () => {
@@ -559,44 +559,21 @@ const PublicLayout = () => {
   const { openAuthModal } = useAuthModalStore();
   const { isAuthenticated, setUser, logout } = useAuthStore();
 
-  // Proactive check on route change & initial mount
+  // Deduplicated and cached profile query
+  const { data: profileData } = useProfile({
+    enabled: isAuthenticated,
+  });
+
+  // Keep store in sync and handle blocked status
   useEffect(() => {
-    if (!isAuthenticated) return;
-
-    usersApi.getProfile()
-      .then((res) => {
-        const data = res?.data?.data || res?.data;
-        if (data?.status === 'BLOCKED') {
-          logout();
-          toast.error('Your account has been blocked. Please contact support.', { id: 'account-status-error' });
-        } else if (data) {
-          setUser(data);
-        }
-      })
-      .catch(() => {
-        // Any 401/403 status is handled automatically by Axios interceptor
-      });
-  }, [location.pathname, isAuthenticated, logout, setUser]);
-
-  // Check on tab focus when user switches back to this tab
-  useEffect(() => {
-    if (!isAuthenticated) return;
-
-    const handleFocus = () => {
-      usersApi.getProfile()
-        .then((res) => {
-          const data = res?.data?.data || res?.data;
-          if (data?.status === 'BLOCKED') {
-            logout();
-            toast.error('Your account has been blocked. Please contact support.', { id: 'account-status-error' });
-          }
-        })
-        .catch(() => {});
-    };
-
-    window.addEventListener('focus', handleFocus);
-    return () => window.removeEventListener('focus', handleFocus);
-  }, [isAuthenticated, logout]);
+    if (!profileData) return;
+    if (profileData?.status === 'BLOCKED') {
+      logout();
+      toast.error('Your account has been blocked. Please contact support.', { id: 'account-status-error' });
+    } else {
+      setUser(profileData);
+    }
+  }, [profileData, logout, setUser]);
 
   useEffect(() => {
     const otp = searchParams.get('otp');
