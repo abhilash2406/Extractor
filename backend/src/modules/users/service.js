@@ -228,17 +228,37 @@ export const getUserResumeService = async (id) => {
 
 export const getProfileService = async (userId) => {
   const user = await User.findByPk(userId, {
-    attributes: ['id', 'username', 'email', 'phone', 'profile_pic', 'role', 'status']
+    attributes: ['id', 'username', 'email', 'phone', 'profile_pic', 'role', 'status'],
+    include: [
+      {
+        model: Subscription,
+        as: 'subscriptions',
+        where: { status: 'ACTIVE' },
+        include: [{ model: Plan, as: 'plan' }],
+        limit: 1,
+        order: [['created_at', 'DESC']],
+        required: false,
+      }
+    ]
   });
 
   if (!user) throw new Error('User not found');
+
+  const json = user.toJSON();
+  const activeSub = json.subscriptions && json.subscriptions.length > 0 ? json.subscriptions[0] : null;
+  delete json.subscriptions;
 
   let photoUrl = null;
   if (user.profile_pic) {
     photoUrl = await generateB2PresignedUrl(user.profile_pic);
   }
 
-  return { ...user.toJSON(), photoUrl };
+  return { 
+    ...json, 
+    photoUrl,
+    plan_code: activeSub?.plan?.code || 'FREE',
+    plan: activeSub?.plan?.name || 'Free',
+  };
 };
 
 export const updateProfileService = async (userId, data, file) => {

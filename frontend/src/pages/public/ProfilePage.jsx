@@ -21,6 +21,8 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuthStore } from '@/store/authStore';
 import { useAuthModalStore } from '@/store/authModalStore';
+import { useProfile } from '@/hooks/useUsers';
+import { useQueryClient } from '@tanstack/react-query';
 import * as usersApi from '@/api/users.api';
 import * as authApi from '@/api/auth.api';
 import toast from 'react-hot-toast';
@@ -38,35 +40,28 @@ export default function ProfilePage() {
   const [photoFile, setPhotoFile] = useState(null);
   const [photoPreview, setPhotoPreview] = useState(user?.profile_pic || null);
   const [isSaving, setIsSaving] = useState(false);
-  const [isLoadingProfile, setIsLoadingProfile] = useState(false);
+  const { data: profileData, isLoading: isLoadingProfile } = useProfile({
+    enabled: isAuthenticated,
+  });
 
   useEffect(() => {
-    if (isAuthenticated) {
-      setIsLoadingProfile(true);
-      usersApi.getProfile()
-        .then((res) => {
-          const data = res?.data?.data || res?.data;
-          if (data) {
-            if (data.status === 'BLOCKED') {
-              logout();
-              toast.error('Your account has been blocked. Please contact support.', { id: 'account-status-error' });
-              navigate('/');
-              return;
-            }
-            setFormData({
-              name: data.name || data.username || '',
-              phone: data.phone || '',
-              email: data.email || '',
-            });
-            if (data.profile_pic) {
-              setPhotoPreview(data.profile_pic);
-            }
-          }
-        })
-        .catch(() => {})
-        .finally(() => setIsLoadingProfile(false));
+    if (profileData) {
+      if (profileData.status === 'BLOCKED') {
+        logout();
+        toast.error('Your account has been blocked. Please contact support.', { id: 'account-status-error' });
+        navigate('/');
+        return;
+      }
+      setFormData({
+        name: profileData.name || profileData.username || '',
+        phone: profileData.phone || '',
+        email: profileData.email || '',
+      });
+      if (profileData.profile_pic) {
+        setPhotoPreview(profileData.profile_pic);
+      }
     }
-  }, [isAuthenticated, logout, navigate]);
+  }, [profileData, logout, navigate]);
 
   const handlePhotoChange = (e) => {
     const file = e.target.files?.[0];
@@ -102,6 +97,7 @@ export default function ProfilePage() {
         profile_pic: updatedUser.profile_pic || photoPreview,
       });
 
+      queryClient.invalidateQueries({ queryKey: ['profile'] });
       toast.success('Profile updated successfully!');
     } catch (err) {
       toast.error(err.response?.data?.message || err.message || 'Failed to update profile');
@@ -205,9 +201,19 @@ export default function ProfilePage() {
                 <p className="text-xs text-muted-foreground mt-0.5">
                   {formData.email || user?.email}
                 </p>
-                <div className="mt-2">
+                <div className="mt-2 flex items-center justify-center gap-2">
                   <Badge variant="outline" className="text-[10px] font-bold px-2.5 py-0.5 bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/30 uppercase">
                     {user?.role || 'Candidate'}
+                  </Badge>
+                  <Badge 
+                    variant="outline" 
+                    className={
+                      user?.plan_code === 'PRO' || user?.plan_code === 'PREMIUM'
+                        ? "text-[10px] font-bold px-2.5 py-0.5 bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/30 uppercase"
+                        : "text-[10px] font-bold px-2.5 py-0.5 bg-muted text-muted-foreground border-border uppercase"
+                    }
+                  >
+                    {user?.plan_code || 'FREE'}
                   </Badge>
                 </div>
               </div>
