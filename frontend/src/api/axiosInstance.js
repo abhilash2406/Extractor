@@ -1,4 +1,5 @@
 import axios from 'axios';
+import toast from 'react-hot-toast';
 import { useAuthStore } from '../store/authStore';
 
 const axiosInstance = axios.create({
@@ -24,13 +25,26 @@ axiosInstance.interceptors.request.use((config) => {
   return config;
 });
 
-// Handle 401 globally — clear store without disruptive hard reload
+// Handle 401 & 403 (blocked/inactive) globally — clear store and notify user
 axiosInstance.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+    const status = error.response?.status;
+    const data = error.response?.data;
+    const isBlocked = data?.isBlocked || data?.message?.toLowerCase().includes('block');
+    const isInactive = data?.message?.toLowerCase().includes('not active') || data?.message?.toLowerCase().includes('inactive');
+
+    if (status === 401) {
+      if (useAuthStore.getState().isAuthenticated) {
+        useAuthStore.getState().logout();
+      }
+    } else if (status === 403 && (isBlocked || isInactive)) {
       useAuthStore.getState().logout();
+      toast.error(data?.message || 'Your account has been blocked. Please contact support.', {
+        id: 'account-status-error',
+      });
     }
+
     return Promise.reject(error);
   }
 );

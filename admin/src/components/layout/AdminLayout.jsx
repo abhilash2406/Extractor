@@ -13,7 +13,9 @@ import {
   ChevronLeft,
   ChevronRight,
   Sparkles,
-  LogOut
+  LogOut,
+  Layers,
+  MessageSquare
 } from 'lucide-react';
 import UserMenu from './UserMenu';
 import { Button } from '@/components/ui/button';
@@ -28,9 +30,11 @@ import { cn } from '@/lib/utils';
 const navItems = [
   { to: '/admin', label: 'Dashboard', icon: LayoutDashboard, end: true },
   { to: '/admin/users', label: 'Users', icon: Users },
+  { to: '/admin/subscriptions', label: 'Subscriptions', icon: Coins },
+  { to: '/admin/plans', label: 'Plans', icon: Layers },
+  { to: '/admin/feedback', label: 'Feedback', icon: MessageSquare },
   { to: '/admin/templates', label: 'Templates', icon: Palette },
   { to: '/admin/transactions', label: 'Transactions', icon: CreditCard },
-  { to: '/admin/subscriptions', label: 'Subscriptions', icon: Coins },
   { to: '/admin/ai-usage', label: 'AI Usage', icon: Bot },
 ];
 

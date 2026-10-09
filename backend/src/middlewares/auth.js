@@ -1,7 +1,8 @@
 import { logger } from '../config/winston-config.js';
 import jwt from 'jsonwebtoken';
 import users from '../models/user.js';
-import { getAudience, cookieNamesFor } from '../utils/cookies.js';
+import { EntityType } from '../common/enum/activity-enum.js';
+import { getAudience, cookieNamesFor, clearAuthCookies } from '../utils/cookies.js';
 
 /**
  * Global authentication middleware.
@@ -66,6 +67,24 @@ export default async (req, res, next) => {
       });
     }
 
+    // Check user account status
+    if (user.status === EntityType.BLOCKED) {
+      clearAuthCookies(res, audience);
+      return res.status(403).send({
+        success: false,
+        isBlocked: true,
+        message: 'Your account has been blocked. Please contact support.',
+      });
+    }
+
+    if (user.status !== EntityType.ACTIVE) {
+      clearAuthCookies(res, audience);
+      return res.status(403).send({
+        success: false,
+        message: 'Your account is not active. Please contact support.',
+      });
+    }
+
     // If accessing admin portal audience, enforce admin role
     if (audience === 'admin' && user.role !== 'ADMIN') {
       return res.status(403).send({
@@ -76,6 +95,7 @@ export default async (req, res, next) => {
 
     req.user = decoded;
     req.user.role = user.role;
+    req.user.status = user.status;
     return next();
   } catch (ex) {
     console.error('TOKEN VERIFICATION ERROR:', ex);

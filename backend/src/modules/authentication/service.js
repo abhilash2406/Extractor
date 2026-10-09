@@ -42,6 +42,10 @@ export const loginUser = async (data) => {
     throw new BadRequest('Invalid email or password');
   }
 
+  // Update last login timestamp
+  user.last_login_at = new Date();
+  await user.save();
+
   const accessToken = user.generateAuthToken();
   const refreshToken = user.generateAuthToken(true);
   return {

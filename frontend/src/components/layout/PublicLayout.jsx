@@ -39,6 +39,7 @@ import {
 import { useAuthStore } from '@/store/authStore';
 import { useAuthModalStore } from '@/store/authModalStore';
 import AuthModal from '@/components/auth/AuthModal';
+import * as usersApi from '@/api/users.api';
 import { cn } from '@/lib/utils';
 
 export const PublicNavbar = () => {
@@ -554,7 +555,48 @@ export const PublicFooter = () => {
 
 const PublicLayout = () => {
   const [searchParams] = useSearchParams();
+  const location = useLocation();
   const { openAuthModal } = useAuthModalStore();
+  const { isAuthenticated, setUser, logout } = useAuthStore();
+
+  // Proactive check on route change & initial mount
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    usersApi.getProfile()
+      .then((res) => {
+        const data = res?.data?.data || res?.data;
+        if (data?.status === 'BLOCKED') {
+          logout();
+          toast.error('Your account has been blocked. Please contact support.', { id: 'account-status-error' });
+        } else if (data) {
+          setUser(data);
+        }
+      })
+      .catch(() => {
+        // Any 401/403 status is handled automatically by Axios interceptor
+      });
+  }, [location.pathname, isAuthenticated, logout, setUser]);
+
+  // Check on tab focus when user switches back to this tab
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    const handleFocus = () => {
+      usersApi.getProfile()
+        .then((res) => {
+          const data = res?.data?.data || res?.data;
+          if (data?.status === 'BLOCKED') {
+            logout();
+            toast.error('Your account has been blocked. Please contact support.', { id: 'account-status-error' });
+          }
+        })
+        .catch(() => {});
+    };
+
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, [isAuthenticated, logout]);
 
   useEffect(() => {
     const otp = searchParams.get('otp');

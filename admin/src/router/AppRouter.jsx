@@ -9,9 +9,11 @@ import ResetPasswordPage from '../pages/auth/ResetPasswordPage';
 // Admin pages
 import DashboardPage from '../pages/admin/DashboardPage';
 import UsersPage from '../pages/admin/UsersPage';
+import SubscriptionsPage from '../pages/admin/SubscriptionsPage';
+import PlansPage from '../pages/admin/PlansPage';
+import FeedbackPage from '../pages/admin/FeedbackPage';
 import TemplatesPage from '../pages/admin/TemplatesPage';
 import TransactionsPage from '../pages/admin/TransactionsPage';
-import SubscriptionsPage from '../pages/admin/SubscriptionsPage';
 import AIUsagePage from '../pages/admin/AIUsagePage';
 import SettingsPage from '../pages/admin/SettingsPage';
 
@@ -38,9 +40,11 @@ const router = createBrowserRouter([
         children: [
           { path: '/admin', element: <DashboardPage /> },
           { path: '/admin/users', element: <UsersPage /> },
+          { path: '/admin/subscriptions', element: <SubscriptionsPage /> },
+          { path: '/admin/plans', element: <PlansPage /> },
+          { path: '/admin/feedback', element: <FeedbackPage /> },
           { path: '/admin/templates', element: <TemplatesPage /> },
           { path: '/admin/transactions', element: <TransactionsPage /> },
-          { path: '/admin/subscriptions', element: <SubscriptionsPage /> },
           { path: '/admin/ai-usage', element: <AIUsagePage /> },
           { path: '/admin/settings', element: <SettingsPage /> },
         ],

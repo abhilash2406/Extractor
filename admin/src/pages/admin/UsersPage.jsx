@@ -20,12 +20,20 @@ import {
   ChevronRight,
   ShieldCheck,
   UserCheck,
-  UserX
+  UserX,
+  ChevronDown,
+  Check
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from '@/components/ui/dropdown-menu';
 import {
   Table,
   TableBody,
@@ -169,19 +177,58 @@ const UsersPage = () => {
                         {moment(user.createdAt || user.created_at).format('MMM DD, YYYY')}
                       </TableCell>
                       <TableCell>
-                        <select
-                          className={`text-xs font-semibold rounded-lg px-2.5 py-1.5 border transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring ${
-                            user.status === 'ACTIVE'
-                              ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-800'
-                              : 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/50 dark:text-rose-300 dark:border-rose-800'
-                          }`}
-                          value={user.status}
-                          onChange={(e) => handleStatusChange(user.id, e.target.value)}
-                          disabled={isUpdating}
-                        >
-                          <option value="ACTIVE">Active</option>
-                          <option value="BLOCKED">Blocked</option>
-                        </select>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <button
+                              type="button"
+                              disabled={isUpdating}
+                              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border transition-all duration-150 outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
+                                user.status === 'ACTIVE'
+                                  ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/20 hover:border-emerald-500/50'
+                                  : 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/30 hover:bg-rose-500/20 hover:border-rose-500/50'
+                              }`}
+                            >
+                              <span
+                                className={`h-1.5 w-1.5 rounded-full ${
+                                  user.status === 'ACTIVE' ? 'bg-emerald-500 shadow-xs shadow-emerald-500/60' : 'bg-rose-500 shadow-xs shadow-rose-500/60'
+                                }`}
+                              />
+                              <span>{user.status === 'ACTIVE' ? 'Active' : 'Blocked'}</span>
+                              <ChevronDown className="h-3 w-3 opacity-60 ml-0.5" />
+                            </button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="start" className="w-36 p-1 rounded-xl bg-card/95 backdrop-blur-xl border border-border shadow-xl">
+                            <DropdownMenuItem
+                              onClick={() => handleStatusChange(user.id, 'ACTIVE')}
+                              className={`flex items-center justify-between px-2.5 py-1.5 text-xs font-semibold rounded-lg cursor-pointer transition-colors ${
+                                user.status === 'ACTIVE'
+                                  ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold'
+                                  : 'text-foreground hover:bg-accent'
+                              }`}
+                            >
+                              <div className="flex items-center gap-2">
+                                <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                                <span>Active</span>
+                              </div>
+                              {user.status === 'ACTIVE' && <Check className="h-3.5 w-3.5 text-emerald-500" />}
+                            </DropdownMenuItem>
+
+                            <DropdownMenuItem
+                              onClick={() => handleStatusChange(user.id, 'BLOCKED')}
+                              className={`flex items-center justify-between px-2.5 py-1.5 text-xs font-semibold rounded-lg cursor-pointer transition-colors ${
+                                user.status === 'BLOCKED'
+                                  ? 'bg-rose-500/10 text-rose-600 dark:text-rose-400 font-bold'
+                                  : 'text-foreground hover:bg-accent'
+                              }`}
+                            >
+                              <div className="flex items-center gap-2">
+                                <span className="h-2 w-2 rounded-full bg-rose-500" />
+                                <span>Blocked</span>
+                              </div>
+                              {user.status === 'BLOCKED' && <Check className="h-3.5 w-3.5 text-rose-500" />}
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-1">

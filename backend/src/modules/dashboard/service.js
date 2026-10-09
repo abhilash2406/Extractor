@@ -1,40 +1,29 @@
 import User from '../../models/user.js';
-import JobRole from '../../models/jobRole.js';
-import Application from '../../models/application.js';
+import Resume from '../../models/resume.js';
+import ResumeAnalysis from '../../models/resumeAnalysis.js';
 import Test from '../../models/test.js';
 import { UserType } from '../../common/enum/usertype-enum.js';
 import { EntityType } from '../../common/enum/activity-enum.js';
-import sequelize from '../../config/sequelize-config.js';
 import { Op } from 'sequelize';
 import moment from 'moment';
 
 export const getDashboardStatsService = async () => {
   const [
     totalUsers,
-    totalJobRoles,
-    pendingApplications,
-    acceptedApplications,
-    statusAggregation
+    totalResumes,
+    totalAnalyses,
+    activeUsers
   ] = await Promise.all([
-    User.count({ where: { role: UserType.USER } }),
-    JobRole.count({ where: { status: EntityType.ACTIVE } }),
-    Application.count({ where: { status: 'pending' } }),
-    Application.count({ where: { status: 'accepted' } }),
-    Application.findAll({
-      attributes: ['status', [sequelize.fn('COUNT', sequelize.col('id')), 'count']],
-      group: ['status']
-    })
+    User.count({ where: { role: UserType.USER, status: { [Op.ne]: EntityType.DELETED } } }),
+    Resume.count(),
+    ResumeAnalysis.count(),
+    User.count({ where: { status: EntityType.ACTIVE } })
   ]);
 
-  const applicationsByStatus = statusAggregation.map(s => ({
-    name: s.status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
-    value: parseInt(s.dataValues.count, 10)
-  }));
-
   const thirtyDaysAgo = moment().subtract(30, 'days').startOf('day').toDate();
-  const recentApps = await Application.findAll({
-    where: { applied_at: { [Op.gte]: thirtyDaysAgo } },
-    attributes: ['applied_at']
+  const recentResumes = await Resume.findAll({
+    where: { uploaded_at: { [Op.gte]: thirtyDaysAgo } },
+    attributes: ['uploaded_at']
   });
 
   const timeMap = {};
@@ -42,8 +31,8 @@ export const getDashboardStatsService = async () => {
     timeMap[moment().subtract(i, 'days').format('MMM DD')] = 0;
   }
   
-  recentApps.forEach(app => {
-    const dateStr = moment(app.applied_at).format('MMM DD');
+  recentResumes.forEach(r => {
+    const dateStr = moment(r.uploaded_at).format('MMM DD');
     if (timeMap[dateStr] !== undefined) {
       timeMap[dateStr]++;
     }
@@ -54,11 +43,17 @@ export const getDashboardStatsService = async () => {
     count: timeMap[date]
   }));
 
+  const applicationsByStatus = [
+    { name: 'Active Users', value: activeUsers },
+    { name: 'Resumes Analyzed', value: totalAnalyses },
+    { name: 'Resumes Uploaded', value: totalResumes }
+  ];
+
   return {
     totalUsers,
-    totalJobRoles,
-    pendingApplications,
-    acceptedApplications,
+    totalJobRoles: totalResumes,
+    pendingApplications: totalResumes,
+    acceptedApplications: totalAnalyses,
     applicationsByStatus,
     applicationsOverTime
   };
@@ -66,32 +61,24 @@ export const getDashboardStatsService = async () => {
 
 export const getCandidateDashboardStatsService = async (candidateId) => {
   const [
-    totalApplications,
-    pendingApplications,
+    totalResumes,
     completedTests,
-    recentApplications
+    recentResumes
   ] = await Promise.all([
-    Application.count({ where: { user_id: candidateId } }),
-    Application.count({ where: { user_id: candidateId, status: { [Op.in]: ['pending', 'reviewed', 'aptitude_round', 'technical_round', 'face_to_face_interview'] } } }),
+    Resume.count({ where: { user_id: candidateId } }),
     Test.count({ where: { user_id: candidateId, is_completed: true } }),
-    Application.findAll({
+    Resume.findAll({
       where: { user_id: candidateId },
-      order: [['applied_at', 'DESC']],
+      order: [['uploaded_at', 'DESC']],
       limit: 5,
-      include: [
-        {
-          model: JobRole,
-          as: 'job_role',
-          attributes: ['title', 'min_experience']
-        }
-      ]
+      include: [{ model: ResumeAnalysis, as: 'analysis' }]
     })
   ]);
 
   return {
-    totalApplications,
-    pendingApplications,
+    totalApplications: totalResumes,
+    pendingApplications: totalResumes,
     completedTests,
-    recentApplications
+    recentApplications: recentResumes
   };
 };

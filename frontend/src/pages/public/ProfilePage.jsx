@@ -47,6 +47,12 @@ export default function ProfilePage() {
         .then((res) => {
           const data = res?.data?.data || res?.data;
           if (data) {
+            if (data.status === 'BLOCKED') {
+              logout();
+              toast.error('Your account has been blocked. Please contact support.', { id: 'account-status-error' });
+              navigate('/');
+              return;
+            }
             setFormData({
               name: data.name || data.username || '',
               phone: data.phone || '',
@@ -60,7 +66,7 @@ export default function ProfilePage() {
         .catch(() => {})
         .finally(() => setIsLoadingProfile(false));
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, logout, navigate]);
 
   const handlePhotoChange = (e) => {
     const file = e.target.files?.[0];

@@ -22,11 +22,7 @@ const Test = sequelize.define('Test', {
   },
   application_id: {
     type: DataTypes.UUID,
-    allowNull: false,
-    references: {
-      model: 'applications',
-      key: 'id'
-    }
+    allowNull: true,
   },
   total_questions: {
     type: DataTypes.INTEGER,
@@ -55,7 +51,6 @@ const Test = sequelize.define('Test', {
 
 Test.associate = (models) => {
   Test.belongsTo(models.User, { foreignKey: 'user_id', as: 'candidate' });
-  Test.belongsTo(models.Application, { foreignKey: 'application_id', as: 'application' });
   Test.hasMany(models.TestAnswer, { foreignKey: 'test_id', as: 'answers' });
 };
 
