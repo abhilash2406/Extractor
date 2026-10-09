@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { 
   Search, 
   Coins, 
@@ -7,22 +7,15 @@ import {
   User, 
   CreditCard, 
   Calendar, 
-  CheckCircle2, 
-  XCircle, 
-  AlertCircle, 
-  Clock, 
-  Filter, 
-  ChevronDown, 
-  ArrowUpDown,
-  Download,
-  ShieldCheck,
-  Check,
-  Zap,
-  Layers,
-  ChevronLeft,
-  ChevronRight
+  Check, 
+  ChevronLeft, 
+  ChevronRight,
+  ChevronDown,
+  RotateCcw,
+  X,
+  Clock
 } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -34,7 +27,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -291,6 +284,29 @@ const initialSubscriptions = [
   }
 ];
 
+const planLabels = {
+  ALL: 'All Plans',
+  FREE: 'Free',
+  BASIC: 'Basic',
+  PRO: 'Pro',
+  PREMIUM: 'Premium',
+};
+
+const statusLabels = {
+  ALL: 'All Statuses',
+  ACTIVE: 'Active',
+  CANCELED: 'Canceled',
+  PAST_DUE: 'Past Due',
+  EXPIRED: 'Expired',
+};
+
+const periodLabels = {
+  ALL: 'All Periods',
+  'No expiry': 'No expiry',
+  'Monthly': 'Monthly',
+  'Until period end': 'Until period end',
+};
+
 export default function SubscriptionsPage() {
   const [subscriptions, setSubscriptions] = useState(initialSubscriptions);
   const [search, setSearch] = useState('');
@@ -300,6 +316,21 @@ export default function SubscriptionsPage() {
   const [viewSub, setViewSub] = useState(null);
   const [page, setPage] = useState(1);
   const itemsPerPage = 8;
+
+  const hasActiveFilters = Boolean(
+    search ||
+    selectedPlan !== 'ALL' ||
+    selectedStatus !== 'ALL' ||
+    selectedPeriod !== 'ALL'
+  );
+
+  const resetFilters = () => {
+    setSearch('');
+    setSelectedPlan('ALL');
+    setSelectedStatus('ALL');
+    setSelectedPeriod('ALL');
+    setPage(1);
+  };
 
   // Filtered Subscriptions
   const filteredSubscriptions = useMemo(() => {
@@ -435,74 +466,165 @@ export default function SubscriptionsPage() {
             <div className="relative flex-1 max-w-md">
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search by user email, name, or username..."
-                className="pl-10 h-10 rounded-xl bg-background/60"
+                placeholder="Search by user, email....."
+                className="pl-10 pr-8 h-10 rounded-xl bg-background/60"
                 value={search}
                 onChange={(e) => {
                   setSearch(e.target.value);
                   setPage(1);
                 }}
               />
+              {search && (
+                <button
+                  type="button"
+                  onClick={() => { setSearch(''); setPage(1); }}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              )}
             </div>
 
-            {/* Filter Dropdowns */}
+            {/* Modern Filter Dropdown Pills */}
             <div className="flex flex-wrap items-center gap-2.5">
               
               {/* Plan Filter */}
               <div className="flex items-center gap-1.5">
                 <span className="text-xs font-semibold text-muted-foreground">Plan:</span>
-                <select
-                  value={selectedPlan}
-                  onChange={(e) => {
-                    setSelectedPlan(e.target.value);
-                    setPage(1);
-                  }}
-                  className="h-9 px-3 rounded-xl border border-border bg-background text-xs font-semibold focus:ring-2 focus:ring-primary outline-none cursor-pointer"
-                >
-                  <option value="ALL">All Plans</option>
-                  <option value="FREE">Free</option>
-                  <option value="BASIC">Basic</option>
-                  <option value="PRO">Pro</option>
-                  <option value="PREMIUM">Premium</option>
-                </select>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      type="button"
+                      className={`inline-flex items-center gap-1.5 h-9 px-3 rounded-xl border text-xs font-semibold transition-all duration-150 outline-none focus:ring-2 focus:ring-primary/30 cursor-pointer ${
+                        selectedPlan !== 'ALL'
+                          ? 'bg-primary/10 border-primary/40 text-primary shadow-xs'
+                          : 'bg-background hover:bg-muted/60 border-border/80 text-foreground'
+                      }`}
+                    >
+                      <span>{planLabels[selectedPlan] || 'All Plans'}</span>
+                      <ChevronDown className="h-3.5 w-3.5 opacity-60" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" className="w-44 p-1 rounded-xl bg-card/95 backdrop-blur-xl border border-border shadow-xl">
+                    {[
+                      { code: 'ALL', label: 'All Plans', dot: null },
+                      { code: 'FREE', label: 'Free', dot: 'bg-slate-400' },
+                      { code: 'BASIC', label: 'Basic', dot: 'bg-blue-500' },
+                      { code: 'PRO', label: 'Pro', dot: 'bg-violet-500' },
+                      { code: 'PREMIUM', label: 'Premium', dot: 'bg-amber-500' },
+                    ].map((item) => (
+                      <DropdownMenuItem
+                        key={item.code}
+                        onClick={() => { setSelectedPlan(item.code); setPage(1); }}
+                        className={`flex items-center justify-between px-2.5 py-1.5 text-xs font-semibold rounded-lg cursor-pointer transition-colors ${
+                          selectedPlan === item.code ? 'bg-primary/10 text-primary font-bold' : 'text-foreground hover:bg-accent'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2">
+                          {item.dot ? <span className={`h-2 w-2 rounded-full ${item.dot}`} /> : <span className="h-2 w-2" />}
+                          <span>{item.label}</span>
+                        </div>
+                        {selectedPlan === item.code && <Check className="h-3.5 w-3.5 text-primary" />}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
 
               {/* Status Filter */}
               <div className="flex items-center gap-1.5">
                 <span className="text-xs font-semibold text-muted-foreground">Status:</span>
-                <select
-                  value={selectedStatus}
-                  onChange={(e) => {
-                    setSelectedStatus(e.target.value);
-                    setPage(1);
-                  }}
-                  className="h-9 px-3 rounded-xl border border-border bg-background text-xs font-semibold focus:ring-2 focus:ring-primary outline-none cursor-pointer"
-                >
-                  <option value="ALL">All Statuses</option>
-                  <option value="ACTIVE">Active</option>
-                  <option value="CANCELED">Canceled</option>
-                  <option value="PAST_DUE">Past Due</option>
-                  <option value="EXPIRED">Expired</option>
-                </select>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      type="button"
+                      className={`inline-flex items-center gap-1.5 h-9 px-3 rounded-xl border text-xs font-semibold transition-all duration-150 outline-none focus:ring-2 focus:ring-primary/30 cursor-pointer ${
+                        selectedStatus !== 'ALL'
+                          ? 'bg-primary/10 border-primary/40 text-primary shadow-xs'
+                          : 'bg-background hover:bg-muted/60 border-border/80 text-foreground'
+                      }`}
+                    >
+                      <span>{statusLabels[selectedStatus] || 'All Statuses'}</span>
+                      <ChevronDown className="h-3.5 w-3.5 opacity-60" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" className="w-40 p-1 rounded-xl bg-card/95 backdrop-blur-xl border border-border shadow-xl">
+                    {[
+                      { code: 'ALL', label: 'All Statuses', dot: null },
+                      { code: 'ACTIVE', label: 'Active', dot: 'bg-emerald-500' },
+                      { code: 'CANCELED', label: 'Canceled', dot: 'bg-rose-500' },
+                      { code: 'PAST_DUE', label: 'Past Due', dot: 'bg-amber-500' },
+                      { code: 'EXPIRED', label: 'Expired', dot: 'bg-slate-400' },
+                    ].map((item) => (
+                      <DropdownMenuItem
+                        key={item.code}
+                        onClick={() => { setSelectedStatus(item.code); setPage(1); }}
+                        className={`flex items-center justify-between px-2.5 py-1.5 text-xs font-semibold rounded-lg cursor-pointer transition-colors ${
+                          selectedStatus === item.code ? 'bg-primary/10 text-primary font-bold' : 'text-foreground hover:bg-accent'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2">
+                          {item.dot ? <span className={`h-2 w-2 rounded-full ${item.dot}`} /> : <span className="h-2 w-2" />}
+                          <span>{item.label}</span>
+                        </div>
+                        {selectedStatus === item.code && <Check className="h-3.5 w-3.5 text-primary" />}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
 
               {/* Period Filter */}
               <div className="flex items-center gap-1.5">
                 <span className="text-xs font-semibold text-muted-foreground">Period:</span>
-                <select
-                  value={selectedPeriod}
-                  onChange={(e) => {
-                    setSelectedPeriod(e.target.value);
-                    setPage(1);
-                  }}
-                  className="h-9 px-3 rounded-xl border border-border bg-background text-xs font-semibold focus:ring-2 focus:ring-primary outline-none cursor-pointer"
-                >
-                  <option value="ALL">All Periods</option>
-                  <option value="No expiry">No expiry</option>
-                  <option value="Monthly">Monthly</option>
-                  <option value="Until period end">Until period end</option>
-                </select>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      type="button"
+                      className={`inline-flex items-center gap-1.5 h-9 px-3 rounded-xl border text-xs font-semibold transition-all duration-150 outline-none focus:ring-2 focus:ring-primary/30 cursor-pointer ${
+                        selectedPeriod !== 'ALL'
+                          ? 'bg-primary/10 border-primary/40 text-primary shadow-xs'
+                          : 'bg-background hover:bg-muted/60 border-border/80 text-foreground'
+                      }`}
+                    >
+                      <span>{periodLabels[selectedPeriod] || 'All Periods'}</span>
+                      <ChevronDown className="h-3.5 w-3.5 opacity-60" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" className="w-44 p-1 rounded-xl bg-card/95 backdrop-blur-xl border border-border shadow-xl">
+                    {[
+                      { code: 'ALL', label: 'All Periods' },
+                      { code: 'No expiry', label: 'No expiry' },
+                      { code: 'Monthly', label: 'Monthly' },
+                      { code: 'Until period end', label: 'Until period end' },
+                    ].map((item) => (
+                      <DropdownMenuItem
+                        key={item.code}
+                        onClick={() => { setSelectedPeriod(item.code); setPage(1); }}
+                        className={`flex items-center justify-between px-2.5 py-1.5 text-xs font-semibold rounded-lg cursor-pointer transition-colors ${
+                          selectedPeriod === item.code ? 'bg-primary/10 text-primary font-bold' : 'text-foreground hover:bg-accent'
+                        }`}
+                      >
+                        <span>{item.label}</span>
+                        {selectedPeriod === item.code && <Check className="h-3.5 w-3.5 text-primary" />}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
+
+              {/* Reset Filters Button */}
+              {hasActiveFilters && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={resetFilters}
+                  className="h-9 px-2.5 text-xs text-muted-foreground hover:text-foreground gap-1.5 rounded-xl border border-dashed border-border hover:border-foreground/30 transition-colors cursor-pointer"
+                >
+                  <RotateCcw className="h-3.5 w-3.5" />
+                  <span>Reset</span>
+                </Button>
+              )}
 
             </div>
 
@@ -512,15 +634,15 @@ export default function SubscriptionsPage() {
         {/* Table Content */}
         <CardContent className="p-0">
           <div className="overflow-x-auto">
-            <Table>
+            <Table className="min-w-[800px]">
               <TableHeader>
                 <TableRow className="border-border/60 hover:bg-transparent">
-                  <TableHead className="font-bold text-xs uppercase text-muted-foreground pl-6">User</TableHead>
-                  <TableHead className="font-bold text-xs uppercase text-muted-foreground">Plan</TableHead>
-                  <TableHead className="font-bold text-xs uppercase text-muted-foreground">Status</TableHead>
-                  <TableHead className="font-bold text-xs uppercase text-muted-foreground">Billing period</TableHead>
-                  <TableHead className="font-bold text-xs uppercase text-muted-foreground hidden md:table-cell">Member Since</TableHead>
-                  <TableHead className="font-bold text-xs uppercase text-muted-foreground text-right pr-6">Actions</TableHead>
+                  <TableHead className="font-bold text-xs uppercase text-muted-foreground pl-6 whitespace-nowrap">User</TableHead>
+                  <TableHead className="font-bold text-xs uppercase text-muted-foreground whitespace-nowrap">Plan</TableHead>
+                  <TableHead className="font-bold text-xs uppercase text-muted-foreground whitespace-nowrap">Status</TableHead>
+                  <TableHead className="font-bold text-xs uppercase text-muted-foreground whitespace-nowrap">Billing period</TableHead>
+                  <TableHead className="font-bold text-xs uppercase text-muted-foreground hidden md:table-cell whitespace-nowrap">Member Since</TableHead>
+                  <TableHead className="font-bold text-xs uppercase text-muted-foreground text-right pr-6 whitespace-nowrap">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>

@@ -1,6 +1,6 @@
 import React from 'react';
 import { useAuthStore } from '../../store/authStore';
-import { useDashboardStats } from '../../hooks/useDashboard';
+import { useDashboardStats } from '@/hooks/api/useDashboard';
 import { 
   Users, 
   Activity, 

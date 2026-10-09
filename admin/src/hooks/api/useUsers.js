@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import * as usersApi from '../api/users.api';
+import * as usersApi from '@/api/users.api';
 import toast from 'react-hot-toast';
 
 export const useUsers = (params) =>
@@ -21,6 +21,7 @@ export const useUpdateUserStatus = () => {
     mutationFn: ({ id, status }) => usersApi.updateUserStatus(id, status),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
+      queryClient.invalidateQueries({ queryKey: ['user'] });
       toast.success('User status updated');
     },
     onError: (err) => {
@@ -34,5 +35,5 @@ export const useUserResume = (id) =>
     queryKey: ['userResume', id],
     queryFn: () => usersApi.getUserResume(id).then((r) => r.data.data),
     enabled: false,
-    retry: false
+    retry: false,
   });

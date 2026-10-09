@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import { Link } from 'react-router-dom';
-import { useForgotPassword } from '../../hooks/useAuth';
+import { useForgotPassword } from '@/hooks/api/useAuth';
 import AuthLayout from '../../components/layout/AuthLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';

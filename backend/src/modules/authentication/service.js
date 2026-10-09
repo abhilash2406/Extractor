@@ -143,6 +143,9 @@ export const googleLoginService = async (data) => {
     await user.update({ status: EntityType.ACTIVE });
   }
 
+  user.last_login_at = new Date();
+  await user.save();
+
   const accessToken = user.generateAuthToken();
   const refreshToken = user.generateAuthToken(true);
 

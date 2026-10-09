@@ -1,27 +1,21 @@
-import React, { useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { 
   Search, 
   MessageSquare, 
   Mail, 
-  User, 
   Calendar, 
-  CheckCircle2, 
-  Clock, 
-  AlertTriangle, 
-  Star, 
   Eye, 
   Trash2, 
   Reply, 
   Save, 
   Check, 
+  ChevronLeft, 
+  ChevronRight,
   ChevronDown,
-  Filter,
-  Layers,
-  Sparkles,
-  ChevronLeft,
-  ChevronRight
+  RotateCcw,
+  X
 } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -107,6 +101,23 @@ const initialFeedbacks = [
   }
 ];
 
+const categoryLabels = {
+  ALL: 'All Categories',
+  bug: 'Bug Report',
+  feature_request: 'Feature Request',
+  pricing: 'Pricing & Sales',
+  support: 'Support Query',
+  general: 'General',
+};
+
+const statusLabels = {
+  ALL: 'All Statuses',
+  NEW: 'New',
+  IN_REVIEW: 'In Review',
+  RESOLVED: 'Resolved',
+  CLOSED: 'Closed',
+};
+
 export default function FeedbackPage() {
   const [feedbacks, setFeedbacks] = useState(initialFeedbacks);
   const [search, setSearch] = useState('');
@@ -116,6 +127,19 @@ export default function FeedbackPage() {
   const [adminNotes, setAdminNotes] = useState('');
   const [page, setPage] = useState(1);
   const itemsPerPage = 8;
+
+  const hasActiveFilters = Boolean(
+    search ||
+    selectedCategory !== 'ALL' ||
+    selectedStatus !== 'ALL'
+  );
+
+  const resetFilters = () => {
+    setSearch('');
+    setSelectedCategory('ALL');
+    setSelectedStatus('ALL');
+    setPage(1);
+  };
 
   // Filter logic
   const filteredFeedbacks = useMemo(() => {
@@ -246,54 +270,126 @@ export default function FeedbackPage() {
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Search feedback by user, subject, or keywords..."
-                className="pl-10 h-10 rounded-xl bg-background/60"
+                className="pl-10 pr-8 h-10 rounded-xl bg-background/60"
                 value={search}
                 onChange={(e) => {
                   setSearch(e.target.value);
                   setPage(1);
                 }}
               />
+              {search && (
+                <button
+                  type="button"
+                  onClick={() => { setSearch(''); setPage(1); }}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              )}
             </div>
 
-            {/* Filters */}
+            {/* Modern Filter Dropdown Pills */}
             <div className="flex flex-wrap items-center gap-2.5">
               
+              {/* Category Filter */}
               <div className="flex items-center gap-1.5">
                 <span className="text-xs font-semibold text-muted-foreground">Category:</span>
-                <select
-                  value={selectedCategory}
-                  onChange={(e) => {
-                    setSelectedCategory(e.target.value);
-                    setPage(1);
-                  }}
-                  className="h-9 px-3 rounded-xl border border-border bg-background text-xs font-semibold focus:ring-2 focus:ring-primary outline-none cursor-pointer"
-                >
-                  <option value="ALL">All Categories</option>
-                  <option value="bug">Bug Report</option>
-                  <option value="feature_request">Feature Request</option>
-                  <option value="pricing">Pricing & Sales</option>
-                  <option value="support">Support Query</option>
-                  <option value="general">General</option>
-                </select>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      type="button"
+                      className={`inline-flex items-center gap-1.5 h-9 px-3 rounded-xl border text-xs font-semibold transition-all duration-150 outline-none focus:ring-2 focus:ring-primary/30 cursor-pointer ${
+                        selectedCategory !== 'ALL'
+                          ? 'bg-primary/10 border-primary/40 text-primary shadow-xs'
+                          : 'bg-background hover:bg-muted/60 border-border/80 text-foreground'
+                      }`}
+                    >
+                      <span>{categoryLabels[selectedCategory] || 'All Categories'}</span>
+                      <ChevronDown className="h-3.5 w-3.5 opacity-60" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" className="w-48 p-1 rounded-xl bg-card/95 backdrop-blur-xl border border-border shadow-xl">
+                    {[
+                      { code: 'ALL', label: 'All Categories', dot: null },
+                      { code: 'bug', label: 'Bug Report', dot: 'bg-rose-500' },
+                      { code: 'feature_request', label: 'Feature Request', dot: 'bg-violet-500' },
+                      { code: 'pricing', label: 'Pricing & Sales', dot: 'bg-amber-500' },
+                      { code: 'support', label: 'Support Query', dot: 'bg-blue-500' },
+                      { code: 'general', label: 'General', dot: 'bg-emerald-500' },
+                    ].map((item) => (
+                      <DropdownMenuItem
+                        key={item.code}
+                        onClick={() => { setSelectedCategory(item.code); setPage(1); }}
+                        className={`flex items-center justify-between px-2.5 py-1.5 text-xs font-semibold rounded-lg cursor-pointer transition-colors ${
+                          selectedCategory === item.code ? 'bg-primary/10 text-primary font-bold' : 'text-foreground hover:bg-accent'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2">
+                          {item.dot ? <span className={`h-2 w-2 rounded-full ${item.dot}`} /> : <span className="h-2 w-2" />}
+                          <span>{item.label}</span>
+                        </div>
+                        {selectedCategory === item.code && <Check className="h-3.5 w-3.5 text-primary" />}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
 
+              {/* Status Filter */}
               <div className="flex items-center gap-1.5">
                 <span className="text-xs font-semibold text-muted-foreground">Status:</span>
-                <select
-                  value={selectedStatus}
-                  onChange={(e) => {
-                    setSelectedStatus(e.target.value);
-                    setPage(1);
-                  }}
-                  className="h-9 px-3 rounded-xl border border-border bg-background text-xs font-semibold focus:ring-2 focus:ring-primary outline-none cursor-pointer"
-                >
-                  <option value="ALL">All Statuses</option>
-                  <option value="NEW">New</option>
-                  <option value="IN_REVIEW">In Review</option>
-                  <option value="RESOLVED">Resolved</option>
-                  <option value="CLOSED">Closed</option>
-                </select>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      type="button"
+                      className={`inline-flex items-center gap-1.5 h-9 px-3 rounded-xl border text-xs font-semibold transition-all duration-150 outline-none focus:ring-2 focus:ring-primary/30 cursor-pointer ${
+                        selectedStatus !== 'ALL'
+                          ? 'bg-primary/10 border-primary/40 text-primary shadow-xs'
+                          : 'bg-background hover:bg-muted/60 border-border/80 text-foreground'
+                      }`}
+                    >
+                      <span>{statusLabels[selectedStatus] || 'All Statuses'}</span>
+                      <ChevronDown className="h-3.5 w-3.5 opacity-60" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" className="w-40 p-1 rounded-xl bg-card/95 backdrop-blur-xl border border-border shadow-xl">
+                    {[
+                      { code: 'ALL', label: 'All Statuses', dot: null },
+                      { code: 'NEW', label: 'New', dot: 'bg-blue-500' },
+                      { code: 'IN_REVIEW', label: 'In Review', dot: 'bg-amber-500' },
+                      { code: 'RESOLVED', label: 'Resolved', dot: 'bg-emerald-500' },
+                      { code: 'CLOSED', label: 'Closed', dot: 'bg-slate-400' },
+                    ].map((item) => (
+                      <DropdownMenuItem
+                        key={item.code}
+                        onClick={() => { setSelectedStatus(item.code); setPage(1); }}
+                        className={`flex items-center justify-between px-2.5 py-1.5 text-xs font-semibold rounded-lg cursor-pointer transition-colors ${
+                          selectedStatus === item.code ? 'bg-primary/10 text-primary font-bold' : 'text-foreground hover:bg-accent'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2">
+                          {item.dot ? <span className={`h-2 w-2 rounded-full ${item.dot}`} /> : <span className="h-2 w-2" />}
+                          <span>{item.label}</span>
+                        </div>
+                        {selectedStatus === item.code && <Check className="h-3.5 w-3.5 text-primary" />}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
+
+              {/* Reset Filters Button */}
+              {hasActiveFilters && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={resetFilters}
+                  className="h-9 px-2.5 text-xs text-muted-foreground hover:text-foreground gap-1.5 rounded-xl border border-dashed border-border hover:border-foreground/30 transition-colors cursor-pointer"
+                >
+                  <RotateCcw className="h-3.5 w-3.5" />
+                  <span>Reset</span>
+                </Button>
+              )}
 
             </div>
 
@@ -303,15 +399,15 @@ export default function FeedbackPage() {
         {/* Table Content */}
         <CardContent className="p-0">
           <div className="overflow-x-auto">
-            <Table>
+            <Table className="min-w-[800px]">
               <TableHeader>
                 <TableRow className="border-border/60 hover:bg-transparent">
-                  <TableHead className="font-bold text-xs uppercase text-muted-foreground pl-6">Sender</TableHead>
-                  <TableHead className="font-bold text-xs uppercase text-muted-foreground">Category</TableHead>
-                  <TableHead className="font-bold text-xs uppercase text-muted-foreground">Subject & Message</TableHead>
-                  <TableHead className="font-bold text-xs uppercase text-muted-foreground">Status</TableHead>
-                  <TableHead className="font-bold text-xs uppercase text-muted-foreground hidden md:table-cell">Date</TableHead>
-                  <TableHead className="font-bold text-xs uppercase text-muted-foreground text-right pr-6">Actions</TableHead>
+                  <TableHead className="font-bold text-xs uppercase text-muted-foreground pl-6 whitespace-nowrap">Sender</TableHead>
+                  <TableHead className="font-bold text-xs uppercase text-muted-foreground whitespace-nowrap">Category</TableHead>
+                  <TableHead className="font-bold text-xs uppercase text-muted-foreground whitespace-nowrap">Subject & Message</TableHead>
+                  <TableHead className="font-bold text-xs uppercase text-muted-foreground whitespace-nowrap">Status</TableHead>
+                  <TableHead className="font-bold text-xs uppercase text-muted-foreground hidden md:table-cell whitespace-nowrap">Date</TableHead>
+                  <TableHead className="font-bold text-xs uppercase text-muted-foreground text-right pr-6 whitespace-nowrap">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
