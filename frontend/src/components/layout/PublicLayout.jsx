@@ -214,7 +214,7 @@ export const PublicNavbar = () => {
                             : "bg-muted/80 text-muted-foreground border-border/80"
                         )}
                       >
-                        {user?.plan || 'Free'}
+                        {user?.plan_code || 'FREE'}
                       </Badge>
                     )}
                   </div>
@@ -348,7 +348,7 @@ export const PublicNavbar = () => {
                           : "bg-muted/80 text-muted-foreground border-border/80"
                       )}
                     >
-                      {user?.plan || 'Free'}
+                      {user?.plan_code || 'FREE'}
                     </Badge>
                   )}
                 </div>

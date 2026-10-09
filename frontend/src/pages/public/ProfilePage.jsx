@@ -213,7 +213,7 @@ export default function ProfilePage() {
                         : "text-[10px] font-bold px-2.5 py-0.5 bg-muted text-muted-foreground border-border uppercase"
                     }
                   >
-                    {user?.plan || 'Free'} Plan
+                    {user?.plan_code || 'FREE'}
                   </Badge>
                 </div>
               </div>

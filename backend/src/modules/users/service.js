@@ -246,6 +246,7 @@ export const getProfileService = async (userId) => {
 
   const json = user.toJSON();
   const activeSub = json.subscriptions && json.subscriptions.length > 0 ? json.subscriptions[0] : null;
+  delete json.subscriptions;
 
   let photoUrl = null;
   if (user.profile_pic) {
@@ -255,27 +256,8 @@ export const getProfileService = async (userId) => {
   return { 
     ...json, 
     photoUrl,
-    plan: activeSub?.plan?.name || 'Free',
     plan_code: activeSub?.plan?.code || 'FREE',
-    subscription: activeSub ? {
-      id: activeSub.id,
-      status: activeSub.status,
-      starts_at: activeSub.starts_at,
-      current_period_start: activeSub.current_period_start,
-      current_period_end: activeSub.current_period_end,
-      cancel_at_period_end: activeSub.cancel_at_period_end,
-      canceled_at: activeSub.canceled_at,
-      gateway: activeSub.gateway,
-      plan: activeSub.plan ? {
-        id: activeSub.plan.id,
-        code: activeSub.plan.code,
-        name: activeSub.plan.name,
-        price: activeSub.plan.price,
-        currency: activeSub.plan.currency,
-        billing_interval: activeSub.plan.billing_interval,
-        features: activeSub.plan.features,
-      } : null,
-    } : null,
+    plan: activeSub?.plan?.name || 'Free',
   };
 };
 
