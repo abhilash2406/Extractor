@@ -6,16 +6,16 @@ import LoginPage from '../pages/auth/LoginPage';
 import ForgotPasswordPage from '../pages/auth/ForgotPasswordPage';
 import ResetPasswordPage from '../pages/auth/ResetPasswordPage';
 
-// Admin pages
-import DashboardPage from '../pages/admin/DashboardPage';
-import UsersPage from '../pages/admin/UsersPage';
-import SubscriptionsPage from '../pages/admin/SubscriptionsPage';
-import PlansPage from '../pages/admin/PlansPage';
-import FeedbackPage from '../pages/admin/FeedbackPage';
-import TemplatesPage from '../pages/admin/TemplatesPage';
-import TransactionsPage from '../pages/admin/TransactionsPage';
-import AIUsagePage from '../pages/admin/AIUsagePage';
-import SettingsPage from '../pages/admin/SettingsPage';
+// Feature pages
+import DashboardPage from '../pages/dashboard/DashboardPage';
+import UsersPage from '../pages/user/UsersPage';
+import SubscriptionsPage from '../pages/subscription/SubscriptionsPage';
+import PlansPage from '../pages/plan/PlansPage';
+import FeedbackPage from '../pages/feedback/FeedbackPage';
+import TemplatesPage from '../pages/template/TemplatesPage';
+import TransactionsPage from '../pages/transaction/TransactionsPage';
+import AIUsagePage from '../pages/ai-usage/AIUsagePage';
+import SettingsPage from '../pages/settings/SettingsPage';
 
 // Layout
 import AdminLayout from '../components/layout/AdminLayout';
