@@ -665,7 +665,7 @@ export default function ResumeBuilderPage() {
               {/* Rendered Live Resume Sheet */}
               <div 
                 id="printableResume"
-                className="bg-white text-slate-900 rounded-2xl p-6 sm:p-8 shadow-md border border-slate-200 min-h-[620px] text-xs space-y-5 font-sans"
+                className="bg-white text-slate-900 rounded-2xl p-6 sm:p-8 shadow-md border border-slate-200 min-h-[620px] text-xs space-y-5 font-sans break-words overflow-hidden"
               >
                 {/* Header */}
                 <div className="border-b border-slate-200 pb-4 space-y-1.5">
