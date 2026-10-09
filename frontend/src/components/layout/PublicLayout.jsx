@@ -91,7 +91,7 @@ export const PublicNavbar = () => {
 
   return (
     <header className="fixed top-0 inset-x-0 z-50 w-full h-16 sm:h-20 bg-background/95 backdrop-blur-xl border-b border-border/80 shadow-sm transition-all duration-300">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center justify-between gap-3 sm:gap-4">
+      <div className="w-full max-w-[1500px] mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center justify-between gap-2 sm:gap-4">
         
         {/* Top-Left Logo */}
         <Link to="/" className="flex items-center gap-2.5 group shrink-0">
@@ -109,7 +109,7 @@ export const PublicNavbar = () => {
         </Link>
 
         {/* Desktop Navigation Links */}
-        <nav className="hidden xl:flex items-center gap-0.5 2xl:gap-1 bg-muted/60 dark:bg-card/50 p-1.5 rounded-2xl border border-border/70 backdrop-blur-md shadow-xs shrink-0">
+        <nav className="hidden xl:flex items-center gap-0.5 2xl:gap-1 bg-muted/60 dark:bg-card/50 p-1 2xl:p-1.5 rounded-2xl border border-border/70 backdrop-blur-md shadow-xs shrink-0">
           {navLinks.map((link) => {
             const Icon = link.icon;
             return (
@@ -117,7 +117,7 @@ export const PublicNavbar = () => {
                 key={link.to}
                 to={link.to}
                 className={({ isActive }) => cn(
-                  "group relative px-2.5 2xl:px-3 py-1.5 rounded-xl text-xs font-semibold transition-all duration-200 flex items-center gap-1.5 2xl:gap-2 shrink-0",
+                  "group relative px-2 2xl:px-2.5 py-1.5 rounded-xl text-[11.5px] 2xl:text-xs font-semibold transition-all duration-200 flex items-center gap-1.5 2xl:gap-2 shrink-0",
                   isActive 
                     ? "bg-background text-foreground shadow-xs ring-1 ring-border/80 dark:bg-card/90 dark:text-foreground font-bold" 
                     : "text-slate-600 dark:text-slate-400 hover:text-foreground hover:bg-background/60 dark:hover:bg-muted/40"
@@ -132,7 +132,7 @@ export const PublicNavbar = () => {
                     <span className="whitespace-nowrap">{link.label}</span>
                     {link.badge && (
                       <span className={cn(
-                        "px-1.5 py-0.5 rounded-md text-[9px] font-bold tracking-tight uppercase leading-none border transition-colors shadow-2xs hidden 2xl:inline-block",
+                        "inline-flex items-center px-1.5 py-0.5 rounded-md text-[8.5px] 2xl:text-[9px] font-bold tracking-tight uppercase leading-none border transition-colors shadow-2xs shrink-0",
                         link.badge === 'AI' 
                           ? "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/20" 
                           : link.badge === 'Free' 
