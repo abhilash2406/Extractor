@@ -228,17 +228,55 @@ export const getUserResumeService = async (id) => {
 
 export const getProfileService = async (userId) => {
   const user = await User.findByPk(userId, {
-    attributes: ['id', 'username', 'email', 'phone', 'profile_pic', 'role', 'status']
+    attributes: ['id', 'username', 'email', 'phone', 'profile_pic', 'role', 'status'],
+    include: [
+      {
+        model: Subscription,
+        as: 'subscriptions',
+        where: { status: 'ACTIVE' },
+        include: [{ model: Plan, as: 'plan' }],
+        limit: 1,
+        order: [['created_at', 'DESC']],
+        required: false,
+      }
+    ]
   });
 
   if (!user) throw new Error('User not found');
+
+  const json = user.toJSON();
+  const activeSub = json.subscriptions && json.subscriptions.length > 0 ? json.subscriptions[0] : null;
 
   let photoUrl = null;
   if (user.profile_pic) {
     photoUrl = await generateB2PresignedUrl(user.profile_pic);
   }
 
-  return { ...user.toJSON(), photoUrl };
+  return { 
+    ...json, 
+    photoUrl,
+    plan: activeSub?.plan?.name || 'Free',
+    plan_code: activeSub?.plan?.code || 'FREE',
+    subscription: activeSub ? {
+      id: activeSub.id,
+      status: activeSub.status,
+      starts_at: activeSub.starts_at,
+      current_period_start: activeSub.current_period_start,
+      current_period_end: activeSub.current_period_end,
+      cancel_at_period_end: activeSub.cancel_at_period_end,
+      canceled_at: activeSub.canceled_at,
+      gateway: activeSub.gateway,
+      plan: activeSub.plan ? {
+        id: activeSub.plan.id,
+        code: activeSub.plan.code,
+        name: activeSub.plan.name,
+        price: activeSub.plan.price,
+        currency: activeSub.plan.currency,
+        billing_interval: activeSub.plan.billing_interval,
+        features: activeSub.plan.features,
+      } : null,
+    } : null,
+  };
 };
 
 export const updateProfileService = async (userId, data, file) => {

@@ -201,9 +201,19 @@ export default function ProfilePage() {
                 <p className="text-xs text-muted-foreground mt-0.5">
                   {formData.email || user?.email}
                 </p>
-                <div className="mt-2">
+                <div className="mt-2 flex items-center justify-center gap-2">
                   <Badge variant="outline" className="text-[10px] font-bold px-2.5 py-0.5 bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/30 uppercase">
                     {user?.role || 'Candidate'}
+                  </Badge>
+                  <Badge 
+                    variant="outline" 
+                    className={
+                      user?.plan_code === 'PRO' || user?.plan_code === 'PREMIUM'
+                        ? "text-[10px] font-bold px-2.5 py-0.5 bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/30 uppercase"
+                        : "text-[10px] font-bold px-2.5 py-0.5 bg-muted text-muted-foreground border-border uppercase"
+                    }
+                  >
+                    {user?.plan || 'Free'} Plan
                   </Badge>
                 </div>
               </div>

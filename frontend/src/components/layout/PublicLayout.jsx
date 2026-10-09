@@ -200,9 +200,21 @@ export const PublicNavbar = () => {
                         </p>
                       )}
                     </div>
-                    {user?.role === 'ADMIN' && (
+                    {user?.role === 'ADMIN' ? (
                       <Badge variant="outline" className="text-[9px] font-bold px-1.5 py-0.5 uppercase bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/30 shrink-0">
                         Admin
+                      </Badge>
+                    ) : (
+                      <Badge 
+                        variant="outline" 
+                        className={cn(
+                          "text-[9px] font-bold px-1.5 py-0.5 uppercase shrink-0",
+                          user?.plan_code === 'PRO' || user?.plan_code === 'PREMIUM'
+                            ? "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/30"
+                            : "bg-muted/80 text-muted-foreground border-border/80"
+                        )}
+                      >
+                        {user?.plan || 'Free'}
                       </Badge>
                     )}
                   </div>
@@ -322,9 +334,21 @@ export const PublicNavbar = () => {
                       )}
                     </div>
                   </div>
-                  {user?.role === 'ADMIN' && (
+                  {user?.role === 'ADMIN' ? (
                     <Badge variant="outline" className="text-[9px] font-bold px-1.5 py-0.5 uppercase bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/30 shrink-0">
                       Admin
+                    </Badge>
+                  ) : (
+                    <Badge 
+                      variant="outline" 
+                      className={cn(
+                        "text-[9px] font-bold px-1.5 py-0.5 uppercase shrink-0",
+                        user?.plan_code === 'PRO' || user?.plan_code === 'PREMIUM'
+                          ? "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/30"
+                          : "bg-muted/80 text-muted-foreground border-border/80"
+                      )}
+                    >
+                      {user?.plan || 'Free'}
                     </Badge>
                   )}
                 </div>
