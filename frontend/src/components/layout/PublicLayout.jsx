@@ -91,14 +91,14 @@ export const PublicNavbar = () => {
 
   return (
     <header className="fixed top-0 inset-x-0 z-50 w-full h-16 sm:h-20 bg-background/95 backdrop-blur-xl border-b border-border/80 shadow-sm transition-all duration-300">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center justify-between gap-4">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center justify-between gap-3 sm:gap-4">
         
         {/* Top-Left Logo */}
         <Link to="/" className="flex items-center gap-2.5 group shrink-0">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-xs transition-transform group-hover:scale-105">
+          <div className="flex h-9 sm:h-10 w-9 sm:w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-xs transition-transform group-hover:scale-105 shrink-0">
             <Zap className="h-5 w-5 fill-current" />
           </div>
-          <div className="flex flex-col">
+          <div className="flex flex-col shrink-0">
             <span className="font-heading text-lg sm:text-xl font-extrabold tracking-tight text-foreground">
               Extractor
             </span>
@@ -109,7 +109,7 @@ export const PublicNavbar = () => {
         </Link>
 
         {/* Desktop Navigation Links */}
-        <nav className="hidden lg:flex items-center gap-1 bg-muted/60 dark:bg-card/50 p-1.5 rounded-2xl border border-border/70 backdrop-blur-md shadow-xs">
+        <nav className="hidden xl:flex items-center gap-0.5 2xl:gap-1 bg-muted/60 dark:bg-card/50 p-1.5 rounded-2xl border border-border/70 backdrop-blur-md shadow-xs shrink-0">
           {navLinks.map((link) => {
             const Icon = link.icon;
             return (
@@ -117,7 +117,7 @@ export const PublicNavbar = () => {
                 key={link.to}
                 to={link.to}
                 className={({ isActive }) => cn(
-                  "group relative px-2.5 xl:px-3 py-1.5 rounded-xl text-xs font-semibold transition-all duration-200 flex items-center gap-2",
+                  "group relative px-2.5 2xl:px-3 py-1.5 rounded-xl text-xs font-semibold transition-all duration-200 flex items-center gap-1.5 2xl:gap-2 shrink-0",
                   isActive 
                     ? "bg-background text-foreground shadow-xs ring-1 ring-border/80 dark:bg-card/90 dark:text-foreground font-bold" 
                     : "text-slate-600 dark:text-slate-400 hover:text-foreground hover:bg-background/60 dark:hover:bg-muted/40"
@@ -132,7 +132,7 @@ export const PublicNavbar = () => {
                     <span className="whitespace-nowrap">{link.label}</span>
                     {link.badge && (
                       <span className={cn(
-                        "px-1.5 py-0.5 rounded-md text-[9px] font-bold tracking-tight uppercase leading-none border transition-colors shadow-2xs",
+                        "px-1.5 py-0.5 rounded-md text-[9px] font-bold tracking-tight uppercase leading-none border transition-colors shadow-2xs hidden 2xl:inline-block",
                         link.badge === 'AI' 
                           ? "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/20" 
                           : link.badge === 'Free' 
@@ -152,12 +152,12 @@ export const PublicNavbar = () => {
         </nav>
 
         {/* Right Actions: Login / Logout & CTAs */}
-        <div className="flex items-center gap-2.5">
-          <ThemeToggle className="h-9 w-9" />
+        <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
+          <ThemeToggle className="h-9 w-9 shrink-0" />
 
           {isAuthenticated ? (
-            <div className="flex items-center gap-2.5">
-              <Button asChild className="h-9 sm:h-10 px-3.5 sm:px-4 rounded-xl text-xs font-semibold gap-1.5 shadow-xs">
+            <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
+              <Button asChild className="h-9 sm:h-10 px-3.5 sm:px-4 rounded-xl text-xs font-semibold gap-1.5 shadow-xs shrink-0">
                 <Link to="/builder">
                   <Sparkles className="h-3.5 w-3.5" />
                   <span className="hidden sm:inline">Create Resume</span>
@@ -170,7 +170,7 @@ export const PublicNavbar = () => {
                 <DropdownMenuTrigger asChild>
                   <button
                     type="button"
-                    className="flex items-center gap-2 p-1 pl-1.5 pr-2.5 rounded-full border border-border/80 bg-background/60 hover:bg-accent hover:border-primary/40 transition-all outline-none focus-visible:ring-2 focus-visible:ring-primary shadow-xs cursor-pointer"
+                    className="flex items-center gap-2 p-1 pl-1.5 pr-2.5 rounded-full border border-border/80 bg-background/60 hover:bg-accent hover:border-primary/40 transition-all outline-none focus-visible:ring-2 focus-visible:ring-primary shadow-xs cursor-pointer shrink-0"
                   >
                     <Avatar className="h-8 w-8 ring-2 ring-primary/20">
                       {user?.profile_pic ? (
@@ -259,17 +259,17 @@ export const PublicNavbar = () => {
               </DropdownMenu>
             </div>
           ) : (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 shrink-0">
               <Button 
                 type="button" 
                 variant="outline" 
                 onClick={() => openAuthModal('login')}
-                className="h-9 sm:h-10 px-3.5 sm:px-4 text-xs font-semibold border-border hover:bg-accent rounded-xl gap-1.5"
+                className="h-9 sm:h-10 px-3.5 sm:px-4 text-xs font-semibold border-border hover:bg-accent rounded-xl gap-1.5 shrink-0"
               >
                 <LogIn className="h-3.5 w-3.5 text-primary" />
                 <span>Sign In</span>
               </Button>
-              <Button asChild className="h-9 sm:h-10 px-3.5 sm:px-4 rounded-xl text-xs font-semibold gap-1.5 shadow-xs">
+              <Button asChild className="h-9 sm:h-10 px-3.5 sm:px-4 rounded-xl text-xs font-semibold gap-1.5 shadow-xs shrink-0">
                 <Link to="/builder">
                   <Sparkles className="h-3.5 w-3.5" />
                   <span className="hidden sm:inline">Create Resume</span>
@@ -282,7 +282,7 @@ export const PublicNavbar = () => {
           {/* Mobile Menu Trigger */}
           <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="lg:hidden h-10 w-10 rounded-xl text-foreground hover:bg-muted">
+              <Button variant="ghost" size="icon" className="xl:hidden h-9 sm:h-10 w-9 sm:w-10 rounded-xl text-foreground hover:bg-muted shrink-0">
                 <Menu className="h-5 w-5" />
                 <span className="sr-only">Toggle menu</span>
               </Button>
