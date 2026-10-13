@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { 
   Sparkles, 
@@ -24,7 +24,13 @@ import {
   Lock,
   Copy,
   Zap,
-  Printer
+  Printer,
+  Columns,
+  Square,
+  ZoomIn,
+  ZoomOut,
+  Maximize2,
+  X
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -34,8 +40,10 @@ import { Label } from '@/components/ui/label';
 import { useAuthStore } from '@/store/authStore';
 import { useAuthModalStore } from '@/store/authModalStore';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { getPublishedTemplates } from '@/api/templates.api';
+import ResumeRenderer from '@/components/resume/ResumeRenderer';
 
-const templates = [
+const fallbackTemplates = [
   { id: 'modern', name: 'Modern Tech', accent: '#3B82F6', font: 'sans', description: 'Clean layout with bold headers, optimal for tech roles.' },
   { id: 'executive', name: 'Executive Clean', accent: '#4F46E5', font: 'heading', description: 'Sophisticated header and structured timeline for leaders.' },
   { id: 'minimal', name: 'Minimalist ATS', accent: '#0F172A', font: 'mono', description: 'High-speed OCR parsing with zero graphic overhead.' },
@@ -46,12 +54,49 @@ export default function ResumeBuilderPage() {
   const [searchParams] = useSearchParams();
   const selectedTemplateParam = searchParams.get('template') || 'modern';
   
-  const [activeTab, setActiveTab] = useState('personal');
+  const [activeTab, setActiveTab] = useState('template');
+  const [apiTemplates, setApiTemplates] = useState([]);
+  const [loadingTemplates, setLoadingTemplates] = useState(true);
+  const [selectedTemplateObj, setSelectedTemplateObj] = useState(null);
   const [selectedTemplate, setSelectedTemplate] = useState(selectedTemplateParam);
   const [accentColor, setAccentColor] = useState('#3B82F6');
+  const [zoomLevel, setZoomLevel] = useState(0.68);
+  const [isFullScreen, setIsFullScreen] = useState(false);
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [aiGenerating, setAiGenerating] = useState(false);
   const { isAuthenticated } = useAuthStore();
+
+  // Load published templates created from backend
+  useEffect(() => {
+    let isMounted = true;
+    const fetchTemplates = async () => {
+      try {
+        setLoadingTemplates(true);
+        const res = await getPublishedTemplates({ limit: 50 });
+        const items = res.data?.data || [];
+        if (isMounted && items.length > 0) {
+          setApiTemplates(items);
+          const matched = items.find(
+            (t) => t.id === selectedTemplateParam || t.code === selectedTemplateParam
+          ) || items[0];
+          if (matched) {
+            setSelectedTemplate(matched.code || matched.id);
+            setSelectedTemplateObj(matched);
+            if (matched.design_config?.primaryColor) {
+              setAccentColor(matched.design_config.primaryColor);
+            }
+          }
+        }
+      } catch (err) {
+        console.error('Failed to load published templates', err);
+      } finally {
+        if (isMounted) setLoadingTemplates(false);
+      }
+    };
+
+    fetchTemplates();
+    return () => { isMounted = false; };
+  }, [selectedTemplateParam]);
 
   // Resume State
   const [resumeData, setResumeData] = useState({
@@ -100,6 +145,101 @@ export default function ResumeBuilderPage() {
     ],
     skills: ['TypeScript', 'React.js', 'Node.js', 'Python', 'FastAPI', 'PostgreSQL', 'Docker', 'AWS ECS', 'GraphQL', 'Tailwind CSS', 'Redis', 'CI/CD']
   });
+
+  // Dynamically resolve template configurations & user accent color
+  const activeTemplate = useMemo(() => {
+    const tpl =
+      selectedTemplateObj ||
+      apiTemplates.find(
+        (t) => t.id === selectedTemplate || t.code === selectedTemplate
+      );
+
+    if (tpl) {
+      return {
+        ...tpl,
+        design_config: {
+          ...tpl.design_config,
+          primaryColor: accentColor || tpl.design_config?.primaryColor || '#2563eb',
+          accentColor: accentColor || tpl.design_config?.accentColor || '#3b82f6',
+        },
+      };
+    }
+
+    return {
+      id: 'default',
+      name: 'Standard ATS',
+      layout_config: {
+        pageSize: 'A4',
+        columns: 1,
+        sidebarPosition: 'left',
+        sidebarWidth: '33%',
+        headerFullWidth: false,
+        sections: [
+          { id: 'header', type: 'header', title: 'Header Details', visible: true, column: 'main' },
+          { id: 'summary', type: 'summary', title: 'Professional Summary', visible: true, column: 'main' },
+          { id: 'experience', type: 'experience', title: 'Work Experience', visible: true, column: 'main' },
+          { id: 'education', type: 'education', title: 'Education', visible: true, column: 'main' },
+          { id: 'skills', type: 'skills', title: 'Skills & Proficiencies', visible: true, column: 'main' },
+        ],
+      },
+      design_config: {
+        fontFamily: "'Inter', sans-serif",
+        headingFontFamily: "'Inter', sans-serif",
+        fontSize: '10pt',
+        headingStyle: 'underline',
+        primaryColor: accentColor || '#2563eb',
+        textColor: '#1e293b',
+        headingColor: '#0f172a',
+        accentColor: accentColor || '#3b82f6',
+        backgroundColor: '#ffffff',
+        sidebarBackgroundColor: '#f8fafc',
+        pageMargin: 'normal',
+        sectionSpacing: 'normal',
+        itemSpacing: 'normal',
+        dividerStyle: 'subtle',
+        headerAlignment: 'left',
+        headerStyle: 'standard',
+        contactStyle: 'inline',
+        datePlacement: 'right',
+        showSectionIcons: false,
+        skillsStyle: 'tags',
+        showPhoto: false,
+        experienceStyle: 'standard',
+        educationStyle: 'standard',
+      },
+    };
+  }, [selectedTemplateObj, selectedTemplate, apiTemplates, accentColor]);
+
+  // Normalize form state for ResumeRenderer
+  const normalizedResumeData = useMemo(() => {
+    return {
+      name: resumeData.fullName,
+      title: resumeData.jobTitle,
+      email: resumeData.email,
+      phone: resumeData.phone,
+      location: resumeData.location,
+      website: resumeData.website,
+      linkedin: resumeData.linkedin,
+      summary: resumeData.summary,
+      experience: (resumeData.experiences || []).map((exp) => ({
+        id: exp.id,
+        title: exp.position,
+        company: exp.company,
+        location: exp.location,
+        period: exp.period,
+        description: exp.bullets,
+      })),
+      education: (resumeData.education || []).map((edu) => ({
+        id: edu.id,
+        degree: edu.degree,
+        institution: edu.school,
+        location: edu.location,
+        period: edu.year,
+        grade: edu.gpa,
+      })),
+      skills: resumeData.skills || [],
+    };
+  }, [resumeData]);
 
   const handlePersonalChange = (field, val) => {
     setResumeData(prev => ({ ...prev, [field]: val }));
@@ -253,6 +393,15 @@ export default function ResumeBuilderPage() {
             {/* Step Tabs */}
             <div className="flex items-center gap-1 p-1.5 rounded-2xl bg-muted/60 border border-border/80 overflow-x-auto">
               <button
+                onClick={() => setActiveTab('template')}
+                className={`flex-1 min-w-[100px] py-2 px-3 rounded-xl text-xs font-semibold transition-all flex items-center justify-center gap-1.5 ${
+                  activeTab === 'template' ? 'bg-card text-primary shadow-xs ring-1 ring-border' : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                <Palette className="h-3.5 w-3.5" />
+                <span>Template</span>
+              </button>
+              <button
                 onClick={() => setActiveTab('personal')}
                 className={`flex-1 min-w-[100px] py-2 px-3 rounded-xl text-xs font-semibold transition-all flex items-center justify-center gap-1.5 ${
                   activeTab === 'personal' ? 'bg-card text-primary shadow-xs ring-1 ring-border' : 'text-muted-foreground hover:text-foreground'
@@ -279,16 +428,118 @@ export default function ResumeBuilderPage() {
                 <Wrench className="h-3.5 w-3.5" />
                 <span>Skills & Edu</span>
               </button>
-              <button
-                onClick={() => setActiveTab('template')}
-                className={`flex-1 min-w-[100px] py-2 px-3 rounded-xl text-xs font-semibold transition-all flex items-center justify-center gap-1.5 ${
-                  activeTab === 'template' ? 'bg-card text-primary shadow-xs ring-1 ring-border' : 'text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                <Palette className="h-3.5 w-3.5" />
-                <span>Template</span>
-              </button>
             </div>
+
+            {/* Tab 1: Template Selection (Loaded from Backend Created Templates) */}
+            {activeTab === 'template' && (
+              <Card className="border-border/80 shadow-sm animate-in fade-in duration-200">
+                <CardHeader className="p-5 pb-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="text-base font-bold">Choose Resume Template</CardTitle>
+                      <CardDescription>Select a layout designed for your industry and target ATS score.</CardDescription>
+                    </div>
+                    {apiTemplates.length > 0 && (
+                      <Badge variant="outline" className="text-[10px] font-mono text-primary border-primary/20 bg-primary/5">
+                        {apiTemplates.length} Available
+                      </Badge>
+                    )}
+                  </div>
+                </CardHeader>
+                <CardContent className="p-5 pt-2 space-y-5">
+                  {loadingTemplates ? (
+                    <div className="py-12 flex flex-col items-center justify-center gap-2.5 text-center">
+                      <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                      <p className="text-xs text-muted-foreground">Loading created templates...</p>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {(apiTemplates.length > 0 ? apiTemplates : fallbackTemplates).map((tpl) => {
+                        const isSelected =
+                          selectedTemplate === (tpl.code || tpl.id) ||
+                          selectedTemplate === tpl.id ||
+                          selectedTemplateObj?.id === tpl.id;
+                        const primaryColor =
+                          tpl.design_config?.primaryColor || tpl.accent || '#3B82F6';
+                        const columns = tpl.layout_config?.columns || 1;
+
+                        return (
+                          <div
+                            key={tpl.id}
+                            onClick={() => {
+                              setSelectedTemplate(tpl.code || tpl.id);
+                              setSelectedTemplateObj(tpl);
+                              if (primaryColor) {
+                                setAccentColor(primaryColor);
+                              }
+                            }}
+                            className={`group relative p-3.5 rounded-2xl border cursor-pointer transition-all ${
+                              isSelected
+                                ? 'border-primary ring-2 ring-primary/20 bg-primary/5 shadow-xs'
+                                : 'border-border/80 bg-card/60 hover:border-primary/50 hover:bg-card'
+                            }`}
+                          >
+                            <div className="flex items-start justify-between gap-2 mb-1.5">
+                              <div className="space-y-0.5 min-w-0">
+                                <span className="font-bold text-xs text-foreground group-hover:text-primary transition-colors block truncate">
+                                  {tpl.name}
+                                </span>
+                                <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                                  <Badge variant="outline" className="text-[9px] px-1.5 py-0 border-border/60">
+                                    {tpl.category || 'General'}
+                                  </Badge>
+                                  <span>•</span>
+                                  <span className="flex items-center gap-1">
+                                    {columns === 2 ? (
+                                      <>
+                                        <Columns className="h-2.5 w-2.5 text-purple-400" />
+                                        <span>2 Cols</span>
+                                      </>
+                                    ) : (
+                                      <>
+                                        <Square className="h-2.5 w-2.5 text-blue-400" />
+                                        <span>1 Col</span>
+                                      </>
+                                    )}
+                                  </span>
+                                </div>
+                              </div>
+
+                              <span
+                                className="h-3.5 w-3.5 rounded-full shrink-0 border border-background shadow-xs mt-0.5"
+                                style={{ backgroundColor: primaryColor }}
+                                title={`Accent: ${primaryColor}`}
+                              />
+                            </div>
+
+                            <p className="text-[11px] text-muted-foreground line-clamp-2 leading-relaxed mt-1">
+                              {tpl.description || 'Clean, recruiter-approved ATS layout.'}
+                            </p>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {/* Custom Accent Color picker */}
+                  <div className="space-y-2 pt-2 border-t border-border/60">
+                    <Label className="text-xs font-semibold">Custom Accent Color</Label>
+                    <div className="flex items-center gap-3">
+                      {['#3B82F6', '#4F46E5', '#06B6D4', '#10B981', '#F59E0B', '#E11D48', '#0F172A'].map((color) => (
+                        <button
+                          key={color}
+                          onClick={() => setAccentColor(color)}
+                          className={`h-7 w-7 rounded-full transition-transform ${
+                            accentColor === color ? 'scale-125 ring-2 ring-foreground ring-offset-2' : 'hover:scale-110'
+                          }`}
+                          style={{ backgroundColor: color }}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
             {/* Tab 1: Personal Contact Info */}
             {activeTab === 'personal' && (
@@ -596,62 +847,12 @@ export default function ResumeBuilderPage() {
               </div>
             )}
 
-            {/* Tab 4: Template Customization */}
-            {activeTab === 'template' && (
-              <Card className="border-border/80 shadow-sm animate-in fade-in duration-200">
-                <CardHeader className="p-5 pb-3">
-                  <CardTitle className="text-base font-bold">Choose Layout & Accent</CardTitle>
-                  <CardDescription>Select a layout tailored for your industry and target ATS score.</CardDescription>
-                </CardHeader>
-                <CardContent className="p-5 pt-2 space-y-5">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {templates.map((tpl) => (
-                      <div 
-                        key={tpl.id}
-                        onClick={() => {
-                          setSelectedTemplate(tpl.id);
-                          setAccentColor(tpl.accent);
-                        }}
-                        className={`p-3.5 rounded-2xl border cursor-pointer transition-all ${
-                          selectedTemplate === tpl.id 
-                            ? 'border-primary ring-2 ring-primary/20 bg-primary/5 shadow-xs' 
-                            : 'border-border/80 bg-card/60 hover:border-border'
-                        }`}
-                      >
-                        <div className="flex items-center justify-between mb-1.5">
-                          <span className="font-bold text-xs text-foreground">{tpl.name}</span>
-                          <span className="h-3 w-3 rounded-full" style={{ backgroundColor: tpl.accent }} />
-                        </div>
-                        <p className="text-[11px] text-muted-foreground leading-relaxed">{tpl.description}</p>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="space-y-2 pt-2 border-t border-border/60">
-                    <Label className="text-xs font-semibold">Custom Accent Color</Label>
-                    <div className="flex items-center gap-3">
-                      {['#3B82F6', '#4F46E5', '#06B6D4', '#10B981', '#F59E0B', '#E11D48', '#0F172A'].map((color) => (
-                        <button
-                          key={color}
-                          onClick={() => setAccentColor(color)}
-                          className={`h-7 w-7 rounded-full transition-transform ${
-                            accentColor === color ? 'scale-125 ring-2 ring-foreground ring-offset-2' : 'hover:scale-110'
-                          }`}
-                          style={{ backgroundColor: color }}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
           </div>
 
           {/* Right Column: Live Printable Resume Preview (6 cols) */}
-          <div className="lg:col-span-6 sticky top-24">
-            <div className="p-4 rounded-3xl border border-border/80 bg-card/40 backdrop-blur-xl shadow-xl space-y-3">
-              <div className="flex items-center justify-between px-2 pb-2 border-b border-border/50 text-xs">
+          <div className="lg:col-span-6 sticky top-20">
+            <div className="p-3.5 sm:p-4 rounded-3xl border border-border/80 bg-card/40 backdrop-blur-xl shadow-xl space-y-3">
+              <div className="flex flex-wrap items-center justify-between gap-2 px-1 pb-2 border-b border-border/50 text-xs">
                 <div className="flex items-center gap-2">
                   <Eye className="h-4 w-4 text-primary" />
                   <span className="font-bold text-foreground">Live ATS Preview</span>
@@ -659,99 +860,135 @@ export default function ResumeBuilderPage() {
                     Score: 96%
                   </Badge>
                 </div>
-                <span className="text-[11px] text-muted-foreground capitalize">Template: {selectedTemplate}</span>
+
+                <div className="flex items-center gap-2">
+                  {/* Quick Zoom Controls */}
+                  <div className="flex items-center gap-1 bg-muted/60 px-1.5 py-0.5 rounded-lg border border-border/70 text-[11px]">
+                    <button
+                      type="button"
+                      onClick={() => setZoomLevel((z) => Math.max(0.45, +(z - 0.05).toFixed(2)))}
+                      className="p-1 rounded text-muted-foreground hover:text-foreground transition-colors"
+                      title="Zoom Out"
+                    >
+                      <ZoomOut className="h-3 w-3" />
+                    </button>
+                    {[
+                      { label: '65%', val: 0.65 },
+                      { label: '75%', val: 0.75 },
+                      { label: '90%', val: 0.90 },
+                    ].map((zp) => (
+                      <button
+                        key={zp.label}
+                        type="button"
+                        onClick={() => setZoomLevel(zp.val)}
+                        className={`px-1.5 py-0.5 rounded transition-all ${
+                          Math.abs(zoomLevel - zp.val) < 0.04
+                            ? 'bg-primary text-primary-foreground font-semibold shadow-2xs'
+                            : 'text-muted-foreground hover:text-foreground'
+                        }`}
+                      >
+                        {zp.label}
+                      </button>
+                    ))}
+                    <button
+                      type="button"
+                      onClick={() => setZoomLevel((z) => Math.min(1.1, +(z + 0.05).toFixed(2)))}
+                      className="p-1 rounded text-muted-foreground hover:text-foreground transition-colors"
+                      title="Zoom In"
+                    >
+                      <ZoomIn className="h-3 w-3" />
+                    </button>
+                  </div>
+
+                  {/* Fullscreen Preview */}
+                  <button
+                    type="button"
+                    onClick={() => setIsFullScreen(true)}
+                    className="p-1.5 rounded-lg border border-border/70 text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
+                    title="Fullscreen Preview"
+                  >
+                    <Maximize2 className="h-3.5 w-3.5" />
+                  </button>
+
+                  <span className="text-[11px] text-muted-foreground hidden sm:inline ml-1">
+                    Template: <strong className="text-foreground font-semibold">{activeTemplate?.name || selectedTemplate}</strong>
+                  </span>
+                </div>
               </div>
 
               {/* Rendered Live Resume Sheet */}
               <div 
-                id="printableResume"
-                className="bg-white text-slate-900 rounded-2xl p-6 sm:p-8 shadow-md border border-slate-200 min-h-[620px] text-xs space-y-5 font-sans break-words overflow-hidden"
+                id="printableResumeContainer"
+                className="w-full overflow-x-auto overflow-y-auto max-h-[780px] rounded-2xl border border-border/70 bg-slate-950/40 p-2 sm:p-4 flex justify-center items-start shadow-inner"
               >
-                {/* Header */}
-                <div className="border-b border-slate-200 pb-4 space-y-1.5">
-                  <h2 className="text-2xl font-bold tracking-tight text-slate-900" style={{ color: selectedTemplate === 'minimal' ? '#0F172A' : accentColor }}>
-                    {resumeData.fullName || 'Your Name'}
-                  </h2>
-                  <div className="text-sm font-semibold text-slate-700">
-                    {resumeData.jobTitle || 'Target Position'}
-                  </div>
-                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-slate-600 pt-1">
-                    {resumeData.email && <span>{resumeData.email}</span>}
-                    {resumeData.phone && <span>• {resumeData.phone}</span>}
-                    {resumeData.location && <span>• {resumeData.location}</span>}
-                    {resumeData.linkedin && <span>• {resumeData.linkedin}</span>}
+                <div
+                  style={{
+                    width: `${(activeTemplate?.layout_config?.pageSize === 'Letter' ? 816 : 794) * zoomLevel}px`,
+                    height: `${(activeTemplate?.layout_config?.pageSize === 'Letter' ? 1056 : 1123) * zoomLevel}px`,
+                  }}
+                  className="relative shrink-0 transition-all duration-150"
+                >
+                  <div
+                    id="printableResume"
+                    style={{
+                      transform: `scale(${zoomLevel})`,
+                      transformOrigin: 'top left',
+                      width: `${activeTemplate?.layout_config?.pageSize === 'Letter' ? 816 : 794}px`,
+                    }}
+                  >
+                    <ResumeRenderer
+                      template={activeTemplate}
+                      data={normalizedResumeData}
+                      scale={1}
+                    />
                   </div>
                 </div>
-
-                {/* Summary */}
-                {resumeData.summary && (
-                  <div className="space-y-1">
-                    <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800 border-b border-slate-100 pb-1" style={{ color: accentColor }}>
-                      Professional Summary
-                    </h3>
-                    <p className="text-[11px] text-slate-700 leading-relaxed pt-0.5">
-                      {resumeData.summary}
-                    </p>
-                  </div>
-                )}
-
-                {/* Experience */}
-                {resumeData.experiences.length > 0 && (
-                  <div className="space-y-3">
-                    <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800 border-b border-slate-100 pb-1" style={{ color: accentColor }}>
-                      Experience
-                    </h3>
-                    {resumeData.experiences.map((exp) => (
-                      <div key={exp.id} className="space-y-1">
-                        <div className="flex items-center justify-between text-[11px]">
-                          <span className="font-bold text-slate-900">{exp.position} <span className="font-normal text-slate-600">at {exp.company}</span></span>
-                          <span className="text-slate-500 font-mono text-[10px]">{exp.period}</span>
-                        </div>
-                        <ul className="list-disc list-inside space-y-0.5 text-[11px] text-slate-700 leading-normal pl-1">
-                          {exp.bullets.map((b, bIdx) => (
-                            <li key={bIdx} className="text-[10.5px]">{b}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {/* Skills */}
-                {resumeData.skills.length > 0 && (
-                  <div className="space-y-1.5">
-                    <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800 border-b border-slate-100 pb-1" style={{ color: accentColor }}>
-                      Technical Skills
-                    </h3>
-                    <div className="flex flex-wrap gap-1.5 pt-0.5">
-                      {resumeData.skills.map((s) => (
-                        <span key={s} className="px-2 py-0.5 rounded bg-slate-100 text-slate-800 text-[10px] font-medium">
-                          {s}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Education */}
-                {resumeData.education.length > 0 && (
-                  <div className="space-y-1.5">
-                    <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800 border-b border-slate-100 pb-1" style={{ color: accentColor }}>
-                      Education
-                    </h3>
-                    {resumeData.education.map((edu) => (
-                      <div key={edu.id} className="flex justify-between text-[11px] text-slate-700">
-                        <span className="font-semibold text-slate-900">{edu.degree} — <span className="font-normal">{edu.school}</span></span>
-                        <span className="text-slate-500 font-mono text-[10px]">{edu.year}</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
               </div>
             </div>
           </div>
 
         </div>
+
+        {/* Fullscreen Document Preview Modal */}
+        {isFullScreen && (
+          <div className="fixed inset-0 z-50 bg-background/95 backdrop-blur-md flex flex-col animate-in fade-in duration-150">
+            <div className="h-14 border-b border-border/80 px-6 flex items-center justify-between text-foreground bg-card">
+              <div className="flex items-center gap-3">
+                <span className="font-bold text-sm">{activeTemplate?.name || 'Resume'} — Live Preview</span>
+                <Badge variant="outline" className="text-xs font-mono text-primary">
+                  {activeTemplate?.layout_config?.columns === 2 ? '2 Columns' : '1 Column'}
+                </Badge>
+              </div>
+              <div className="flex items-center gap-3">
+                <Button 
+                  size="sm" 
+                  variant="outline"
+                  onClick={() => window.print()}
+                  className="h-8 text-xs gap-1.5"
+                >
+                  <Printer className="h-3.5 w-3.5" /> Print / Export
+                </Button>
+                <button
+                  type="button"
+                  onClick={() => setIsFullScreen(false)}
+                  className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted"
+                  title="Close Fullscreen"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+            </div>
+            <div className="flex-1 overflow-auto p-6 sm:p-10 flex justify-center items-start bg-slate-950/60">
+              <div className="transition-all duration-150">
+                <ResumeRenderer
+                  template={activeTemplate}
+                  data={normalizedResumeData}
+                  scale={0.95}
+                />
+              </div>
+            </div>
+          </div>
+        )}
 
       </div>
     </div>

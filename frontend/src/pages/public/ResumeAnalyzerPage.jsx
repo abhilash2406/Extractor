@@ -521,7 +521,7 @@ export default function ResumeAnalyzerPage() {
               </p>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
                 <Button asChild variant="gradient" className="h-11 px-6 rounded-xl text-xs font-bold gap-2 shadow-lg shadow-indigo-500/25">
-                  <Link to="/builder">
+                  <Link to="/resume-builder">
                     <span>Open in Resume Builder</span>
                     <ArrowRight className="h-4 w-4" />
                   </Link>

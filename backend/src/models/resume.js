@@ -17,8 +17,27 @@ const Resume = sequelize.define('Resume', {
   },
   file: {
     type: DataTypes.STRING,
-    allowNull: false,
+    allowNull: true,
     comment: 'Path or URL to the resume file',
+  },
+  template_id: {
+    type: DataTypes.UUID,
+    allowNull: true,
+    references: {
+      model: 'templates',
+      key: 'id',
+    },
+    comment: 'ID of the template used for this resume',
+  },
+  title: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    defaultValue: 'Untitled Resume',
+  },
+  content: {
+    type: DataTypes.JSONB,
+    allowNull: true,
+    comment: 'JSON resume data when built using template builder',
   },
   uploaded_at: {
     type: DataTypes.DATE,
@@ -33,6 +52,9 @@ const Resume = sequelize.define('Resume', {
 Resume.associate = (models) => {
   Resume.belongsTo(models.User, { foreignKey: 'user_id', as: 'candidate' });
   Resume.hasOne(models.ResumeAnalysis, { foreignKey: 'resume_id', as: 'analysis' });
+  if (models.Template) {
+    Resume.belongsTo(models.Template, { foreignKey: 'template_id', as: 'template' });
+  }
 };
 
 export default Resume;

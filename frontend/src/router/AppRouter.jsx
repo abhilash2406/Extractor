@@ -19,7 +19,8 @@ const router = createBrowserRouter([
     element: <PublicLayout />,
     children: [
       { path: '/', element: <LandingPage /> },
-      { path: '/builder', element: <ResumeBuilderPage /> },
+      { path: '/resume-builder', element: <ResumeBuilderPage /> },
+      { path: '/builder', element: <Navigate to="/resume-builder" replace /> },
       { path: '/analyze', element: <ResumeAnalyzerPage /> },
       { path: '/ats-checker', element: <AtsCheckerPage /> },
       { path: '/templates', element: <TemplatesPage /> },

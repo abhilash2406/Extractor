@@ -32,7 +32,7 @@ const pricingPlans = [
     ],
     popular: false,
     cta: "Start Building Free",
-    ctaLink: "/builder"
+    ctaLink: "/resume-builder"
   },
   {
     name: "Starter Pro",

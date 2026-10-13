@@ -13,6 +13,7 @@ import SubscriptionsPage from '../pages/subscription/SubscriptionsPage';
 import PlansPage from '../pages/plan/PlansPage';
 import FeedbackPage from '../pages/feedback/FeedbackPage';
 import TemplatesPage from '../pages/template/TemplatesPage';
+import TemplateBuilderPage from '../pages/template/TemplateBuilderPage';
 import TransactionsPage from '../pages/transaction/TransactionsPage';
 import AIUsagePage from '../pages/ai-usage/AIUsagePage';
 import SettingsPage from '../pages/settings/SettingsPage';
@@ -49,6 +50,8 @@ const router = createBrowserRouter([
           { path: '/admin/settings', element: <SettingsPage /> },
         ],
       },
+      { path: '/admin/templates/create', element: <TemplateBuilderPage /> },
+      { path: '/admin/templates/edit/:id', element: <TemplateBuilderPage /> },
     ],
   },
 

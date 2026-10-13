@@ -204,7 +204,7 @@ export default function TemplatesPage() {
                   size="sm" 
                   className="flex-1 rounded-xl text-xs font-bold gap-1.5 h-10 shadow-md shadow-indigo-500/20"
                 >
-                  <Link to={`/builder?template=${tpl.id}`}>
+                  <Link to={`/resume-builder?template=${tpl.id}`}>
                     <span>Use Template</span>
                     <ArrowRight className="h-3.5 w-3.5" />
                   </Link>
@@ -251,7 +251,7 @@ export default function TemplatesPage() {
                 Close
               </Button>
               <Button asChild variant="gradient" className="rounded-xl text-xs font-bold gap-2">
-                <Link to={`/builder?template=${previewTemplate.id}`}>
+                <Link to={`/resume-builder?template=${previewTemplate.id}`}>
                   <span>Customize in Resume Builder</span>
                   <ArrowRight className="h-4 w-4" />
                 </Link>
