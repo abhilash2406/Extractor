@@ -18,328 +18,122 @@ import {
   Square,
   Globe2,
   Maximize2,
-  X
+  X,
+  AlertTriangle
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import TemplateBuilderModal from './TemplateBuilderModal';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogFooter,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog';
 import ResumeRenderer from '@/components/resume/ResumeRenderer';
 import { samplePersonas } from '@/components/resume/sampleResumeData';
+import { 
+  getTemplates, 
+  updateTemplateStatus, 
+  duplicateTemplate, 
+  deleteTemplate 
+} from '@/api/templates.api';
 import toast from 'react-hot-toast';
 
-// Initial curated resume templates
-export const INITIAL_TEMPLATES = [
-  {
-    id: 'tpl-1',
-    name: 'Modern Azure Chronological',
-    code: 'modern-azure-chrono',
-    category: 'Modern',
-    status: 'published',
-    description: 'Clean single-column layout with vibrant azure accents and high readability. Ideal for software engineers and technology professionals.',
-    layout_config: {
-      pageSize: 'A4',
-      columns: 1,
-      sections: [
-        { id: 'header', type: 'header', title: 'Header Details', visible: true, column: 'main' },
-        { id: 'summary', type: 'summary', title: 'Professional Summary', visible: true, column: 'main' },
-        { id: 'experience', type: 'experience', title: 'Work Experience', visible: true, column: 'main' },
-        { id: 'education', type: 'education', title: 'Education', visible: true, column: 'main' },
-        { id: 'skills', type: 'skills', title: 'Technical Skills', visible: true, column: 'main' },
-        { id: 'projects', type: 'projects', title: 'Key Projects', visible: true, column: 'main' },
-        { id: 'certifications', type: 'certifications', title: 'Certifications', visible: true, column: 'main' },
-      ],
-    },
-    design_config: {
-      fontFamily: "'Inter', sans-serif",
-      headingFontFamily: "'Inter', sans-serif",
-      fontSize: '10pt',
-      headingStyle: 'underline',
-      primaryColor: '#2563eb',
-      accentColor: '#3b82f6',
-      headingColor: '#0f172a',
-      textColor: '#1e293b',
-      backgroundColor: '#ffffff',
-      sidebarBackgroundColor: '#f8fafc',
-      pageMargin: 'normal',
-      sectionSpacing: 'normal',
-      itemSpacing: 'normal',
-      dividerStyle: 'solid',
-      headerAlignment: 'left',
-      skillsStyle: 'tags',
-    },
-    created_at: new Date(Date.now() - 3600000 * 24 * 2).toISOString(),
-    updated_at: new Date(Date.now() - 3600000 * 4).toISOString(),
-  },
-
-  {
-    id: 'tpl-2',
-    name: 'Executive Navy Split-Column',
-    code: 'executive-navy-split',
-    category: 'Executive',
-    status: 'published',
-    description: 'Two-column sidebar structure with distinguished serif typography and deep navy tones. Perfect for leadership, consulting, and finance roles.',
-    layout_config: {
-      pageSize: 'A4',
-      columns: 2,
-      sidebarPosition: 'left',
-      sidebarWidth: '33%',
-      sections: [
-        { id: 'header', type: 'header', title: 'Profile Header', visible: true, column: 'main' },
-        { id: 'summary', type: 'summary', title: 'Executive Summary', visible: true, column: 'main' },
-        { id: 'experience', type: 'experience', title: 'Leadership Experience', visible: true, column: 'main' },
-        { id: 'education', type: 'education', title: 'Academic Background', visible: true, column: 'main' },
-        { id: 'skills', type: 'skills', title: 'Core Competencies', visible: true, column: 'sidebar' },
-        { id: 'certifications', type: 'certifications', title: 'Certifications', visible: true, column: 'sidebar' },
-        { id: 'languages', type: 'languages', title: 'Languages', visible: true, column: 'sidebar' },
-        { id: 'awards', type: 'awards', title: 'Honors & Recognitions', visible: true, column: 'sidebar' },
-      ],
-    },
-    design_config: {
-      fontFamily: "'Outfit', sans-serif",
-      headingFontFamily: "'Playfair Display', Georgia, serif",
-      fontSize: '10pt',
-      headingStyle: 'pill',
-      primaryColor: '#1e3a8a',
-      accentColor: '#2563eb',
-      headingColor: '#0f172a',
-      textColor: '#334155',
-      backgroundColor: '#ffffff',
-      sidebarBackgroundColor: '#f1f5f9',
-      pageMargin: 'normal',
-      sectionSpacing: 'normal',
-      itemSpacing: 'normal',
-      dividerStyle: 'subtle',
-      headerAlignment: 'left',
-      skillsStyle: 'tags',
-    },
-    created_at: new Date(Date.now() - 3600000 * 24 * 5).toISOString(),
-    updated_at: new Date(Date.now() - 3600000 * 12).toISOString(),
-  },
-
-  {
-    id: 'tpl-3',
-    name: 'Minimalist Obsidian',
-    code: 'minimalist-obsidian',
-    category: 'Minimalist',
-    status: 'published',
-    description: 'Monochrome, distraction-free typographic hierarchy with clean dot accents. High ATS pass rate and understated Scandinavian elegance.',
-    layout_config: {
-      pageSize: 'A4',
-      columns: 1,
-      sections: [
-        { id: 'header', type: 'header', title: 'Personal Info', visible: true, column: 'main' },
-        { id: 'summary', type: 'summary', title: 'About Me', visible: true, column: 'main' },
-        { id: 'experience', type: 'experience', title: 'Work History', visible: true, column: 'main' },
-        { id: 'skills', type: 'skills', title: 'Capabilities', visible: true, column: 'main' },
-        { id: 'projects', type: 'projects', title: 'Selected Works', visible: true, column: 'main' },
-        { id: 'education', type: 'education', title: 'Education', visible: true, column: 'main' },
-      ],
-    },
-    design_config: {
-      fontFamily: "'Plus Jakarta Sans', sans-serif",
-      headingFontFamily: "'Plus Jakarta Sans', sans-serif",
-      fontSize: '9pt',
-      headingStyle: 'minimal',
-      primaryColor: '#18181b',
-      accentColor: '#52525b',
-      headingColor: '#09090b',
-      textColor: '#27272a',
-      backgroundColor: '#ffffff',
-      sidebarBackgroundColor: '#f4f4f5',
-      pageMargin: 'compact',
-      sectionSpacing: 'compact',
-      itemSpacing: 'compact',
-      dividerStyle: 'none',
-      headerAlignment: 'split',
-      skillsStyle: 'text',
-    },
-    created_at: new Date(Date.now() - 3600000 * 24 * 7).toISOString(),
-    updated_at: new Date(Date.now() - 3600000 * 48).toISOString(),
-  },
-
-  {
-    id: 'tpl-4',
-    name: 'Creative Emerald Designer',
-    code: 'creative-emerald',
-    category: 'Creative',
-    status: 'draft',
-    description: 'Rich two-column layout with sidebar right, bold left-border accents, and emerald styling tailored for designers, content creators, and marketers.',
-    layout_config: {
-      pageSize: 'A4',
-      columns: 2,
-      sidebarPosition: 'right',
-      sidebarWidth: '34%',
-      sections: [
-        { id: 'header', type: 'header', title: 'Header Details', visible: true, column: 'main' },
-        { id: 'summary', type: 'summary', title: 'Creative Statement', visible: true, column: 'main' },
-        { id: 'projects', type: 'projects', title: 'Featured Portfolio', visible: true, column: 'main' },
-        { id: 'experience', type: 'experience', title: 'Experience Timeline', visible: true, column: 'main' },
-        { id: 'skills', type: 'skills', title: 'Design & Tools', visible: true, column: 'sidebar' },
-        { id: 'education', type: 'education', title: 'Degree', visible: true, column: 'sidebar' },
-        { id: 'languages', type: 'languages', title: 'Languages', visible: true, column: 'sidebar' },
-      ],
-    },
-    design_config: {
-      fontFamily: "'Poppins', sans-serif",
-      headingFontFamily: "'Poppins', sans-serif",
-      fontSize: '10pt',
-      headingStyle: 'border-left',
-      primaryColor: '#059669',
-      accentColor: '#10b981',
-      headingColor: '#064e3b',
-      textColor: '#1e293b',
-      backgroundColor: '#ffffff',
-      sidebarBackgroundColor: '#f0fdf4',
-      pageMargin: 'normal',
-      sectionSpacing: 'normal',
-      itemSpacing: 'normal',
-      dividerStyle: 'subtle',
-      headerAlignment: 'left',
-      skillsStyle: 'bars',
-    },
-    created_at: new Date(Date.now() - 3600000 * 24 * 10).toISOString(),
-    updated_at: new Date(Date.now() - 3600000 * 72).toISOString(),
-  },
-
-  {
-    id: 'tpl-5',
-    name: 'Nordic Heritage Academic',
-    code: 'nordic-heritage',
-    category: 'Academic',
-    status: 'draft',
-    description: 'Traditional editorial layout featuring Merriweather serif fonts, crimson accents, and comprehensive academic section hierarchies.',
-    layout_config: {
-      pageSize: 'A4',
-      columns: 1,
-      sections: [
-        { id: 'header', type: 'header', title: 'Curriculum Vitae', visible: true, column: 'main' },
-        { id: 'summary', type: 'summary', title: 'Research Overview', visible: true, column: 'main' },
-        { id: 'education', type: 'education', title: 'Higher Education', visible: true, column: 'main' },
-        { id: 'experience', type: 'experience', title: 'Academic Appointments', visible: true, column: 'main' },
-        { id: 'projects', type: 'projects', title: 'Grants & Publications', visible: true, column: 'main' },
-        { id: 'awards', type: 'awards', title: 'Fellowships & Honors', visible: true, column: 'main' },
-        { id: 'skills', type: 'skills', title: 'Technical Methodologies', visible: true, column: 'main' },
-      ],
-    },
-    design_config: {
-      fontFamily: "'Merriweather', Georgia, serif",
-      headingFontFamily: "'Merriweather', Georgia, serif",
-      fontSize: '10pt',
-      headingStyle: 'uppercase',
-      primaryColor: '#991b1b',
-      accentColor: '#dc2626',
-      headingColor: '#450a0a',
-      textColor: '#1c1917',
-      backgroundColor: '#fffdfa',
-      sidebarBackgroundColor: '#fef2f2',
-      pageMargin: 'spacious',
-      sectionSpacing: 'generous',
-      itemSpacing: 'normal',
-      dividerStyle: 'dashed',
-      headerAlignment: 'center',
-      skillsStyle: 'text',
-    },
-    created_at: new Date(Date.now() - 3600000 * 24 * 14).toISOString(),
-    updated_at: new Date(Date.now() - 3600000 * 96).toISOString(),
-  },
-];
-
-const LOCAL_STORAGE_KEY = 'extractor_resume_templates_v1';
-
 const TemplatesPage = () => {
-  const [templates, setTemplates] = useState(() => {
-    try {
-      const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-      }
-    } catch (e) {
-      console.error('Failed to load templates from localStorage', e);
-    }
-    return INITIAL_TEMPLATES;
-  });
+  const navigate = useNavigate();
 
+  const [templates, setTemplates] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [selectedStatus, setSelectedStatus] = useState('All');
 
-  // Modal State
-  const [isBuilderOpen, setIsBuilderOpen] = useState(false);
-  const [editingTemplate, setEditingTemplate] = useState(null);
+  // Delete Confirmation Modal State
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Quick Fullscreen Preview Modal State
   const [previewModalTemplate, setPreviewModalTemplate] = useState(null);
   const [previewPersona, setPreviewPersona] = useState('software_engineer');
 
-  // Save templates to localStorage on changes
-  useEffect(() => {
+  // Fetch templates from backend API
+  const fetchTemplates = async () => {
     try {
-      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(templates));
+      setLoading(true);
+      const res = await getTemplates({
+        search: search.trim() || undefined,
+        category: selectedCategory !== 'All' ? selectedCategory : undefined,
+        status: selectedStatus !== 'All' ? selectedStatus.toLowerCase() : undefined,
+        limit: 100,
+      });
+      if (res.data?.data) {
+        setTemplates(res.data.data);
+      }
     } catch (e) {
-      console.error('Failed to save templates to localStorage', e);
+      console.error('Failed to load templates from API', e);
+      toast.error(e.response?.data?.message || 'Failed to load templates');
+    } finally {
+      setLoading(false);
     }
-  }, [templates]);
-
-  // Handle Create or Edit Save
-  const handleSaveTemplate = (templateData) => {
-    if (templateData.id) {
-      // Update existing
-      setTemplates((prev) =>
-        prev.map((t) =>
-          t.id === templateData.id
-            ? { ...templateData, updated_at: new Date().toISOString() }
-            : t
-        )
-      );
-    } else {
-      // Create new
-      const newTemplate = {
-        ...templateData,
-        id: `tpl-${Date.now()}`,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      };
-      setTemplates((prev) => [newTemplate, ...prev]);
-    }
-    setIsBuilderOpen(false);
-    setEditingTemplate(null);
   };
 
+  useEffect(() => {
+    fetchTemplates();
+  }, [search, selectedCategory, selectedStatus]);
+
   // Duplicate Template
-  const handleDuplicate = (tpl, e) => {
+  const handleDuplicate = async (tpl, e) => {
     e.stopPropagation();
-    const cloned = {
-      ...tpl,
-      id: `tpl-${Date.now()}`,
-      name: `${tpl.name} (Copy)`,
-      code: `${tpl.code}-copy-${Math.floor(Math.random() * 1000)}`,
-      status: 'draft',
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    };
-    setTemplates((prev) => [cloned, ...prev]);
-    toast.success(`Duplicated "${tpl.name}" as draft`);
+    try {
+      const res = await duplicateTemplate(tpl.id);
+      if (res.data?.data) {
+        setTemplates((prev) => [res.data.data, ...prev]);
+        toast.success(`Duplicated "${tpl.name}" as draft`);
+      }
+    } catch (e) {
+      toast.error(e.response?.data?.message || 'Failed to duplicate template');
+    }
   };
 
   // Toggle Publish / Draft status
-  const handleToggleStatus = (tpl, e) => {
+  const handleToggleStatus = async (tpl, e) => {
     e.stopPropagation();
     const newStatus = tpl.status === 'published' ? 'draft' : 'published';
-    setTemplates((prev) =>
-      prev.map((t) => (t.id === tpl.id ? { ...t, status: newStatus, updated_at: new Date().toISOString() } : t))
-    );
-    toast.success(`Template marked as ${newStatus}`);
+    try {
+      await updateTemplateStatus(tpl.id, newStatus);
+      setTemplates((prev) =>
+        prev.map((t) => (t.id === tpl.id ? { ...t, status: newStatus } : t))
+      );
+      toast.success(`Template marked as ${newStatus}`);
+    } catch (e) {
+      toast.error(e.response?.data?.message || 'Failed to update template status');
+    }
   };
 
-  // Delete Template
+  // Open Delete Confirmation Modal
   const handleDelete = (id, title, e) => {
     e.stopPropagation();
-    if (window.confirm(`Are you sure you want to delete template "${title}"?`)) {
-      setTemplates((prev) => prev.filter((t) => t.id !== id));
-      toast.success('Template deleted');
+    setDeleteTarget({ id, name: title });
+  };
+
+  // Execute Soft Deletion after confirmation
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget) return;
+    setIsDeleting(true);
+    try {
+      await deleteTemplate(deleteTarget.id);
+      setTemplates((prev) => prev.filter((t) => t.id !== deleteTarget.id));
+      toast.success(`Template "${deleteTarget.name}" deleted successfully`);
+      setDeleteTarget(null);
+    } catch (e) {
+      toast.error(e.response?.data?.message || 'Failed to delete template');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -380,16 +174,15 @@ const TemplatesPage = () => {
           </p>
         </div>
 
-        <Button
-          onClick={() => {
-            setEditingTemplate(null);
-            setIsBuilderOpen(true);
-          }}
-          className="gap-2 self-start sm:self-auto bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white shadow-md shadow-blue-500/20"
-        >
-          <Plus className="h-4 w-4" />
-          <span>Create Template</span>
-        </Button>
+        <div className="flex items-center gap-2.5 self-start sm:self-auto">
+          <Button
+            onClick={() => navigate('/admin/templates/create')}
+            className="gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white shadow-md shadow-blue-500/20 h-9"
+          >
+            <Plus className="h-4 w-4" />
+            <span>Create Template</span>
+          </Button>
+        </div>
       </div>
 
       {/* Metrics Banner */}
@@ -482,19 +275,29 @@ const TemplatesPage = () => {
       </Card>
 
       {/* Templates Grid */}
-      {filteredTemplates.length === 0 ? (
-        <div className="text-center py-16 bg-card rounded-2xl border border-dashed border-border p-8">
-          <Palette className="h-10 w-10 text-muted-foreground mx-auto mb-3 opacity-60" />
-          <h3 className="font-heading font-semibold text-lg text-foreground">No templates found</h3>
-          <p className="text-xs text-muted-foreground max-w-sm mx-auto mt-1">
-            Try adjusting your search criteria or create a new template using the builder.
-          </p>
+      {loading ? (
+        <div className="text-center py-24 bg-card/60 backdrop-blur-xs rounded-2xl border border-dashed border-border/80 flex flex-col items-center justify-center gap-3">
+          <div className="w-8 h-8 border-3 border-primary border-t-transparent rounded-full animate-spin" />
+          <p className="text-xs text-muted-foreground font-medium">Loading templates from database...</p>
+        </div>
+      ) : filteredTemplates.length === 0 ? (
+        <div className="text-center py-20 bg-card rounded-2xl border border-dashed border-border/80 p-8 space-y-4">
+          <div className="w-14 h-14 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center mx-auto text-primary shadow-xs">
+            <Palette className="h-7 w-7" />
+          </div>
+          <div className="space-y-1">
+            <h3 className="font-heading font-semibold text-xl text-foreground">
+              {templates.length === 0 ? 'No Templates Created Yet' : 'No Templates Match Your Filters'}
+            </h3>
+            <p className="text-xs text-muted-foreground max-w-sm mx-auto leading-relaxed">
+              {templates.length === 0
+                ? 'Your template catalog is currently empty. Design and publish your first custom resume template using the interactive builder.'
+                : 'Try adjusting your search criteria or clearing your active filters.'}
+            </p>
+          </div>
           <Button
-            onClick={() => {
-              setEditingTemplate(null);
-              setIsBuilderOpen(true);
-            }}
-            className="mt-4 gap-2 text-xs"
+            onClick={() => navigate('/admin/templates/create')}
+            className="gap-2 text-xs bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white shadow-md shadow-blue-500/20 h-10 px-5"
           >
             <Plus className="h-4 w-4" />
             <span>Create New Template</span>
@@ -546,6 +349,8 @@ const TemplatesPage = () => {
                           ? 'bg-emerald-500/90 hover:bg-emerald-500 text-white'
                           : tpl.status === 'archived'
                           ? 'bg-slate-600 text-white'
+                          : tpl.status === 'deleted'
+                          ? 'bg-rose-500/90 hover:bg-rose-500 text-white'
                           : 'bg-amber-500/90 hover:bg-amber-500 text-white'
                       }`}
                     >
@@ -613,10 +418,7 @@ const TemplatesPage = () => {
                   <div className="flex items-center justify-between pt-1 gap-2">
                     <Button
                       size="sm"
-                      onClick={() => {
-                        setEditingTemplate(tpl);
-                        setIsBuilderOpen(true);
-                      }}
+                      onClick={() => navigate(`/admin/templates/edit/${tpl.id}`)}
                       className="flex-1 text-xs gap-1.5 h-8 bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 shadow-none font-semibold"
                     >
                       <Edit className="h-3.5 w-3.5" />
@@ -662,19 +464,6 @@ const TemplatesPage = () => {
             );
           })}
         </div>
-      )}
-
-      {/* Main Full-Featured Visual Template Builder Modal */}
-      {isBuilderOpen && (
-        <TemplateBuilderModal
-          isOpen={isBuilderOpen}
-          template={editingTemplate}
-          onClose={() => {
-            setIsBuilderOpen(false);
-            setEditingTemplate(null);
-          }}
-          onSave={handleSaveTemplate}
-        />
       )}
 
       {/* Quick A4 Preview Modal */}
@@ -741,10 +530,9 @@ const TemplatesPage = () => {
                 <Button
                   size="sm"
                   onClick={() => {
-                    const tpl = previewModalTemplate;
+                    const tplId = previewModalTemplate.id;
                     setPreviewModalTemplate(null);
-                    setEditingTemplate(tpl);
-                    setIsBuilderOpen(true);
+                    navigate(`/admin/templates/edit/${tplId}`);
                   }}
                   className="text-xs h-7 gap-1.5"
                 >
@@ -764,6 +552,57 @@ const TemplatesPage = () => {
           </div>
         </div>
       )}
+      {/* Delete Confirmation Modal */}
+      <Dialog open={!!deleteTarget} onOpenChange={(open) => !open && !isDeleting && setDeleteTarget(null)}>
+        <DialogContent className="max-w-md p-6 bg-card border-border shadow-2xl rounded-2xl">
+          <div className="flex items-start gap-4">
+            <div className="h-11 w-11 rounded-2xl bg-destructive/10 text-destructive border border-destructive/20 flex items-center justify-center shrink-0">
+              <AlertTriangle className="h-5 w-5" />
+            </div>
+            <div className="space-y-1.5 flex-1 min-w-0">
+              <DialogTitle className="text-lg font-bold text-foreground">
+                Delete Template
+              </DialogTitle>
+              <DialogDescription className="text-xs text-muted-foreground leading-relaxed">
+                Are you sure you want to delete template <span className="font-semibold text-foreground">"{deleteTarget?.name}"</span>?
+              </DialogDescription>
+            </div>
+          </div>
+
+          <DialogFooter className="pt-3 gap-2 sm:gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              type="button"
+              disabled={isDeleting}
+              onClick={() => setDeleteTarget(null)}
+              className="text-xs h-9 px-4"
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              size="sm"
+              type="button"
+              disabled={isDeleting}
+              onClick={handleConfirmDelete}
+              className="text-xs h-9 px-4 gap-1.5 font-semibold bg-destructive hover:bg-destructive/90 text-destructive-foreground shadow-sm shadow-destructive/20"
+            >
+              {isDeleting ? (
+                <>
+                  <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  <span>Deleting...</span>
+                </>
+              ) : (
+                <>
+                  <Trash2 className="h-3.5 w-3.5" />
+                  <span>Delete Template</span>
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

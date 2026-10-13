@@ -81,7 +81,7 @@ export const PublicNavbar = () => {
   }, []);
 
   const navLinks = [
-    { to: '/builder', label: 'Resume Builder', icon: FileEdit, badge: 'Popular' },
+    { to: '/resume-builder', label: 'Resume Builder', icon: FileEdit, badge: 'Popular' },
     { to: '/analyze', label: 'AI Analyzer', icon: Bot, badge: 'AI' },
     { to: '/ats-checker', label: 'ATS Checker', icon: Search, badge: 'Free' },
     { to: '/interview-prep', label: 'Interview Prep', icon: BrainCircuit, badge: 'Hot' },
@@ -158,7 +158,7 @@ export const PublicNavbar = () => {
           {isAuthenticated ? (
             <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
               <Button asChild className="h-9 sm:h-10 px-3.5 sm:px-4 rounded-xl text-xs font-semibold gap-1.5 shadow-xs shrink-0">
-                <Link to="/builder">
+                <Link to="/resume-builder">
                   <Sparkles className="h-3.5 w-3.5" />
                   <span className="hidden sm:inline">Create Resume</span>
                   <span className="sm:hidden">Build</span>
@@ -282,7 +282,7 @@ export const PublicNavbar = () => {
                 <span>Sign In</span>
               </Button>
               <Button asChild className="h-9 sm:h-10 px-3.5 sm:px-4 rounded-xl text-xs font-semibold gap-1.5 shadow-xs shrink-0">
-                <Link to="/builder">
+                <Link to="/resume-builder">
                   <Sparkles className="h-3.5 w-3.5" />
                   <span className="hidden sm:inline">Create Resume</span>
                   <span className="sm:hidden">Build</span>
@@ -436,7 +436,7 @@ export const PublicNavbar = () => {
 
               <div className="pt-4 border-t border-border/60 space-y-2.5">
                 <Button asChild variant="gradient" className="w-full h-11 rounded-xl text-xs font-bold justify-center gap-2">
-                  <Link to="/builder" onClick={() => setMobileMenuOpen(false)}>
+                  <Link to="/resume-builder" onClick={() => setMobileMenuOpen(false)}>
                     <Sparkles className="h-3.5 w-3.5" />
                     <span>Build Resume Free</span>
                   </Link>
@@ -512,7 +512,7 @@ export const PublicFooter = () => {
               AI Tools
             </h4>
             <ul className="space-y-2 text-sm text-muted-foreground">
-              <li><Link to="/builder" className="hover:text-primary transition-colors">Resume Builder</Link></li>
+              <li><Link to="/resume-builder" className="hover:text-primary transition-colors">Resume Builder</Link></li>
               <li><Link to="/analyze" className="hover:text-primary transition-colors">AI Resume Analyzer</Link></li>
               <li><Link to="/ats-checker" className="hover:text-primary transition-colors">ATS Resume Checker</Link></li>
               <li><Link to="/interview-prep" className="hover:text-primary transition-colors">AI Interview Prep & Mock</Link></li>

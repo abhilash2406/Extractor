@@ -1,5 +1,6 @@
 import { DataTypes } from 'sequelize';
 import sequelize from '../config/sequelize-config.js';
+import { TemplateStatus } from '../common/enum/template-status-enum.js';
 
 const Template = sequelize.define(
   'Template',
@@ -42,9 +43,9 @@ const Template = sequelize.define(
       defaultValue: {},
     },
     status: {
-      type: DataTypes.ENUM('draft', 'published', 'archived'),
+      type: DataTypes.ENUM(...Object.values(TemplateStatus)),
       allowNull: false,
-      defaultValue: 'draft',
+      defaultValue: TemplateStatus.DRAFT,
     },
     created_by: {
       type: DataTypes.UUID,

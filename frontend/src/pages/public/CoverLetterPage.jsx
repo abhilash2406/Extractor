@@ -199,7 +199,7 @@ alex.rivera@dev.io • (555) 234-5678`);
 
             <div className="flex justify-end gap-3">
               <Button asChild variant="gradient" className="h-10 px-5 rounded-xl text-xs font-bold gap-2">
-                <Link to="/builder">
+                <Link to="/resume-builder">
                   <span>Attach to Resume in Builder</span>
                   <ArrowRight className="h-4 w-4" />
                 </Link>

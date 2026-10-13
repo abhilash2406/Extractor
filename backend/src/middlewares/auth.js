@@ -2,6 +2,7 @@ import { logger } from '../config/winston-config.js';
 import jwt from 'jsonwebtoken';
 import users from '../models/user.js';
 import { EntityType } from '../common/enum/activity-enum.js';
+import { UserType } from '../common/enum/usertype-enum.js';
 import { getAudience, cookieNamesFor, clearAuthCookies } from '../utils/cookies.js';
 
 /**
@@ -86,7 +87,7 @@ export default async (req, res, next) => {
     }
 
     // If accessing admin portal audience, enforce admin role
-    if (audience === 'admin' && user.role !== 'ADMIN') {
+    if (audience === 'admin' && user.role !== UserType.ADMIN) {
       return res.status(403).send({
         success: false,
         message: 'Forbidden: Admin access required',
