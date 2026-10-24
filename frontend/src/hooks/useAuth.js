@@ -11,14 +11,12 @@ export const useLogin = () => {
   return useMutation({
     mutationFn: authApi.login,
     onSuccess: ({ data: res }) => {
-      if (!res?.success || !res?.accessToken) {
+      if (!res?.success) {
         toast.error(res?.message || 'Login failed');
         return;
       }
-      // Backend returns: { success, accessToken, data: { name, role } }
-      const user = res.data;
-      const accessToken = res.accessToken;
-      login(user, accessToken);
+      const user = res.data?.user || res.data;
+      login(user);
       toast.success('Welcome back!');
       if (user?.role === 'ADMIN') {
         navigate('/admin');
@@ -32,13 +30,26 @@ export const useLogin = () => {
   });
 };
 
+export const useLogout = () => {
+  const { logout } = useAuthStore();
+  const navigate = useNavigate();
+
+  return useMutation({
+    mutationFn: authApi.logout,
+    onSettled: () => {
+      logout();
+      navigate('/');
+    },
+  });
+};
+
 export const useRegister = () => {
   const navigate = useNavigate();
   return useMutation({
     mutationFn: authApi.register,
     onSuccess: () => {
-      toast.success('Registered! Please check your email to verify your account.');
-      navigate('/login');
+      toast.success('Registration successful! Please enter the 6-digit OTP sent to your email.');
+      navigate('/verify-email');
     },
     onError: (err) => {
       toast.error(err.response?.data?.message || 'Registration failed');
@@ -51,8 +62,9 @@ export const useVerifyEmail = () => {
   const navigate = useNavigate();
   return useMutation({
     mutationFn: authApi.verifyEmail,
-    onSuccess: ({ data }) => {
-      if (data.accessToken) login(null, data.accessToken);
+    onSuccess: ({ data: res }) => {
+      const user = res.data?.user || res.data;
+      if (user) login(user);
       toast.success('Email verified! You can now log in.');
       navigate('/login');
     },

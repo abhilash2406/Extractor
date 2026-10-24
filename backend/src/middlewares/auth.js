@@ -1,26 +1,35 @@
 import { logger } from '../config/winston-config.js';
 import jwt from 'jsonwebtoken';
 import users from '../models/user.js';
-// // authentication middleware
+import { EntityType } from '../common/enum/activity-enum.js';
+import { UserType } from '../common/enum/usertype-enum.js';
+import { getAudience, cookieNamesFor, clearAuthCookies } from '../utils/cookies.js';
 
 /**
  * Global authentication middleware.
- * Verifies JWT tokens present in the 'Authorization' header.
- * Skips authentication for public routes like /auth, /contact, and /gallery.
+ * Verifies JWT tokens present in HTTP-only cookies or 'Authorization' header.
+ * Automatically selects audience-specific cookies (user vs admin) to prevent localhost session collisions.
  * @param {import('express').Request} req - The Express request object.
  * @param {import('express').Response} res - The Express response object.
  * @param {import('express').NextFunction} next - The Express next middleware function.
  */
 export default async (req, res, next) => {
   try {
-    if (
-      req.originalUrl.startsWith('/auth') ||
-      req.originalUrl.startsWith('/contact') ||
-      req.originalUrl.startsWith('/gallery')
-    )
-      return next();
+    const audience = getAudience(req);
+    const names = cookieNamesFor(audience);
+
+    let cookieToken = req.cookies?.[names.access];
+    if (!cookieToken) {
+      if (audience === 'admin') {
+        cookieToken = req.cookies?.admin_access_token;
+      } else {
+        cookieToken = req.cookies?.user_access_token || req.cookies?.access_token;
+      }
+    }
+
     const authHeader = req.header('Authorization');
-    const token = authHeader ? authHeader.replace('Bearer ', '') : null;
+    const headerToken = authHeader ? authHeader.replace('Bearer ', '') : null;
+    const token = cookieToken || headerToken;
 
     if (!token || token === 'undefined' || token === 'null') {
       return res.status(401).send({
@@ -28,10 +37,6 @@ export default async (req, res, next) => {
         message: 'Unauthorized Access',
       });
     }
-
-    // In users model we don't store tokens, we just verify the user logic
-    // Previously we checked if the access_Token existed in the loginHistory
-    // With JWT, verification is usually sufficient unless token invalidation is implemented in DB
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     if (!decoded) {
@@ -46,24 +51,52 @@ export default async (req, res, next) => {
         message: 'Token expired',
       });
     }
-    const isAdminExists = await users.findOne({ where: { id: decoded.id } });
-    if (!isAdminExists) {
+    const user = await users.findOne({ where: { id: decoded.id } });
+    if (!user) {
       return res.status(401).send({
         success: false,
         message: 'Access Denied',
       });
     }
-    let matchValidity = isAdminExists.password
-      .concat(isAdminExists.id)
-      .concat(isAdminExists.email);
+    let matchValidity = user.password
+      .concat(user.id)
+      .concat(user.email);
     if (matchValidity != decoded.validity) {
       return res.status(401).send({
         success: false,
         message: 'Access Denied',
       });
     }
+
+    // Check user account status
+    if (user.status === EntityType.BLOCKED) {
+      clearAuthCookies(res, audience);
+      return res.status(403).send({
+        success: false,
+        isBlocked: true,
+        message: 'Your account has been blocked. Please contact support.',
+      });
+    }
+
+    if (user.status !== EntityType.ACTIVE) {
+      clearAuthCookies(res, audience);
+      return res.status(403).send({
+        success: false,
+        message: 'Your account is not active. Please contact support.',
+      });
+    }
+
+    // If accessing admin portal audience, enforce admin role
+    if (audience === 'admin' && user.role !== UserType.ADMIN) {
+      return res.status(403).send({
+        success: false,
+        message: 'Forbidden: Admin access required',
+      });
+    }
+
     req.user = decoded;
-    req.user.role = isAdminExists.role;
+    req.user.role = user.role;
+    req.user.status = user.status;
     return next();
   } catch (ex) {
     console.error('TOKEN VERIFICATION ERROR:', ex);
@@ -74,3 +107,4 @@ export default async (req, res, next) => {
     });
   }
 };
+

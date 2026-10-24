@@ -3,14 +3,17 @@ import {
   Login,
   register,
   verifyEmail,
+  resendVerification,
   forgotPassword,
   resetPassword,
   changePassword,
+  logout,
 } from './controller.js';
 import {
   loginValidate,
   registerValidate,
   verifyEmailValidate,
+  resendVerificationValidate,
   forgotPasswordValidate,
   resetPasswordValidate,
   changePasswordValidate,
@@ -57,6 +60,7 @@ const router = express.Router();
  *         description: Bad request
  */
 router.post('/login', loginValidate, Login);
+
 /**
  * @swagger
  * /api/v1/auth/register:
@@ -78,10 +82,13 @@ router.post('/login', loginValidate, Login);
  *                 type: string
  *               password:
  *                 type: string
+ *               confirm_password:
+ *                 type: string
  *             required:
  *               - name
  *               - email
  *               - password
+ *               - confirm_password
  *     responses:
  *       '200':
  *         description: Registered successfully
@@ -94,11 +101,10 @@ router.post('/register', registerValidate, register);
  * @swagger
  * /api/v1/auth/verify-email:
  *   post:
- *     summary: Verify an email-verification token
+ *     summary: Verify email using OTP code
  *     description: >
- *       Confirms the token, activates the account, and logs the user in by
- *       returning an access token and setting the httpOnly refresh-token
- *       cookie.
+ *       Confirms the 6-digit OTP code, activates the account, and logs the user in by
+ *       setting the httpOnly authentication cookies.
  *     tags: [Authentication]
  *     requestBody:
  *       required: true
@@ -106,13 +112,14 @@ router.post('/register', registerValidate, register);
  *         application/json:
  *           schema:
  *             type: object
- *             required: [token]
+ *             required: [otp]
  *             properties:
- *               token:
+ *               otp:
  *                 type: string
+ *                 example: "123456"
  *     responses:
  *       200:
- *         description: Email verified — access token returned, refresh cookie set
+ *         description: Email verified — auth cookies set
  *         content:
  *           application/json:
  *             schema:
@@ -120,9 +127,8 @@ router.post('/register', registerValidate, register);
  *               properties:
  *                 success: { type: boolean, example: true }
  *                 message: { type: string, example: Email verified }
- *                 accessToken: { type: string }
  *       400:
- *         description: Validation error or invalid/expired token
+ *         description: Invalid or expired OTP, or validation error
  *       403:
  *         description: Account is blocked or deleted
  *       404:
@@ -130,6 +136,28 @@ router.post('/register', registerValidate, register);
  */
 
 router.post('/verify-email', verifyEmailValidate, verifyEmail);
+
+/**
+ * @swagger
+ * /api/v1/auth/resend-verification:
+ *   post:
+ *     summary: Resend 6-digit email verification OTP
+ *     tags: [Authentication]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [email]
+ *             properties:
+ *               email:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Verification code resent successfully
+ */
+router.post('/resend-verification', resendVerificationValidate, resendVerification);
 
 
 
@@ -231,5 +259,19 @@ router.post('/reset-password', resetPasswordValidate, resetPassword);
  *         description: Unauthorized
  */
 router.put('/change-password', auth, changePasswordValidate, changePassword);
+
+/**
+ * @swagger
+ * /api/v1/auth/logout:
+ *   post:
+ *     tags:
+ *       - Authentication
+ *     summary: Logout user
+ *     description: Clears HTTP-only authentication cookies.
+ *     responses:
+ *       '200':
+ *         description: Logged out successfully
+ */
+router.post('/logout', logout);
 
 export default router;

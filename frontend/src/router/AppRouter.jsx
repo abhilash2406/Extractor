@@ -1,5 +1,4 @@
 import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom';
-import { GuestRoute } from './Guards';
 
 // Public Layout & Pages
 import PublicLayout from '../components/layout/PublicLayout';
@@ -11,13 +10,8 @@ import TemplatesPage from '../pages/public/TemplatesPage';
 import CoverLetterPage from '../pages/public/CoverLetterPage';
 import InterviewPrepPage from '../pages/public/InterviewPrepPage';
 import PricingPage from '../pages/public/PricingPage';
-
-// Auth pages
-import LoginPage from '../pages/auth/LoginPage';
-import RegisterPage from '../pages/auth/RegisterPage';
-import VerifyEmailPage from '../pages/auth/VerifyEmailPage';
-import ForgotPasswordPage from '../pages/auth/ForgotPasswordPage';
-import ResetPasswordPage from '../pages/auth/ResetPasswordPage';
+import ChangePasswordPage from '../pages/public/ChangePasswordPage';
+import ProfilePage from '../pages/public/ProfilePage';
 
 const router = createBrowserRouter([
   // Public Marketing & Tool Routes
@@ -25,30 +19,26 @@ const router = createBrowserRouter([
     element: <PublicLayout />,
     children: [
       { path: '/', element: <LandingPage /> },
-      { path: '/builder', element: <ResumeBuilderPage /> },
+      { path: '/resume-builder', element: <ResumeBuilderPage /> },
+      { path: '/builder', element: <Navigate to="/resume-builder" replace /> },
       { path: '/analyze', element: <ResumeAnalyzerPage /> },
       { path: '/ats-checker', element: <AtsCheckerPage /> },
       { path: '/templates', element: <TemplatesPage /> },
       { path: '/cover-letter', element: <CoverLetterPage /> },
       { path: '/interview-prep', element: <InterviewPrepPage /> },
       { path: '/pricing', element: <PricingPage /> },
+      { path: '/profile', element: <ProfilePage /> },
+      { path: '/change-password', element: <ChangePasswordPage /> },
       { path: '/dashboard', element: <Navigate to="/" replace /> },
     ],
   },
 
-  // Guest-only routes
-  {
-    element: <GuestRoute />,
-    children: [
-      { path: '/login', element: <LoginPage /> },
-      { path: '/register', element: <RegisterPage /> },
-      { path: '/forgot-password', element: <ForgotPasswordPage /> },
-    ],
-  },
-  
-  // Public verification routes
-  { path: '/verify-email', element: <VerifyEmailPage /> },
-  { path: '/reset-password', element: <ResetPasswordPage /> },
+  // Auth & Password Recovery Redirects to seamless Modal-based Flow
+  { path: '/login', element: <Navigate to="/?auth=login" replace /> },
+  { path: '/register', element: <Navigate to="/?auth=register" replace /> },
+  { path: '/verify-email', element: <Navigate to="/?auth=otp" replace /> },
+  { path: '/forgot-password', element: <Navigate to="/?auth=forgot-password" replace /> },
+  { path: '/reset-password', element: <Navigate to="/?auth=reset-password" replace /> },
 
   // Fallback redirect to Landing Page
   { path: '*', element: <Navigate to="/" replace /> },

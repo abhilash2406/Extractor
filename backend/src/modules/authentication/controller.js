@@ -1,9 +1,10 @@
-import { setAuthCookies } from '../../utils/cookies.js';
+import { setAuthCookies, clearAuthCookies, getAudience } from '../../utils/cookies.js';
 import { goodResponse, failedResponse } from '../../common/response.js';
 import {
   loginUser,
   registerUser,
   verifyEmailService,
+  resendVerificationService,
   forgotPasswordService,
   resetPasswordService,
   changePasswordService,
@@ -12,14 +13,27 @@ import {
 /** Read a named cookie off the request without tripping the `any` from cookie-parser. */
 const readCookie = (req, name) => req.cookies?.[name];
 
-/** Persist an issued token pair as the user auth cookies. */
-const applyAuthCookies = (res, tokens) => {
-  setAuthCookies(res, 'user', {
+/** Persist an issued token pair as the audience auth cookies. */
+const applyAuthCookies = (res, audience, tokens) => {
+  setAuthCookies(res, audience, {
     accessToken: tokens.accessToken,
     refreshToken: tokens.refreshToken,
     accessTtlMs: tokens.accessTtlMs,
     refreshTtlMs: tokens.refreshTtlMs,
   });
+};
+
+/**
+ * Handles resending email verification OTP.
+ */
+export const resendVerification = async (req, res, next) => {
+  try {
+    const data = await resendVerificationService(req.body);
+    return res.json(goodResponse({}, data.message || 'Verification code resent successfully'));
+  } catch (e) {
+    const status = e.statusCode || e.status || 400;
+    return res.status(status).json(failedResponse(e.message, status, e.name || 'BadRequest'));
+  }
 };
 
 /**
@@ -32,15 +46,18 @@ const applyAuthCookies = (res, tokens) => {
 export const verifyEmail = async (req, res, next) => {
   try {
     const data = await verifyEmailService(req.body);
+    const audience = getAudience(req);
 
-    applyAuthCookies(res, {
+    applyAuthCookies(res, audience, {
       accessToken: data.accessToken,
       refreshToken: data.refreshToken,
       accessTtlMs: (process.env.ACCESS_TOKEN_TTL_SECONDS || 900) * 1000,
       refreshTtlMs: (process.env.REFRESH_TOKEN_TTL_SECONDS || 2592000) * 1000,
     });
 
-    return res.json(goodResponse({ accessToken: data.accessToken, data }, 'Email verified'));
+    const { accessToken, refreshToken, ...userData } = data;
+
+    return res.json(goodResponse({ data: userData }, 'Email verified successfully'));
   } catch (e) {
     const status = e.statusCode || e.status || (e.message === 'User not found' ? 404 : e.message.includes('Account') ? 403 : 400);
     return res.status(status).json(failedResponse(e.message, status, e.name || 'BadRequest'));
@@ -57,8 +74,9 @@ export const verifyEmail = async (req, res, next) => {
 export const Login = async (req, res, next) => {
   try {
     const data = await loginUser(req.body);
+    const audience = getAudience(req);
 
-    applyAuthCookies(res, {
+    applyAuthCookies(res, audience, {
       accessToken: data.accessToken,
       refreshToken: data.refreshToken,
       accessTtlMs: (process.env.ACCESS_TOKEN_TTL_SECONDS || 900) * 1000,
@@ -70,10 +88,7 @@ export const Login = async (req, res, next) => {
     return res.json(
       goodResponse(
         {
-          accessToken,
-          refreshToken,
           data: userData,
-          user: userData,
         },
         'Login successfully'
       )
@@ -142,10 +157,39 @@ export const resetPassword = async (req, res, next) => {
 export const changePassword = async (req, res, next) => {
   try {
     const data = await changePasswordService(req.user.id, req.body);
+    const audience = getAudience(req);
+
+    if (data.accessToken) {
+      applyAuthCookies(res, audience, {
+        accessToken: data.accessToken,
+        refreshToken: data.refreshToken,
+        accessTtlMs: (process.env.ACCESS_TOKEN_TTL_SECONDS || 900) * 1000,
+        refreshTtlMs: (process.env.REFRESH_TOKEN_TTL_SECONDS || 2592000) * 1000,
+      });
+    }
+
     return res.json(goodResponse({}, data.message || 'Password changed successfully'));
   } catch (e) {
     const status = e.statusCode || e.status || 400;
     return res.status(status).json(failedResponse(e.message, status, e.name || 'BadRequest'));
   }
 };
+
+/**
+ * Handles user logout by clearing auth cookies.
+ * @param {import('express').Request} req - The Express request object.
+ * @param {import('express').Response} res - The Express response object.
+ * @param {import('express').NextFunction} next - The Express next middleware function.
+ */
+export const logout = async (req, res, next) => {
+  try {
+    const audience = getAudience(req);
+    clearAuthCookies(res, audience);
+    return res.json(goodResponse({}, 'Logged out successfully'));
+  } catch (e) {
+    const status = e.statusCode || e.status || 400;
+    return res.status(status).json(failedResponse(e.message, status, e.name || 'BadRequest'));
+  }
+};
+
 

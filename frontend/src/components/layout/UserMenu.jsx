@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getProfile, updateProfile } from '../../api/users.api';
-import { changePassword } from '../../api/auth.api';
+import { changePassword, logout as logoutApi } from '../../api/auth.api';
 import toast from 'react-hot-toast';
 import { 
   User, 
@@ -128,10 +128,16 @@ const UserMenu = ({ roleLabel = 'User', isMobile = false, isCollapsed = false })
     changePasswordMutation.mutate(passwordData);
   };
 
-  const handleLogout = () => {
-    logout();
-    setIsLogoutOpen(false);
-    navigate('/login');
+  const handleLogout = async () => {
+    try {
+      await logoutApi();
+    } catch {
+      // proceed with local cleanup
+    } finally {
+      logout();
+      setIsLogoutOpen(false);
+      navigate('/login');
+    }
   };
 
   const initials = (user?.name || user?.username || 'User').charAt(0).toUpperCase();

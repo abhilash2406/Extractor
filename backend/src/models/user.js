@@ -61,6 +61,10 @@ const User = sequelize.define('User', {
   is_verified: {
     type: DataTypes.BOOLEAN,
     defaultValue: false,
+  },
+  last_login_at: {
+    type: DataTypes.DATE,
+    allowNull: true,
   }
 }, {
   tableName: 'users',
@@ -101,8 +105,14 @@ User.prototype.generateAuthToken = function (rememberMe = false) {
 
 User.associate = (models) => {
   User.hasMany(models.Resume, { foreignKey: 'user_id', as: 'resumes' });
-  User.hasMany(models.Application, { foreignKey: 'user_id', as: 'applications' });
-  User.hasMany(models.Test, { foreignKey: 'user_id', as: 'tests' });
+  User.hasMany(models.Subscription, { foreignKey: 'user_id', as: 'subscriptions' });
+  User.hasMany(models.Payment, { foreignKey: 'user_id', as: 'payments' });
+  if (models.Feedback) {
+    User.hasMany(models.Feedback, { foreignKey: 'user_id', as: 'feedbacks' });
+  }
+  if (models.Test) {
+    User.hasMany(models.Test, { foreignKey: 'user_id', as: 'tests' });
+  }
 };
 
 export default User;

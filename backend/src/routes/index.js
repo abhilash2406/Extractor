@@ -3,6 +3,7 @@ import healthRoutes from './health.js';
 import authRoutes from '../modules/authentication/index.js';
 import usersRoutes from '../modules/users/index.js';
 import dashboardRoutes from '../modules/dashboard/index.js';
+import templatesRoutes from '../modules/templates/index.js';
 import auth from '../middlewares/auth.js';
 
 const router = express.Router();
@@ -18,5 +19,8 @@ router.use('/auth', authRoutes);
 
 // Users (admin only)
 router.use('/users', usersRoutes);
+
+// Templates (public candidate view & admin management)
+router.use('/templates', templatesRoutes);
 
 export default router;

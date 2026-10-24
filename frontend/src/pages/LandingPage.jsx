@@ -50,7 +50,7 @@ const extractorServices = [
       '4. Download clean ATS-compliant PDF'
     ],
     ctaText: 'Start Building Resume',
-    to: '/builder',
+    to: '/resume-builder',
     isPrimary: true
   },
   {
@@ -261,7 +261,7 @@ export default function LandingPage() {
         {/* Primary Action Buttons */}
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 max-w-md mx-auto pt-2">
           <Button asChild size="lg" variant="gradient" className="w-full sm:w-auto h-12 px-8 rounded-2xl font-bold text-sm shadow-xl shadow-indigo-500/25 gap-2.5">
-            <Link to="/builder">
+            <Link to="/resume-builder">
               <Sparkles className="h-4 w-4" />
               <span>Create My Resume</span>
             </Link>
@@ -544,7 +544,7 @@ export default function LandingPage() {
               </div>
 
               <Button asChild variant="gradient" className="w-full h-11 rounded-xl text-xs font-bold gap-2">
-                <Link to="/builder">
+                <Link to="/resume-builder">
                   <Sparkles className="h-3.5 w-3.5" />
                   <span>Build This Resume in Builder</span>
                 </Link>
@@ -606,7 +606,7 @@ export default function LandingPage() {
 
                 <div className="absolute inset-0 bg-primary/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-[2px]">
                   <Button asChild size="sm" variant="gradient" className="rounded-xl text-xs font-bold gap-1 shadow-lg">
-                    <Link to={`/builder?template=${tpl.id}`}>
+                    <Link to={`/resume-builder?template=${tpl.id}`}>
                       <span>Use Template</span>
                       <ArrowRight className="h-3 w-3" />
                     </Link>
@@ -742,7 +742,7 @@ export default function LandingPage() {
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
             <Button asChild size="lg" variant="gradient" className="w-full sm:w-auto h-12 px-8 rounded-xl font-bold text-xs shadow-lg shadow-indigo-500/25 gap-2">
-              <Link to="/builder">
+              <Link to="/resume-builder">
                 <Sparkles className="h-4 w-4" />
                 <span>Start Building for Free</span>
               </Link>

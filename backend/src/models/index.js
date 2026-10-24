@@ -16,19 +16,19 @@ const files = fs
       file.indexOf('.') !== 0 && file !== path.basename(__filename) && file.slice(-3) === '.js'
   );
 
-(async () => {
-  for (const file of files) {
-    await import(`file://${path.resolve(__dirname, file)}`);
+for (const file of files) {
+  await import(`file://${path.resolve(__dirname, file)}`);
+}
+
+Object.values(sequelize.models).forEach((model) => {
+  if (model.associate) {
+    model.associate(sequelize.models);
   }
+});
 
-  Object.values(sequelize.models).forEach((model) => {
-    if (model.associate) {
-      model.associate(sequelize.models);
-    }
-  });
+sequelize
+  .authenticate()
+  .then(() => logger.info('✅ Database connected successfully! (Auto-sync disabled)'))
+  .catch((e) => logger.error(e.message));
 
-  sequelize
-    .authenticate()
-    .then(() => logger.info('✅ Database connected successfully! (Auto-sync disabled)'))
-    .catch((e) => logger.error(e.message));
-})();
+export default sequelize;

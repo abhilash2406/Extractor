@@ -76,10 +76,29 @@ router.put('/profile', auth, upload.single('photo'), updateProfile);
  *           type: string
  *         description: Search by name or email
  *       - in: query
- *         name: role
+ *         name: plan
  *         schema:
  *           type: string
- *         description: Filter by role (user, admin)
+ *           enum: [ALL, FREE, BASIC, PRO, PREMIUM]
+ *         description: Filter by subscription plan
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *           enum: [ALL, ACTIVE, BLOCKED]
+ *         description: Filter by user status
+ *       - in: query
+ *         name: startDate
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Filter users joined on or after this date (YYYY-MM-DD)
+ *       - in: query
+ *         name: endDate
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Filter users joined on or before this date (YYYY-MM-DD)
  *     responses:
  *       200:
  *         description: List of users with pagination metadata
