@@ -239,22 +239,36 @@ export const DesignTab = ({
         </div>
 
         {/* Font Size Selector */}
-        <div className="flex items-center justify-between pt-2 border-t border-slate-700/50">
-          <span className="text-xs text-slate-300">Base Font Scale:</span>
-          <div className="flex items-center gap-1.5">
+        <div className="space-y-2 pt-2 border-t border-slate-700/50">
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-slate-300">Base Font Scale:</span>
+            <span className="text-xs font-mono text-blue-400 font-semibold">{design.fontSize || '10pt'}</span>
+          </div>
+          <div className="flex items-center gap-1 overflow-x-auto py-1 scrollbar-thin">
             {[
-              { id: '9pt', label: 'Small (9pt)' },
-              { id: '10pt', label: 'Regular (10pt)' },
-              { id: '11pt', label: 'Large (11pt)' },
+              { id: '7pt', label: '7pt' },
+              { id: '7.5pt', label: '7.5pt' },
+              { id: '8pt', label: '8pt' },
+              { id: '8.5pt', label: '8.5pt' },
+              { id: '9pt', label: '9pt' },
+              { id: '9.5pt', label: '9.5pt' },
+              { id: '10pt', label: '10pt' },
+              { id: '10.5pt', label: '10.5pt' },
+              { id: '11pt', label: '11pt' },
+              { id: '11.5pt', label: '11.5pt' },
+              { id: '12pt', label: '12pt' },
+              { id: '12.5pt', label: '12.5pt' },
+              { id: '13pt', label: '13pt' },
+              { id: '14pt', label: '14pt' },
             ].map((fs) => (
               <button
                 key={fs.id}
                 type="button"
                 onClick={() => setDesign({ ...design, fontSize: fs.id })}
-                className={`text-xs px-2.5 py-1 rounded-lg border ${
+                className={`text-xs px-2.5 py-1 rounded-lg border shrink-0 transition-colors ${
                   design.fontSize === fs.id
                     ? 'bg-blue-600 text-white border-blue-500 font-semibold shadow-xs'
-                    : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-white'
+                    : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-white hover:bg-slate-700'
                 }`}
               >
                 {fs.label}

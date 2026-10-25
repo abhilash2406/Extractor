@@ -87,6 +87,13 @@ const GithubIcon = ({ className = 'w-3.5 h-3.5', style }) => (
   </svg>
 );
 
+const cleanUrlDisplay = (url) => {
+  if (!url) return '';
+  return String(url)
+    .replace(/^https?:\/\/(www\.)?/i, '')
+    .replace(/\/$/, '');
+};
+
 export const FONT_OPTIONS = [
   { label: 'Inter (Modern Sans)', value: "'Inter', sans-serif" },
   { label: 'Outfit (Clean Geometric)', value: "'Outfit', sans-serif" },
@@ -128,9 +135,20 @@ const itemGapMap = {
 };
 
 const fontSizeMap = {
-  '9pt': { base: '11px', name: '22px', h2: '13px', title: '12px', small: '10px' },
-  '10pt': { base: '12.5px', name: '26px', h2: '14.5px', title: '13.5px', small: '11px' },
-  '11pt': { base: '14px', name: '30px', h2: '16px', title: '14.5px', small: '12px' },
+  '7pt': { base: '9.3px', name: '20px', h2: '12px', title: '10.5px', small: '8.2px' },
+  '7.5pt': { base: '10px', name: '21px', h2: '12.8px', title: '11.2px', small: '8.8px' },
+  '8pt': { base: '10.7px', name: '22px', h2: '13.5px', title: '12px', small: '9.4px' },
+  '8.5pt': { base: '11.3px', name: '23.5px', h2: '14.2px', title: '12.6px', small: '10px' },
+  '9pt': { base: '12px', name: '25px', h2: '15px', title: '13.3px', small: '10.5px' },
+  '9.5pt': { base: '12.7px', name: '26.5px', h2: '15.8px', title: '14px', small: '11px' },
+  '10pt': { base: '13.3px', name: '28px', h2: '16.8px', title: '14.8px', small: '11.5px' },
+  '10.5pt': { base: '14px', name: '29.5px', h2: '17.6px', title: '15.5px', small: '12px' },
+  '11pt': { base: '14.7px', name: '31px', h2: '18.5px', title: '16.3px', small: '12.6px' },
+  '11.5pt': { base: '15.3px', name: '32.5px', h2: '19.3px', title: '17px', small: '13.2px' },
+  '12pt': { base: '16px', name: '34px', h2: '20.2px', title: '17.8px', small: '13.8px' },
+  '12.5pt': { base: '16.7px', name: '35.5px', h2: '21px', title: '18.5px', small: '14.4px' },
+  '13pt': { base: '17.3px', name: '37px', h2: '22px', title: '19.2px', small: '15px' },
+  '14pt': { base: '18.7px', name: '40px', h2: '23.5px', title: '20.6px', small: '16px' },
 };
 
 const photoSizeMap = {
@@ -150,6 +168,8 @@ const ResumeRenderer = ({
   isThumbnail = false,
   className = '',
   showPageGuidelines = false,
+  spacers = {},
+  minHeight = null,
 }) => {
   if (!template || !data) return null;
 
@@ -177,7 +197,8 @@ const ResumeRenderer = ({
   const datePlacement = design.datePlacement || 'right'; // 'right' | 'left' | 'badge'
   const showSectionIcons = design.showSectionIcons === true;
   const skillsStyle = design.skillsStyle || 'tags'; // 'tags' | 'filled-pills' | 'bars' | 'dots' | 'text' | 'columns-3' | 'card-box'
-  const showPhoto = design.showPhoto !== false; // default true for backward compat
+  const photoUrl = data.photo_url || data.photo;
+  const showPhoto = design.showPhoto !== false && Boolean(photoUrl); // default true if photo exists
   const photoShape = design.photoShape || 'circle'; // 'circle' | 'square' | 'rounded'
   const photoPlacement = design.photoPlacement || 'header'; // 'header' | 'sidebar'
   const photoSize = design.photoSize || 'small'; // 'small' | 'medium' | 'large'
@@ -218,7 +239,49 @@ const ResumeRenderer = ({
   };
 
   // Filter visible sections
-  const sections = (layout.sections || []).filter((s) => s.visible !== false);
+  let sections = (layout.sections || []).filter((s) => s.visible !== false);
+
+  // If candidate has projects but projects section is not present in template's layout, dynamically inject it
+  if (data.projects && data.projects.length > 0 && !sections.some((s) => s.type === 'projects')) {
+    const expIdx = sections.findIndex((s) => s.type === 'experience');
+    const projectsSection = {
+      id: 'projects',
+      type: 'projects',
+      title: 'Key Projects',
+      visible: true,
+      column: 'main',
+    };
+    if (expIdx !== -1) {
+      sections = [
+        ...sections.slice(0, expIdx + 1),
+        projectsSection,
+        ...sections.slice(expIdx + 1),
+      ];
+    } else {
+      sections = [...sections, projectsSection];
+    }
+  }
+
+  // Filter out any user-hidden sections
+  if (data.hiddenSections) {
+    sections = sections.filter((s) => !data.hiddenSections[s.type] && !data.hiddenSections[s.id]);
+  }
+
+  // Apply user-defined sectionOrder if present
+  if (Array.isArray(data.sectionOrder) && data.sectionOrder.length > 0) {
+    const orderMap = {};
+    data.sectionOrder.forEach((type, idx) => {
+      orderMap[type] = idx;
+    });
+    // Header always comes first if present
+    sections.sort((a, b) => {
+      if (a.type === 'header') return -1;
+      if (b.type === 'header') return 1;
+      const orderA = orderMap[a.type] !== undefined ? orderMap[a.type] : 999;
+      const orderB = orderMap[b.type] !== undefined ? orderMap[b.type] : 999;
+      return orderA - orderB;
+    });
+  }
 
   // Separate header if placed at top in single column or across top of 2-column
   const hasHeaderInLayout = sections.some((s) => s.type === 'header');
@@ -290,7 +353,7 @@ const ResumeRenderer = ({
                 className="font-bold tracking-wider uppercase text-white"
                 style={{
                   fontFamily: headingFontFamily,
-                  fontSize: fontSizes.small,
+                  fontSize: fontSizes.h2,
                   letterSpacing: '0.08em',
                 }}
               >
@@ -364,7 +427,7 @@ const ResumeRenderer = ({
                 backgroundColor: `${pc}18`,
                 color: pc,
                 fontFamily: headingFontFamily,
-                fontSize: fontSizes.small,
+                fontSize: fontSizes.h2,
                 border: `1px solid ${pc}30`,
               }}
             >
@@ -390,7 +453,7 @@ const ResumeRenderer = ({
               className="font-bold tracking-wider uppercase text-white"
               style={{
                 fontFamily: headingFontFamily,
-                fontSize: fontSizes.small,
+                fontSize: fontSizes.h2,
               }}
             >
               {title}
@@ -646,11 +709,21 @@ const ResumeRenderer = ({
     const hc = colors.headingColor;
     const pc = colors.primaryColor;
 
+    const isPageBreak = Boolean(data.pageBreaks?.[sec.type] || data.pageBreaks?.[sec.id] || sec.pageBreakBefore);
+    const dynamicSpacer = (spacers && (spacers[sec.type] || spacers[sec.id])) || 0;
+    const sectionStyle = {
+      marginBottom: sectionSpacing,
+      breakInside: 'avoid',
+      pageBreakInside: 'avoid',
+      ...(dynamicSpacer > 0 ? { marginTop: `${dynamicSpacer}px` } : {}),
+      ...(isPageBreak ? { breakBefore: 'page', pageBreakBefore: 'always' } : {}),
+    };
+
     switch (sec.type) {
       case 'summary':
         if (!data.summary) return null;
         return (
-          <section key={sec.id || 'summary'} style={{ marginBottom: sectionSpacing }}>
+          <section key={sec.id || 'summary'} data-section-type="summary" data-avoid-break="true" style={sectionStyle}>
             {renderSectionHeading(sec.title || 'Professional Summary', null, colors, 'summary')}
             <p
               className="leading-relaxed"
@@ -669,14 +742,25 @@ const ResumeRenderer = ({
       case 'experience':
         if (!data.experience || data.experience.length === 0) return null;
         return (
-          <section key={sec.id || 'experience'} style={{ marginBottom: sectionSpacing }}>
+          <section key={sec.id || 'experience'} data-section-type="experience" data-avoid-break="true" style={sectionStyle}>
             {renderSectionHeading(sec.title || 'Work Experience', null, colors, 'experience')}
             
             {/* 1. Timeline Layout */}
             {experienceStyle === 'timeline' ? (
               <div className="relative pl-5 border-l-2 space-y-4 ml-1" style={{ borderColor: `${pc}35` }}>
                 {data.experience.map((exp, index) => (
-                  <div key={exp.id || index} className="relative" style={{ breakInside: 'avoid', pageBreakInside: 'avoid' }}>
+                  <div
+                    key={exp.id || index}
+                    data-card-item="true"
+                    data-avoid-break="true"
+                    data-item-key={`exp-${exp.id || index}`}
+                    className="relative"
+                    style={{
+                      breakInside: 'avoid',
+                      pageBreakInside: 'avoid',
+                      ...(spacers && spacers[`exp-${exp.id || index}`] ? { marginTop: `${spacers[`exp-${exp.id || index}`]}px` } : {}),
+                    }}
+                  >
                     <div
                       className="absolute -left-[27px] top-1.5 w-3 h-3 rounded-full border-2 border-white shadow-2xs"
                       style={{ backgroundColor: pc }}
@@ -729,7 +813,17 @@ const ResumeRenderer = ({
               /* 2. Compact Senior / Executive Layout */
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 {data.experience.map((exp, index) => (
-                  <div key={exp.id || index} style={{ breakInside: 'avoid', pageBreakInside: 'avoid' }}>
+                  <div
+                    key={exp.id || index}
+                    data-card-item="true"
+                    data-avoid-break="true"
+                    data-item-key={`exp-${exp.id || index}`}
+                    style={{
+                      breakInside: 'avoid',
+                      pageBreakInside: 'avoid',
+                      ...(spacers && spacers[`exp-${exp.id || index}`] ? { marginTop: `${spacers[`exp-${exp.id || index}`]}px` } : {}),
+                    }}
+                  >
                     <div className="flex items-baseline justify-between gap-2 border-b pb-0.5" style={{ borderColor: `${pc}20` }}>
                       <div className="flex items-baseline gap-2 truncate">
                         <span className="font-bold" style={{ fontSize: fontSizes.title, color: hc }}>
@@ -753,7 +847,7 @@ const ResumeRenderer = ({
                     {Array.isArray(exp.description) ? (
                       <ul className="mt-1 space-y-0.5 pl-4 list-disc" style={{ color: tc }}>
                         {exp.description.map((bullet, bIdx) => (
-                          <li key={bIdx} className="leading-snug text-[11.5px]" style={{ opacity: 0.9 }}>
+                          <li key={bIdx} className="leading-snug" style={{ fontSize: fontSizes.base, color: tc, opacity: 0.9 }}>
                             {bullet}
                           </li>
                         ))}
@@ -770,12 +864,23 @@ const ResumeRenderer = ({
               /* 3. Standard / Left Date Layout */
               <div style={{ display: 'flex', flexDirection: 'column', gap: itemSpacing }}>
                 {data.experience.map((exp, index) => (
-                  <div key={exp.id || index} className="group" style={{ breakInside: 'avoid', pageBreakInside: 'avoid' }}>
+                  <div
+                    key={exp.id || index}
+                    data-card-item="true"
+                    data-avoid-break="true"
+                    data-item-key={`exp-${exp.id || index}`}
+                    className="group"
+                    style={{
+                      breakInside: 'avoid',
+                      pageBreakInside: 'avoid',
+                      ...(spacers && spacers[`exp-${exp.id || index}`] ? { marginTop: `${spacers[`exp-${exp.id || index}`]}px` } : {}),
+                    }}
+                  >
                     {datePlacement === 'left' ? (
                       <div className="flex items-start gap-4">
                         {exp.period && (
                           <div className="w-24 shrink-0 pt-0.5">
-                            <span className="font-bold block text-xs tracking-tight" style={{ color: pc }}>
+                            <span className="font-bold block tracking-tight" style={{ fontSize: fontSizes.small, color: pc }}>
                               {exp.period}
                             </span>
                           </div>
@@ -795,7 +900,7 @@ const ResumeRenderer = ({
                           {Array.isArray(exp.description) ? (
                             <ul className="mt-1.5 space-y-1 pl-4 list-disc" style={{ color: tc }}>
                               {exp.description.map((bullet, bIdx) => (
-                                <li key={bIdx} className="leading-snug" style={{ fontSize: fontSizes.base, opacity: 0.9 }}>
+                                <li key={bIdx} className="leading-snug" style={{ fontSize: fontSizes.base, color: tc, opacity: 0.9 }}>
                                   {bullet}
                                 </li>
                               ))}
@@ -827,7 +932,7 @@ const ResumeRenderer = ({
                             <span
                               className={`text-right shrink-0 font-medium ${
                                 datePlacement === 'badge'
-                                  ? 'px-2.5 py-0.5 rounded-full border text-xs font-semibold'
+                                  ? 'px-2.5 py-0.5 rounded-full border font-semibold'
                                   : 'px-2 py-0.5 rounded'
                               }`}
                               style={{
@@ -866,14 +971,25 @@ const ResumeRenderer = ({
       case 'education':
         if (!data.education || data.education.length === 0) return null;
         return (
-          <section key={sec.id || 'education'} style={{ marginBottom: sectionSpacing }}>
+          <section key={sec.id || 'education'} data-section-type="education" data-avoid-break="true" style={sectionStyle}>
             {renderSectionHeading(sec.title || 'Education', null, colors, 'education')}
             
             {/* 1. Timeline Layout */}
             {educationStyle === 'timeline' ? (
               <div className="relative pl-5 border-l-2 space-y-3 ml-1" style={{ borderColor: `${pc}35` }}>
                 {data.education.map((edu, idx) => (
-                  <div key={edu.id || idx} className="relative" style={{ breakInside: 'avoid', pageBreakInside: 'avoid' }}>
+                  <div
+                    key={edu.id || idx}
+                    data-card-item="true"
+                    data-avoid-break="true"
+                    data-item-key={`edu-${edu.id || idx}`}
+                    className="relative"
+                    style={{
+                      breakInside: 'avoid',
+                      pageBreakInside: 'avoid',
+                      ...(spacers && spacers[`edu-${edu.id || idx}`] ? { marginTop: `${spacers[`edu-${edu.id || idx}`]}px` } : {}),
+                    }}
+                  >
                     <div
                       className="absolute -left-[27px] top-1.5 w-3 h-3 rounded-full border-2 border-white shadow-2xs"
                       style={{ backgroundColor: pc }}
@@ -899,7 +1015,7 @@ const ResumeRenderer = ({
                       )}
                     </div>
                     {edu.grade && (
-                      <div className="mt-0.5 font-medium italic text-[11px]" style={{ color: `${tc}aa` }}>
+                      <div className="mt-0.5 font-medium italic" style={{ fontSize: fontSizes.small, color: `${tc}aa` }}>
                         {edu.grade}
                       </div>
                     )}
@@ -910,7 +1026,17 @@ const ResumeRenderer = ({
               /* 2. Compact Layout */
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                 {data.education.map((edu, idx) => (
-                  <div key={edu.id || idx} style={{ breakInside: 'avoid', pageBreakInside: 'avoid' }}>
+                  <div
+                    key={edu.id || idx}
+                    data-card-item="true"
+                    data-avoid-break="true"
+                    data-item-key={`edu-${edu.id || idx}`}
+                    style={{
+                      breakInside: 'avoid',
+                      pageBreakInside: 'avoid',
+                      ...(spacers && spacers[`edu-${edu.id || idx}`] ? { marginTop: `${spacers[`edu-${edu.id || idx}`]}px` } : {}),
+                    }}
+                  >
                     <div className="flex items-baseline justify-between gap-2">
                       <div className="flex items-baseline gap-2 truncate">
                         <span className="font-bold" style={{ fontSize: fontSizes.title, color: hc }}>
@@ -927,7 +1053,7 @@ const ResumeRenderer = ({
                       )}
                     </div>
                     {edu.grade && (
-                      <div className="text-[11px] italic" style={{ color: `${tc}aa` }}>
+                      <div className="italic" style={{ fontSize: fontSizes.small, color: `${tc}aa` }}>
                         {edu.grade}
                       </div>
                     )}
@@ -938,12 +1064,22 @@ const ResumeRenderer = ({
               /* 3. Standard Layout */
               <div style={{ display: 'flex', flexDirection: 'column', gap: itemSpacing }}>
                 {data.education.map((edu, idx) => (
-                  <div key={edu.id || idx} style={{ breakInside: 'avoid', pageBreakInside: 'avoid' }}>
+                  <div
+                    key={edu.id || idx}
+                    data-card-item="true"
+                    data-avoid-break="true"
+                    data-item-key={`edu-${edu.id || idx}`}
+                    style={{
+                      breakInside: 'avoid',
+                      pageBreakInside: 'avoid',
+                      ...(spacers && spacers[`edu-${edu.id || idx}`] ? { marginTop: `${spacers[`edu-${edu.id || idx}`]}px` } : {}),
+                    }}
+                  >
                     {datePlacement === 'left' ? (
                       <div className="flex items-start gap-4">
                         {edu.period && (
                           <div className="w-24 shrink-0 pt-0.5">
-                            <span className="font-bold block text-xs tracking-tight" style={{ color: pc }}>
+                            <span className="font-bold block tracking-tight" style={{ fontSize: fontSizes.small, color: pc }}>
                               {edu.period}
                             </span>
                           </div>
@@ -987,7 +1123,7 @@ const ResumeRenderer = ({
                             <span
                               className={`text-right shrink-0 font-medium ${
                                 datePlacement === 'badge'
-                                  ? 'px-2.5 py-0.5 rounded-full border text-xs font-semibold'
+                                  ? 'px-2.5 py-0.5 rounded-full border font-semibold'
                                   : 'px-2 py-0.5 rounded'
                               }`}
                               style={{
@@ -1018,7 +1154,7 @@ const ResumeRenderer = ({
       case 'skills':
         if (!data.skills || data.skills.length === 0) return null;
         return (
-          <section key={sec.id || 'skills'} style={{ marginBottom: sectionSpacing, breakInside: 'avoid', pageBreakInside: 'avoid' }}>
+          <section key={sec.id || 'skills'} data-section-type="skills" data-avoid-break="true" style={{ ...sectionStyle, breakInside: 'avoid', pageBreakInside: 'avoid' }}>
             {renderSectionHeading(sec.title || 'Skills & Competencies', null, colors, 'skills')}
             
             {/* If skills are grouped by category */}
@@ -1049,19 +1185,49 @@ const ResumeRenderer = ({
       case 'projects':
         if (!data.projects || data.projects.length === 0) return null;
         return (
-          <section key={sec.id || 'projects'} style={{ marginBottom: sectionSpacing }}>
+          <section key={sec.id || 'projects'} data-section-type="projects" data-avoid-break="true" style={sectionStyle}>
             {renderSectionHeading(sec.title || 'Featured Projects', null, colors, 'projects')}
             <div style={{ display: 'flex', flexDirection: 'column', gap: itemSpacing }}>
-              {data.projects.map((proj, idx) => (
-                projectsStyle === 'detailed' ? (
+              {data.projects.map((proj, idx) => {
+                let rawBullets = (Array.isArray(proj.bullets) && proj.bullets.length > 0)
+                  ? proj.bullets
+                  : (typeof proj.description === 'string' && (proj.description.includes('•') || proj.description.includes('\n')))
+                  ? proj.description.split(/\n+|•|\r+/).map(s => s.trim()).filter(Boolean)
+                  : (typeof proj.description === 'string' && proj.description.trim())
+                  ? [proj.description.trim()]
+                  : [];
+
+                const projectBullets = [];
+                for (let i = 0; i < rawBullets.length; i++) {
+                  const item = (rawBullets[i] || '').trim();
+                  if (!item) continue;
+                  if (projectBullets.length > 0 && /^[a-z]/.test(item)) {
+                    const prev = projectBullets[projectBullets.length - 1];
+                    if (prev.endsWith('-')) {
+                      projectBullets[projectBullets.length - 1] = prev.slice(0, -1) + item;
+                    } else if (prev.endsWith('gener') && item.startsWith('ation')) {
+                      projectBullets[projectBullets.length - 1] = prev + item;
+                    } else {
+                      projectBullets[projectBullets.length - 1] = prev + ' ' + item;
+                    }
+                  } else {
+                    projectBullets.push(item);
+                  }
+                }
+
+                return projectsStyle === 'detailed' ? (
                   <div
                     key={proj.id || idx}
+                    data-card-item="true"
+                    data-avoid-break="true"
+                    data-item-key={`proj-${proj.id || idx}`}
                     className="p-3 rounded-lg border shadow-2xs"
                     style={{
                       borderColor: `${pc}30`,
                       backgroundColor: `${pc}05`,
                       breakInside: 'avoid',
                       pageBreakInside: 'avoid',
+                      ...(spacers && spacers[`proj-${proj.id || idx}`] ? { marginTop: `${spacers[`proj-${proj.id || idx}`]}px` } : {}),
                     }}
                   >
                     <div className="flex items-center justify-between gap-2 mb-1">
@@ -1073,36 +1239,54 @@ const ResumeRenderer = ({
                       </div>
                       {proj.role && (
                         <span
-                          className="px-2 py-0.5 rounded text-[10px] font-semibold"
-                          style={{ color: pc, backgroundColor: `${pc}14`, border: `1px solid ${pc}25` }}
+                          className="px-2 py-0.5 rounded font-semibold"
+                          style={{ fontSize: fontSizes.small, color: pc, backgroundColor: `${pc}14`, border: `1px solid ${pc}25` }}
                         >
                           {proj.role}
                         </span>
                       )}
                     </div>
-                    {proj.description && (
-                      <p className="leading-snug" style={{ fontSize: fontSizes.base, color: tc, opacity: 0.9 }}>
-                        {proj.description}
-                      </p>
-                    )}
+                    {projectBullets.length > 0 ? (
+                      <ul className="mt-1.5 space-y-1 list-disc list-inside">
+                        {projectBullets.map((bullet, bIdx) => (
+                          <li key={bIdx} className="leading-snug" style={{ fontSize: fontSizes.base, color: tc, opacity: 0.9 }}>
+                            {bullet}
+                          </li>
+                        ))}
+                      </ul>
+                    ) : null}
                   </div>
                 ) : (
-                  <div key={proj.id || idx} style={{ breakInside: 'avoid', pageBreakInside: 'avoid' }}>
+                  <div
+                    key={proj.id || idx}
+                    data-card-item="true"
+                    data-avoid-break="true"
+                    data-item-key={`proj-${proj.id || idx}`}
+                    style={{
+                      breakInside: 'avoid',
+                      pageBreakInside: 'avoid',
+                      ...(spacers && spacers[`proj-${proj.id || idx}`] ? { marginTop: `${spacers[`proj-${proj.id || idx}`]}px` } : {}),
+                    }}
+                  >
                     <div className="flex items-baseline justify-between gap-2">
                       <div className="font-bold flex items-center gap-1.5" style={{ fontSize: fontSizes.title, color: hc }}>
                         <span>{proj.name}</span>
-                        {proj.role && <span className="font-normal text-xs" style={{ color: pc }}>({proj.role})</span>}
+                        {proj.role && <span className="font-normal" style={{ fontSize: fontSizes.small, color: pc }}>({proj.role})</span>}
                         {proj.link && <ExternalLink className="w-3 h-3 opacity-60" style={{ color: pc }} />}
                       </div>
                     </div>
-                    {proj.description && (
-                      <p className="mt-0.5 leading-snug" style={{ fontSize: fontSizes.base, color: tc, opacity: 0.9 }}>
-                        {proj.description}
-                      </p>
-                    )}
+                    {projectBullets.length > 0 ? (
+                      <ul className="mt-1 space-y-1 list-disc list-inside">
+                        {projectBullets.map((bullet, bIdx) => (
+                          <li key={bIdx} className="leading-snug" style={{ fontSize: fontSizes.base, color: tc, opacity: 0.9 }}>
+                            {bullet}
+                          </li>
+                        ))}
+                      </ul>
+                    ) : null}
                   </div>
-                )
-              ))}
+                );
+              })}
             </div>
           </section>
         );
@@ -1120,7 +1304,7 @@ const ResumeRenderer = ({
                       {cert.name}
                     </div>
                     {cert.issuer && (
-                      <div className="text-xs font-medium" style={{ fontSize: fontSizes.small, color: `${tc}99` }}>
+                      <div className="font-medium" style={{ fontSize: fontSizes.small, color: `${tc}99` }}>
                         {cert.issuer}
                       </div>
                     )}
@@ -1237,13 +1421,13 @@ const ResumeRenderer = ({
                       {pub.link && <ExternalLink className="w-3 h-3 opacity-60" style={{ color: pc }} />}
                     </div>
                     {pub.publisher && (
-                      <div className="text-xs italic" style={{ color: `${tc}99` }}>
+                      <div className="italic" style={{ fontSize: fontSizes.small, color: `${tc}99` }}>
                         {pub.publisher}
                       </div>
                     )}
                   </div>
                   {pub.year && (
-                    <span className="text-xs shrink-0" style={{ color: `${tc}88` }}>
+                    <span className="shrink-0" style={{ fontSize: fontSizes.small, color: `${tc}88` }}>
                       {pub.year}
                     </span>
                   )}
@@ -1405,6 +1589,24 @@ const ResumeRenderer = ({
               <span>{data.location}</span>
             </div>
           )}
+          {data.website && (
+            <div className="flex items-center gap-1.5 min-w-0">
+              <Globe className="w-3.5 h-3.5 shrink-0" style={{ color: pc }} />
+              <span className="break-all [overflow-wrap:anywhere] min-w-0">{cleanUrlDisplay(data.website)}</span>
+            </div>
+          )}
+          {data.linkedin && (
+            <div className="flex items-center gap-1.5 min-w-0">
+              <LinkedinIcon className="w-3.5 h-3.5 shrink-0" style={{ color: pc }} />
+              <span className="break-all [overflow-wrap:anywhere] min-w-0">{cleanUrlDisplay(data.linkedin)}</span>
+            </div>
+          )}
+          {data.github && (
+            <div className="flex items-center gap-1.5 min-w-0">
+              <GithubIcon className="w-3.5 h-3.5 shrink-0" style={{ color: pc }} />
+              <span className="break-all [overflow-wrap:anywhere] min-w-0">{cleanUrlDisplay(data.github)}</span>
+            </div>
+          )}
         </div>
       );
     }
@@ -1471,6 +1673,42 @@ const ResumeRenderer = ({
               <span>{data.location}</span>
             </div>
           )}
+          {data.website && (
+            <div
+              className="flex items-center gap-1.5 px-3 py-1 rounded-full border shadow-2xs"
+              style={{
+                backgroundColor: `${tc}06`,
+                borderColor: `${tc}20`,
+              }}
+            >
+              <Globe className="w-3 h-3 shrink-0" style={{ color: pc }} />
+              <span>{data.website.replace('https://', '')}</span>
+            </div>
+          )}
+          {data.linkedin && (
+            <div
+              className="flex items-center gap-1.5 px-3 py-1 rounded-full border shadow-2xs"
+              style={{
+                backgroundColor: `${tc}06`,
+                borderColor: `${tc}20`,
+              }}
+            >
+              <LinkedinIcon className="w-3 h-3 shrink-0" style={{ color: pc }} />
+              <span>{data.linkedin}</span>
+            </div>
+          )}
+          {data.github && (
+            <div
+              className="flex items-center gap-1.5 px-3 py-1 rounded-full border shadow-2xs"
+              style={{
+                backgroundColor: `${tc}06`,
+                borderColor: `${tc}20`,
+              }}
+            >
+              <GithubIcon className="w-3 h-3 shrink-0" style={{ color: pc }} />
+              <span>{data.github}</span>
+            </div>
+          )}
         </div>
       );
     }
@@ -1482,8 +1720,9 @@ const ResumeRenderer = ({
         data.email,
         data.location,
         (data.experienceYears || data.yearsOfExperience) ? `Exp: ${data.experienceYears || data.yearsOfExperience}` : null,
-        data.website ? data.website.replace('https://', '') : null,
-        data.linkedin,
+        data.website ? cleanUrlDisplay(data.website) : null,
+        data.linkedin ? cleanUrlDisplay(data.linkedin) : null,
+        data.github ? cleanUrlDisplay(data.github) : null,
       ].filter(Boolean);
 
       return (
@@ -1510,7 +1749,7 @@ const ResumeRenderer = ({
     // 5. Default Standard / Inline Icon Style
     return (
       <div
-        className={`flex flex-wrap ${isVertical ? 'flex-col gap-1.5' : 'gap-y-1.5 gap-x-3.5'} ${
+        className={`flex flex-wrap ${isVertical ? 'flex-col gap-2 w-full min-w-0' : 'gap-y-1.5 gap-x-3.5 max-w-full'} ${
           isRightAligned
             ? 'items-end justify-end'
             : !isVertical && headerAlignment === 'center'
@@ -1520,39 +1759,39 @@ const ResumeRenderer = ({
         style={{ fontSize: fontSizes.small, color: tc }}
       >
         {data.email && (
-          <div className={`flex items-center gap-1.5 opacity-90 ${isRightAligned ? 'justify-end' : ''}`}>
-            <Mail className="w-3.5 h-3.5 shrink-0" style={{ color: pc }} />
-            <span>{data.email}</span>
+          <div className={`flex items-start gap-1.5 opacity-90 min-w-0 max-w-full ${isRightAligned ? 'justify-end' : ''}`}>
+            <Mail className="w-3.5 h-3.5 shrink-0 mt-0.5" style={{ color: pc }} />
+            <span className="break-all [overflow-wrap:anywhere] min-w-0 leading-snug">{data.email}</span>
           </div>
         )}
         {data.phone && (
-          <div className={`flex items-center gap-1.5 opacity-90 ${isRightAligned ? 'justify-end' : ''}`}>
-            <Phone className="w-3.5 h-3.5 shrink-0" style={{ color: pc }} />
-            <span>{data.phone}</span>
+          <div className={`flex items-start gap-1.5 opacity-90 min-w-0 max-w-full ${isRightAligned ? 'justify-end' : ''}`}>
+            <Phone className="w-3.5 h-3.5 shrink-0 mt-0.5" style={{ color: pc }} />
+            <span className="break-all [overflow-wrap:anywhere] min-w-0 leading-snug">{data.phone}</span>
           </div>
         )}
         {data.location && (
-          <div className={`flex items-center gap-1.5 opacity-90 ${isRightAligned ? 'justify-end' : ''}`}>
-            <MapPin className="w-3.5 h-3.5 shrink-0" style={{ color: pc }} />
-            <span>{data.location}</span>
+          <div className={`flex items-start gap-1.5 opacity-90 min-w-0 max-w-full ${isRightAligned ? 'justify-end' : ''}`}>
+            <MapPin className="w-3.5 h-3.5 shrink-0 mt-0.5" style={{ color: pc }} />
+            <span className="break-all [overflow-wrap:anywhere] min-w-0 leading-snug">{data.location}</span>
           </div>
         )}
         {data.website && (
-          <div className={`flex items-center gap-1.5 opacity-90 ${isRightAligned ? 'justify-end' : ''}`}>
-            <Globe className="w-3.5 h-3.5 shrink-0" style={{ color: pc }} />
-            <span>{data.website.replace('https://', '')}</span>
+          <div className={`flex items-start gap-1.5 opacity-90 min-w-0 max-w-full ${isRightAligned ? 'justify-end' : ''}`}>
+            <Globe className="w-3.5 h-3.5 shrink-0 mt-0.5" style={{ color: pc }} />
+            <span className="break-all [overflow-wrap:anywhere] min-w-0 leading-snug">{cleanUrlDisplay(data.website)}</span>
           </div>
         )}
         {data.linkedin && (
-          <div className={`flex items-center gap-1.5 opacity-90 ${isRightAligned ? 'justify-end' : ''}`}>
-            <LinkedinIcon className="w-3.5 h-3.5 shrink-0" style={{ color: pc }} />
-            <span>{data.linkedin}</span>
+          <div className={`flex items-start gap-1.5 opacity-90 min-w-0 max-w-full ${isRightAligned ? 'justify-end' : ''}`}>
+            <LinkedinIcon className="w-3.5 h-3.5 shrink-0 mt-0.5" style={{ color: pc }} />
+            <span className="break-all [overflow-wrap:anywhere] min-w-0 leading-snug">{cleanUrlDisplay(data.linkedin)}</span>
           </div>
         )}
         {data.github && (
-          <div className={`flex items-center gap-1.5 opacity-90 ${isRightAligned ? 'justify-end' : ''}`}>
-            <GithubIcon className="w-3.5 h-3.5 shrink-0" style={{ color: pc }} />
-            <span>{data.github}</span>
+          <div className={`flex items-start gap-1.5 opacity-90 min-w-0 max-w-full ${isRightAligned ? 'justify-end' : ''}`}>
+            <GithubIcon className="w-3.5 h-3.5 shrink-0 mt-0.5" style={{ color: pc }} />
+            <span className="break-all [overflow-wrap:anywhere] min-w-0 leading-snug">{cleanUrlDisplay(data.github)}</span>
           </div>
         )}
       </div>
@@ -1561,12 +1800,12 @@ const ResumeRenderer = ({
 
   // Render photo block for sidebar placement
   const renderSidebarPhoto = () => {
-    if (!showPhoto || !data.photo_url || photoPlacement !== 'sidebar') return null;
+    if (!showPhoto || !photoUrl || photoPlacement !== 'sidebar') return null;
     const size = photoSizeMap[photoSize] || photoSizeMap.small;
     return (
       <div className="flex flex-col items-center mb-5">
         <img
-          src={data.photo_url}
+          src={photoUrl}
           alt={data.name}
           className={`object-cover border-2 shadow-md ${getPhotoShapeClass()}`}
           style={{
@@ -1583,7 +1822,7 @@ const ResumeRenderer = ({
   const renderSidebarContact = () => {
     if (contactPlacement !== 'sidebar') return null;
     return (
-      <section style={{ marginBottom: sectionSpacing }}>
+      <section className="w-full min-w-0 overflow-hidden" style={{ marginBottom: sectionSpacing }}>
         {renderSectionHeading('Contact Details', null, sidebarColors, 'contact')}
         {renderContactInfo(sidebarColors, 'column')}
       </section>
@@ -1597,7 +1836,7 @@ const ResumeRenderer = ({
     const hc = customHeaderColors.headingColor;
     const pc = customHeaderColors.primaryColor;
     const tc = customHeaderColors.textColor;
-    const showPhotoInHeader = showPhoto && data.photo_url && photoPlacement === 'header';
+    const showPhotoInHeader = showPhoto && photoUrl && photoPlacement === 'header';
     const showContactInHeader = contactPlacement === 'header';
     const size = photoSizeMap[photoSize] || photoSizeMap.small;
     const isSplit = headerAlignment === 'split' || headerStyle === 'contact-card';
@@ -1612,7 +1851,7 @@ const ResumeRenderer = ({
               {showPhotoInHeader && (
                 <div className="w-full h-44 overflow-hidden rounded-t-sm mb-0">
                   <img
-                    src={data.photo_url}
+                    src={photoUrl}
                     alt={data.name}
                     className="w-full h-full object-cover"
                   />
@@ -1723,7 +1962,7 @@ const ResumeRenderer = ({
               {showPhotoInHeader && (
                 <div className="shrink-0">
                   <img
-                    src={data.photo_url}
+                    src={photoUrl}
                     alt={data.name}
                     className={`object-cover border-2 border-white/60 shadow-md ${getPhotoShapeClass()}`}
                     style={{ width: size.width, height: size.height }}
@@ -1777,8 +2016,8 @@ const ResumeRenderer = ({
               </h1>
               {data.title && (
                 <p
-                  className="font-bold tracking-widest uppercase text-xs mt-1"
-                  style={{ color: pc }}
+                  className="font-bold tracking-widest uppercase mt-1"
+                  style={{ fontSize: fontSizes.title, color: pc }}
                 >
                   {data.title}
                 </p>
@@ -1826,7 +2065,7 @@ const ResumeRenderer = ({
               {showPhotoInHeader && (
                 <div className="shrink-0">
                   <img
-                    src={data.photo_url}
+                    src={photoUrl}
                     alt={data.name}
                     className={`object-cover border-2 shadow-xs ${getPhotoShapeClass()}`}
                     style={{
@@ -1843,7 +2082,7 @@ const ResumeRenderer = ({
             showPhotoInHeader && (
               <div className="shrink-0">
                 <img
-                  src={data.photo_url}
+                  src={photoUrl}
                   alt={data.name}
                   className={`object-cover border-2 shadow-xs ${getPhotoShapeClass()}`}
                   style={{
@@ -1873,27 +2112,31 @@ const ResumeRenderer = ({
   const pageSize = layout.pageSize || 'A4';
   const docWidth = pageSize === 'Letter' ? 816 : 794;
   const docHeight = pageSize === 'Letter' ? 1056 : 1123;
+  const effectiveMinHeight = minHeight || `${docHeight}px`;
+  const disableShadow = isThumbnail || className?.includes('shadow-none') || (spacers && Object.keys(spacers).length > 0);
 
   return (
     <div
       className={`resume-paper-container relative mx-auto transition-transform origin-top ${className}`}
       style={{
         width: `${docWidth}px`,
-        minHeight: `${docHeight}px`,
+        minHeight: effectiveMinHeight,
         transform: scale !== 1 ? `scale(${scale})` : undefined,
         transformOrigin: 'top center',
       }}
     >
       {/* Authentic Paper Sheet */}
       <div
-        className="a4-sheet relative w-full text-left box-border select-none md:select-text shadow-xl rounded-sm transition-colors overflow-hidden"
+        className={`a4-sheet relative w-full text-left box-border select-none md:select-text transition-colors overflow-hidden ${
+          disableShadow ? 'shadow-none rounded-none' : 'shadow-xl rounded-sm'
+        }`}
         style={{
-          minHeight: `${docHeight}px`,
+          minHeight: effectiveMinHeight,
           backgroundColor: backgroundColor,
           fontFamily: fontFamily,
           color: textColor,
-          boxShadow: isThumbnail
-            ? '0 2px 8px rgba(0,0,0,0.08)'
+          boxShadow: disableShadow
+            ? 'none'
             : '0 10px 30px -5px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0,0,0,0.04)',
         }}
       >
@@ -1904,7 +2147,7 @@ const ResumeRenderer = ({
 
         {isTwoColumn ? (
           // Two-Column Layout
-          <div className="flex flex-col w-full" style={{ minHeight: `${docHeight}px` }}>
+          <div className="flex flex-col w-full" style={{ minHeight: effectiveMinHeight }}>
             {/* Full-width header (spans across both columns when headerFullWidth=true) */}
             {headerFullWidth && (
               <div
@@ -1926,7 +2169,7 @@ const ResumeRenderer = ({
             <div className="flex flex-1">
               {/* Sidebar Column */}
               <div
-                className={`shrink-0 box-border ${
+                className={`shrink-0 box-border min-w-0 overflow-hidden ${
                   sidebarPosition === 'left' ? 'order-1' : 'order-2'
                 }`}
                 style={{

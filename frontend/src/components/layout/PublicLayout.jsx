@@ -89,9 +89,14 @@ export const PublicNavbar = () => {
     { to: '/cover-letter', label: 'Cover Letter', icon: FileText },
   ];
 
+  const isStudioPage = location.pathname.startsWith('/resume-builder');
+
   return (
-    <header className="fixed top-0 inset-x-0 z-50 w-full h-16 sm:h-20 bg-background/95 backdrop-blur-xl border-b border-border/80 shadow-sm transition-all duration-300">
-      <div className="w-full max-w-[1500px] mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center justify-between gap-2 sm:gap-4">
+    <header className={cn(
+      "fixed top-0 inset-x-0 z-50 w-full bg-background/95 backdrop-blur-xl border-b border-border/80 shadow-sm transition-all duration-300",
+      isStudioPage ? "h-14 sm:h-16" : "h-16 sm:h-20"
+    )}>
+      <div className="w-full max-w-[1460px] mx-auto px-5 sm:px-8 lg:px-10 h-full flex items-center justify-between gap-2 sm:gap-4">
         
         {/* Top-Left Logo */}
         <Link to="/" className="flex items-center gap-2.5 group shrink-0">
@@ -244,9 +249,16 @@ export const PublicNavbar = () => {
 
                   {/* Account Actions */}
                   <DropdownMenuItem asChild>
-                    <Link to="/profile" className="flex items-center gap-2.5 px-2.5 py-2 text-xs font-semibold rounded-xl text-foreground hover:bg-accent cursor-pointer">
+                    <Link to="/profile?tab=resumes" className="flex items-center gap-2.5 px-2.5 py-2 text-xs font-semibold rounded-xl text-foreground hover:bg-accent cursor-pointer">
+                      <FileText className="h-4 w-4 text-primary" />
+                      <span>My Resumes</span>
+                    </Link>
+                  </DropdownMenuItem>
+
+                  <DropdownMenuItem asChild>
+                    <Link to="/profile?tab=profile" className="flex items-center gap-2.5 px-2.5 py-2 text-xs font-semibold rounded-xl text-foreground hover:bg-accent cursor-pointer">
                       <User className="h-4 w-4 text-primary" />
-                      <span>Profile</span>
+                      <span>Profile Settings</span>
                     </Link>
                   </DropdownMenuItem>
 
@@ -281,13 +293,15 @@ export const PublicNavbar = () => {
                 <LogIn className="h-3.5 w-3.5 text-primary" />
                 <span>Sign In</span>
               </Button>
-              <Button asChild className="h-9 sm:h-10 px-3.5 sm:px-4 rounded-xl text-xs font-semibold gap-1.5 shadow-xs shrink-0">
-                <Link to="/resume-builder">
-                  <Sparkles className="h-3.5 w-3.5" />
-                  <span className="hidden sm:inline">Create Resume</span>
-                  <span className="sm:hidden">Build</span>
-                </Link>
-              </Button>
+              {!isStudioPage && (
+                <Button asChild className="h-9 sm:h-10 px-3.5 sm:px-4 rounded-xl text-xs font-semibold gap-1.5 shadow-xs shrink-0">
+                  <Link to="/resume-builder">
+                    <Sparkles className="h-3.5 w-3.5" />
+                    <span className="hidden sm:inline">Create Resume</span>
+                    <span className="sm:hidden">Build</span>
+                  </Link>
+                </Button>
+              )}
             </div>
           )}
 
@@ -415,7 +429,15 @@ export const PublicNavbar = () => {
                       </a>
                     )}
                     <NavLink
-                      to="/profile"
+                      to="/profile?tab=resumes"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all"
+                    >
+                      <FileText className="h-4 w-4 text-primary" />
+                      <span>My Resumes</span>
+                    </NavLink>
+                    <NavLink
+                      to="/profile?tab=profile"
                       onClick={() => setMobileMenuOpen(false)}
                       className="flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all"
                     >
@@ -484,7 +506,7 @@ export const PublicFooter = () => {
   
   return (
     <footer className="w-full border-t border-border/70 bg-card/60 backdrop-blur-xl relative z-10">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
+      <div className="w-full max-w-[1460px] mx-auto px-5 sm:px-8 lg:px-10 py-12 lg:py-16">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 lg:gap-12 pb-12 border-b border-border/60">
           
           {/* Brand Info */}
@@ -621,13 +643,21 @@ const PublicLayout = () => {
     }
   }, [searchParams, openAuthModal]);
 
+  const isStudioPage = location.pathname.startsWith('/resume-builder');
+
   return (
-    <div className="min-h-screen flex flex-col bg-background text-foreground antialiased selection:bg-indigo-500/20 selection:text-indigo-400">
+    <div className={cn(
+      "min-h-screen flex flex-col bg-background text-foreground antialiased selection:bg-indigo-500/20 selection:text-indigo-400",
+      isStudioPage && "h-screen max-h-screen overflow-hidden"
+    )}>
       <PublicNavbar />
-      <main className="flex-1 pt-16 sm:pt-20">
+      <main className={cn(
+        "flex-1 flex flex-col min-h-0",
+        isStudioPage ? "pt-14 sm:pt-16 h-screen max-h-screen overflow-hidden" : "pt-16 sm:pt-20"
+      )}>
         <Outlet />
       </main>
-      <PublicFooter />
+      {!isStudioPage && <PublicFooter />}
       <AuthModal />
     </div>
   );
