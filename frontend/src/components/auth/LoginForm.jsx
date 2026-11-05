@@ -43,7 +43,6 @@ export default function LoginForm() {
       const user = res.data?.user || res.data;
 
       setAuthUser(user);
-      toast.success('Welcome back to Extractor!');
 
       if (onSuccess && typeof onSuccess === 'function') {
         onSuccess(user);

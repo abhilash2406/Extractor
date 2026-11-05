@@ -94,15 +94,8 @@ const cleanUrlDisplay = (url) => {
     .replace(/\/$/, '');
 };
 
-export const FONT_OPTIONS = [
-  { label: 'Inter (Modern Sans)', value: "'Inter', sans-serif" },
-  { label: 'Outfit (Clean Geometric)', value: "'Outfit', sans-serif" },
-  { label: 'Roboto (Neutral Neo-grotesque)', value: "'Roboto', sans-serif" },
-  { label: 'Plus Jakarta Sans (Crisp Contemporary)', value: "'Plus Jakarta Sans', sans-serif" },
-  { label: 'Poppins (Friendly Geometric)', value: "'Poppins', sans-serif" },
-  { label: 'Merriweather (Classic Editorial Serif)', value: "'Merriweather', Georgia, serif" },
-  { label: 'Playfair Display (Executive High-Contrast Serif)', value: "'Playfair Display', Georgia, serif" },
-];
+import { FONT_OPTIONS, loadGoogleFont } from '@/constants/fonts';
+export { FONT_OPTIONS };
 
 export const COLOR_PRESETS = [
   { name: 'Azure Tech', primary: '#2563eb', accent: '#3b82f6', heading: '#0f172a', bg: '#ffffff', sidebarBg: '#f8fafc' },
@@ -183,6 +176,11 @@ const ResumeRenderer = ({
 
   const fontFamily = design.fontFamily || "'Inter', sans-serif";
   const headingFontFamily = design.headingFontFamily || fontFamily;
+
+  React.useEffect(() => {
+    if (fontFamily) loadGoogleFont(fontFamily);
+    if (headingFontFamily && headingFontFamily !== fontFamily) loadGoogleFont(headingFontFamily);
+  }, [fontFamily, headingFontFamily]);
   const primaryColor = design.primaryColor || '#2563eb';
   const textColor = design.textColor || '#1e293b';
   const headingColor = design.headingColor || '#0f172a';

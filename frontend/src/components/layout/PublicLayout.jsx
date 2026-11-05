@@ -89,13 +89,8 @@ export const PublicNavbar = () => {
     { to: '/cover-letter', label: 'Cover Letter', icon: FileText },
   ];
 
-  const isStudioPage = location.pathname.startsWith('/resume-builder');
-
   return (
-    <header className={cn(
-      "fixed top-0 inset-x-0 z-50 w-full bg-background/95 backdrop-blur-xl border-b border-border/80 shadow-sm transition-all duration-300",
-      isStudioPage ? "h-14 sm:h-16" : "h-16 sm:h-20"
-    )}>
+    <header className="fixed top-0 inset-x-0 z-50 w-full bg-background/95 backdrop-blur-xl border-b border-border/80 shadow-sm transition-all duration-300 h-16 sm:h-20">
       <div className="w-full max-w-[1460px] mx-auto px-5 sm:px-8 lg:px-10 h-full flex items-center justify-between gap-2 sm:gap-4">
         
         {/* Top-Left Logo */}
@@ -293,15 +288,13 @@ export const PublicNavbar = () => {
                 <LogIn className="h-3.5 w-3.5 text-primary" />
                 <span>Sign In</span>
               </Button>
-              {!isStudioPage && (
-                <Button asChild className="h-9 sm:h-10 px-3.5 sm:px-4 rounded-xl text-xs font-semibold gap-1.5 shadow-xs shrink-0">
-                  <Link to="/resume-builder">
-                    <Sparkles className="h-3.5 w-3.5" />
-                    <span className="hidden sm:inline">Create Resume</span>
-                    <span className="sm:hidden">Build</span>
-                  </Link>
-                </Button>
-              )}
+              <Button asChild className="h-9 sm:h-10 px-3.5 sm:px-4 rounded-xl text-xs font-semibold gap-1.5 shadow-xs shrink-0">
+                <Link to="/resume-builder">
+                  <Sparkles className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">Create Resume</span>
+                  <span className="sm:hidden">Build</span>
+                </Link>
+              </Button>
             </div>
           )}
 
@@ -652,8 +645,8 @@ const PublicLayout = () => {
     )}>
       <PublicNavbar />
       <main className={cn(
-        "flex-1 flex flex-col min-h-0",
-        isStudioPage ? "pt-14 sm:pt-16 h-screen max-h-screen overflow-hidden" : "pt-16 sm:pt-20"
+        "flex-1 flex flex-col min-h-0 pt-16 sm:pt-20",
+        isStudioPage && "h-screen max-h-screen overflow-hidden"
       )}>
         <Outlet />
       </main>

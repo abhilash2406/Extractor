@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { 
   Sparkles, 
   FileText, 
@@ -22,6 +22,11 @@ import {
   Loader2,
   FileDown,
   FolderCheck,
+  FolderOpen,
+  ChevronDown,
+  ChevronUp,
+  ChevronRight,
+  LayoutDashboard,
   ArrowDownToLine,
   BookmarkCheck,
   Lock,
@@ -41,11 +46,18 @@ import {
   ArrowUp,
   ArrowDown,
   ArrowLeft,
-  EyeOff
+  EyeOff,
+  History,
+  RotateCcw,
+  Copy,
+  Clock,
+  Info,
+  AlertCircle
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuLabel } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
 
 const LinkedinIcon = ({ className = 'w-3.5 h-3.5', style }) => (
@@ -86,7 +98,18 @@ import { useAuthStore } from '@/store/authStore';
 import { useAuthModalStore } from '@/store/authModalStore';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { getPublishedTemplates } from '@/api/templates.api';
-import { saveResume, updateResume, downloadResumePdf, getResumeById } from '@/api/resumes.api';
+import { 
+  saveResume, 
+  updateResume, 
+  downloadResumePdf, 
+  getResumeById,
+  getLatestResume,
+  getResumeUsage,
+  getResumeVersions,
+  restoreResumeVersion,
+  getMyResumes
+} from '@/api/resumes.api';
+import moment from 'moment';
 import toast from 'react-hot-toast';
 import ResumeRenderer from '@/components/resume/ResumeRenderer';
 import MonthYearPicker from '@/components/ui/MonthYearPicker';
@@ -105,17 +128,13 @@ export const COLOR_PRESETS = [
   { name: 'Charcoal Contrast', primary: '#334155', accent: '#64748b', heading: '#0f172a', bg: '#ffffff', sidebarBg: '#1e293b', isPro: true },
 ];
 
-// Font options matching Admin builder (with Free vs Pro tier tagging)
-export const FONT_OPTIONS = [
-  { label: 'Inter (Modern Sans)', value: "'Inter', sans-serif", isPro: false },
-  { label: 'Roboto (Neutral Neo-grotesque)', value: "'Roboto', sans-serif", isPro: false },
-  { label: 'Plus Jakarta Sans (Crisp Contemporary)', value: "'Plus Jakarta Sans', sans-serif", isPro: false },
-  // Premium / Pro locked fonts:
-  { label: 'Outfit (Clean Geometric)', value: "'Outfit', sans-serif", isPro: true },
-  { label: 'Poppins (Friendly Geometric)', value: "'Poppins', sans-serif", isPro: true },
-  { label: 'Merriweather (Classic Editorial Serif)', value: "'Merriweather', Georgia, serif", isPro: true },
-  { label: 'Playfair Display (Executive High-Contrast Serif)', value: "'Playfair Display', Georgia, serif", isPro: true },
-];
+import { 
+  FONT_OPTIONS, 
+  FONT_CATEGORIES, 
+  FEATURED_FONTS, 
+  loadGoogleFont 
+} from '@/constants/fonts';
+export { FONT_OPTIONS };
 
 export const FONT_SIZE_OPTIONS = [
   { id: '7pt', label: '7pt', desc: 'Ultra Compact' },
@@ -228,8 +247,81 @@ export const sanitizeProjectsData = (projects) => {
   });
 };
 
+export const DEFAULT_RESUME_DATA = {
+  fullName: 'Alex Rivera',
+  jobTitle: 'Senior Full-Stack Engineer',
+  email: 'alex.rivera@dev.io',
+  phone: '+1 (555) 234-5678',
+  location: 'San Francisco, CA',
+  website: '',
+  github: '',
+  linkedin: 'linkedin.com/in/alexrivera',
+  photo: '',
+  photo_url: '',
+  summary: 'High-impact Full-Stack Engineer with 6+ years building scalable cloud architectures, real-time distributed microservices, and high-conversion React web applications. Proven track record reducing API latency by 45% with Groq & Redis caching.',
+  experiences: [
+    {
+      id: 1,
+      company: 'CloudScale Technologies',
+      position: 'Senior Software Engineer',
+      location: 'San Francisco, CA',
+      startDate: '2022-01',
+      endDate: '',
+      current: true,
+      period: 'Jan 2022 - Present',
+      bullets: [
+        'Architected and deployed high-throughput ingestion pipelines handling 50M+ daily events using Node.js, Kafka, and PostgreSQL.',
+        'Spearheaded frontend performance optimizations with Vite and Next.js, cutting Core Web Vitals LCP by 60%.',
+        'Mentored a cross-functional team of 6 engineers across Agile sprints and CI/CD best practices.'
+      ]
+    },
+    {
+      id: 2,
+      company: 'Nexus AI Solutions',
+      position: 'Full-Stack Developer',
+      location: 'Austin, TX',
+      startDate: '2019-03',
+      endDate: '2022-01',
+      current: false,
+      period: 'Mar 2019 - Jan 2022',
+      bullets: [
+        'Developed micro-frontend architecture for enterprise dashboard used by over 120,000 monthly active users.',
+        'Integrated LLM automated document extraction pipelines resulting in $180k annual operational cost reduction.'
+      ]
+    }
+  ],
+  projects: [
+    {
+      id: 1,
+      name: 'AI Document Extractor & Talent Cloud',
+      role: 'Full-Stack Lead',
+      link: 'https://github.com/example/talent-extractor',
+      bullets: [
+        'Architected end-to-end document extraction pipeline utilizing LLM multimodal models.',
+        'Built automated ATS compliance scoring system boosting candidate match accuracy to 99.8%.',
+        'Delivered sub-second real-time resume preview generation using React and canvas rendering.'
+      ]
+    }
+  ],
+  education: [
+    {
+      id: 1,
+      degree: 'B.S. in Computer Science',
+      school: 'University of California, Berkeley',
+      location: 'Berkeley, CA',
+      startDate: '2015-08',
+      endDate: '2019-05',
+      current: false,
+      year: '2015 - 2019',
+      gpa: '3.85 / 4.0'
+    }
+  ],
+  skills: ['TypeScript', 'React.js', 'Node.js', 'Python', 'FastAPI', 'PostgreSQL', 'Docker', 'AWS ECS', 'GraphQL', 'Tailwind CSS', 'Redis', 'CI/CD']
+};
+
 export default function ResumeBuilderPage() {
-  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const resumeIdParam = searchParams.get('id') || searchParams.get('resumeId');
   const selectedTemplateParam = searchParams.get('template') || 'modern';
   
@@ -263,6 +355,12 @@ export default function ResumeBuilderPage() {
   const [templateCategoryFilter, setTemplateCategoryFilter] = useState('All');
   const [showAllTemplatesModal, setShowAllTemplatesModal] = useState(false);
 
+  // Font Gallery Modal, Search & Filter States (supports 50+ typography styles)
+  const [showFontModal, setShowFontModal] = useState(false);
+  const [isFontBrowserExpanded, setIsFontBrowserExpanded] = useState(false);
+  const [fontSearch, setFontSearch] = useState('');
+  const [fontCategoryFilter, setFontCategoryFilter] = useState('All');
+
   // Resume persistence & export states
   const [resumeTitle, setResumeTitle] = useState('My Professional Resume');
   const [savedResumeId, setSavedResumeId] = useState(null);
@@ -270,40 +368,47 @@ export default function ResumeBuilderPage() {
   const [isDownloading, setIsDownloading] = useState(false);
   const [isSaveDownloading, setIsSaveDownloading] = useState(false);
   const [showDownloadChoiceModal, setShowDownloadChoiceModal] = useState(false);
+
+  // Download Modal Animated Progress & Phase States (in-modal progress bar, no toaster)
+  const [downloadPhase, setDownloadPhase] = useState('idle'); // 'idle' | 'generating' | 'success' | 'error'
+  const [downloadProgress, setDownloadProgress] = useState(0);
+  const [downloadStatusText, setDownloadStatusText] = useState('Preparing resume PDF...');
+  const [downloadErrorMsg, setDownloadErrorMsg] = useState('');
+  const progressTimerRef = useRef(null);
+
+  useEffect(() => {
+    return () => {
+      if (progressTimerRef.current) clearInterval(progressTimerRef.current);
+    };
+  }, []);
+
   const { user, isAuthenticated } = useAuthStore();
   const isProUser = Boolean(isAuthenticated && (user?.plan_code === 'PRO' || user?.plan_code === 'PREMIUM'));
 
+  // Resume Usage & Free Tier Limit (Max 3 resumes on Free plan)
+  const [resumeUsage, setResumeUsage] = useState({ count: 0, limit: 3, isPro: false, planCode: 'FREE', canCreate: true });
+  const [showLimitExceededModal, setShowLimitExceededModal] = useState(false);
+
+  // All user resumes to detect duplicates and enforce unique names
+  const [userResumes, setUserResumes] = useState([]);
+
+  // Save as New Resume Modal
+  const [showSaveAsNewModal, setShowSaveAsNewModal] = useState(false);
+  const [newResumeTitle, setNewResumeTitle] = useState('');
+  const [isSavingAsNew, setIsSavingAsNew] = useState(false);
+
+  // Version History Modal
+  const [showVersionHistoryModal, setShowVersionHistoryModal] = useState(false);
+  const [versionList, setVersionList] = useState([]);
+  const [loadingVersions, setLoadingVersions] = useState(false);
+  const [restoringVersionId, setRestoringVersionId] = useState(null);
+
   // Module order, custom section visibility & page breaks
-  const [sectionOrder, setSectionOrder] = useState(() => {
-    try {
-      const saved = localStorage.getItem('extractor_resume_draft');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed.sectionOrder)) return parsed.sectionOrder;
-      }
-    } catch (e) {}
-    return ['summary', 'experience', 'projects', 'skills', 'education'];
-  });
-  const [pageBreaks, setPageBreaks] = useState(() => {
-    try {
-      const saved = localStorage.getItem('extractor_resume_draft');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (parsed.pageBreaks) return parsed.pageBreaks;
-      }
-    } catch (e) {}
-    return {};
-  });
-  const [hiddenSections, setHiddenSections] = useState(() => {
-    try {
-      const saved = localStorage.getItem('extractor_resume_draft');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (parsed.hiddenSections) return parsed.hiddenSections;
-      }
-    } catch (e) {}
-    return {};
-  });
+  const [sectionOrder, setSectionOrder] = useState([
+    'summary', 'experience', 'projects', 'skills', 'education'
+  ]);
+  const [pageBreaks, setPageBreaks] = useState({});
+  const [hiddenSections, setHiddenSections] = useState({});
   const [autoBreakSpacers, setAutoBreakSpacers] = useState({});
 
   // Load published templates with React Query (fetches up to 150 templates for rich gallery)
@@ -339,77 +444,7 @@ export default function ResumeBuilderPage() {
   }, [apiTemplates, selectedTemplateParam, selectedTemplateObj]);
 
   // Resume State (photo defaults to empty - no dummy photo if user didn't upload)
-  const [resumeData, setResumeData] = useState({
-    fullName: 'Alex Rivera',
-    jobTitle: 'Senior Full-Stack Engineer',
-    email: 'alex.rivera@dev.io',
-    phone: '+1 (555) 234-5678',
-    location: 'San Francisco, CA',
-    website: '',
-    github: '',
-    linkedin: 'linkedin.com/in/alexrivera',
-    photo: '',
-    photo_url: '',
-    summary: 'High-impact Full-Stack Engineer with 6+ years building scalable cloud architectures, real-time distributed microservices, and high-conversion React web applications. Proven track record reducing API latency by 45% with Groq & Redis caching.',
-    experiences: [
-      {
-        id: 1,
-        company: 'CloudScale Technologies',
-        position: 'Senior Software Engineer',
-        location: 'San Francisco, CA',
-        startDate: '2022-01',
-        endDate: '',
-        current: true,
-        period: 'Jan 2022 - Present',
-        bullets: [
-          'Architected and deployed high-throughput ingestion pipelines handling 50M+ daily events using Node.js, Kafka, and PostgreSQL.',
-          'Spearheaded frontend performance optimizations with Vite and Next.js, cutting Core Web Vitals LCP by 60%.',
-          'Mentored a cross-functional team of 6 engineers across Agile sprints and CI/CD best practices.'
-        ]
-      },
-      {
-        id: 2,
-        company: 'Nexus AI Solutions',
-        position: 'Full-Stack Developer',
-        location: 'Austin, TX',
-        startDate: '2019-03',
-        endDate: '2022-01',
-        current: false,
-        period: 'Mar 2019 - Jan 2022',
-        bullets: [
-          'Developed micro-frontend architecture for enterprise dashboard used by over 120,000 monthly active users.',
-          'Integrated LLM automated document extraction pipelines resulting in $180k annual operational cost reduction.'
-        ]
-      }
-    ],
-    projects: [
-      {
-        id: 1,
-        name: 'AI Document Extractor & Talent Cloud',
-        role: 'Full-Stack Lead',
-        link: 'https://github.com/example/talent-extractor',
-        bullets: [
-          'Architected end-to-end document extraction pipeline utilizing LLM multimodal models.',
-          'Built automated ATS compliance scoring system boosting candidate match accuracy to 99.8%.',
-          'Delivered sub-second real-time resume preview generation using React and canvas rendering.'
-        ]
-      }
-    ],
-    education: [
-      {
-        id: 1,
-        degree: 'B.S. in Computer Science',
-        school: 'University of California, Berkeley',
-        location: 'Berkeley, CA',
-        startDate: '2015-08',
-        endDate: '2019-05',
-        current: false,
-        year: '2015 - 2019',
-        gpa: '3.85 / 4.0'
-      }
-    ],
-    skills: ['TypeScript', 'React.js', 'Node.js', 'Python', 'FastAPI', 'PostgreSQL', 'Docker', 'AWS ECS', 'GraphQL', 'Tailwind CSS', 'Redis', 'CI/CD']
-  });
+  const [resumeData, setResumeData] = useState(DEFAULT_RESUME_DATA);
 
   // Dynamically resolve template configurations & user styling overrides
   const activeTemplate = useMemo(() => {
@@ -744,15 +779,9 @@ export default function ResumeBuilderPage() {
   }, [apiTemplates, templateSearch, templateCategoryFilter]);
 
   // Styling & Palette Handlers (matching Admin builder)
+  // Users can view and apply ANY color or font to their resume in real-time (preview mode).
+  // If a paid Pro styling is selected, proceeding (download/save) is gated for non-Pro users.
   const handleSelectPalette = (preset) => {
-    if (preset.isPro && !isProUser) {
-      setLockedModal({
-        open: true,
-        title: `${preset.name} Theme`,
-        type: 'color',
-      });
-      return;
-    }
     setSelectedPalette(preset.name);
     setAccentColor(preset.primary);
     setCustomDesign(prev => ({
@@ -780,20 +809,88 @@ export default function ResumeBuilderPage() {
   };
 
   const handleSelectFontFamily = (f) => {
-    if (f.isPro && !isProUser) {
-      setLockedModal({
-        open: true,
-        title: f.label,
-        type: 'font',
-      });
-      return;
-    }
+    loadGoogleFont(f.value);
     setCustomDesign(prev => ({
       ...prev,
       fontFamily: f.value,
       headingFontFamily: f.value,
     }));
   };
+
+  const activeFont = useMemo(() => {
+    return FONT_OPTIONS.find(f => f.value === customDesign.fontFamily) || FONT_OPTIONS[0];
+  }, [customDesign.fontFamily]);
+
+  const filteredFonts = useMemo(() => {
+    const q = fontSearch.trim().toLowerCase();
+    return FONT_OPTIONS.filter((f) => {
+      const matchesSearch = !q || 
+        f.name.toLowerCase().includes(q) || 
+        f.label.toLowerCase().includes(q) || 
+        f.category.toLowerCase().includes(q) || 
+        f.subLabel.toLowerCase().includes(q);
+      const matchesCategory = 
+        fontCategoryFilter === 'All' ? true :
+        fontCategoryFilter === 'Free' ? !f.isPro :
+        f.category.toLowerCase() === fontCategoryFilter.toLowerCase();
+      return matchesSearch && matchesCategory;
+    });
+  }, [fontSearch, fontCategoryFilter]);
+
+  // Dynamically prefetch visible Google Fonts when browsing modal or inline sidebar explorer
+  useEffect(() => {
+    if (showFontModal || isFontBrowserExpanded) {
+      filteredFonts.slice(0, 30).forEach((f) => loadGoogleFont(f.value));
+    }
+  }, [showFontModal, isFontBrowserExpanded, filteredFonts]);
+
+  // Determine if active design uses paid / Pro features
+  const activePreset = useMemo(() => {
+    return COLOR_PRESETS.find(p => p.name === selectedPalette || (p.primary === accentColor && p.sidebarBg === customDesign.sidebarBackgroundColor));
+  }, [selectedPalette, accentColor, customDesign.sidebarBackgroundColor]);
+
+  const activeProPalette = activePreset?.isPro ? activePreset : null;
+  const activeProFont = activeFont?.isPro ? activeFont : null;
+  const isUsingProStyling = Boolean(!isProUser && (activeProPalette || activeProFont));
+
+  const proStylingTitle = useMemo(() => {
+    return [
+      activeProPalette?.name && `${activeProPalette.name} Theme`,
+      activeProFont?.label && `${activeProFont.label} Font`
+    ].filter(Boolean).join(' and ');
+  }, [activeProPalette, activeProFont]);
+
+  // Revert back to default free theme and font
+  const handleRevertFreeStyling = useCallback(() => {
+    const defaultPalette = COLOR_PRESETS[0]; // Azure Tech
+    const defaultFont = FONT_OPTIONS[0]; // Inter
+    setSelectedPalette(defaultPalette.name);
+    setAccentColor(defaultPalette.primary);
+    setCustomDesign(prev => ({
+      ...prev,
+      primaryColor: defaultPalette.primary,
+      accentColor: defaultPalette.accent,
+      headingColor: defaultPalette.heading,
+      backgroundColor: defaultPalette.bg,
+      sidebarBackgroundColor: defaultPalette.sidebarBg,
+      fontFamily: defaultFont.value,
+      headingFontFamily: defaultFont.value,
+    }));
+    toast.success('Reverted to free standard styling');
+  }, []);
+
+  // Gate proceeding (Download PDF or Save) when using paid Pro styling on free tier
+  const checkProStylingGate = useCallback((actionType = 'download') => {
+    if (isUsingProStyling) {
+      setLockedModal({
+        open: true,
+        title: proStylingTitle || 'Pro Styling',
+        type: actionType,
+      });
+      return true; // blocked
+    }
+    return false; // allowed
+  }, [isUsingProStyling, proStylingTitle]);
 
   const handleSelectFontSize = (sizeId) => {
     setCustomDesign(prev => ({
@@ -805,6 +902,8 @@ export default function ResumeBuilderPage() {
   const currentSizeIndex = FONT_SIZE_OPTIONS.findIndex(
     (fs) => fs.id === (customDesign.fontSize || '10pt')
   );
+  const safeSizeIndex = currentSizeIndex === -1 ? 6 : currentSizeIndex;
+  const currentSize = FONT_SIZE_OPTIONS[safeSizeIndex] || FONT_SIZE_OPTIONS[6];
 
   const handleDecreaseFontSize = () => {
     const defaultIdx = FONT_SIZE_OPTIONS.findIndex((fs) => fs.id === '10pt');
@@ -1218,113 +1317,217 @@ export default function ResumeBuilderPage() {
     });
   };
 
-  // Load saved resume if resumeId is in query params
-  useEffect(() => {
-    if (!resumeIdParam) return;
-    let isMounted = true;
-    const fetchSavedResume = async () => {
-      try {
-        const res = await getResumeById(resumeIdParam);
-        const data = res.data?.data;
-        if (data && isMounted) {
-          setSavedResumeId(data.id);
-          if (data.title) setResumeTitle(data.title);
-          if (data.content) {
-            const loaded = { ...data.content };
-            if (loaded.projects) {
-              loaded.projects = sanitizeProjectsData(loaded.projects);
-            }
-            if (Array.isArray(loaded.sectionOrder)) {
-              setSectionOrder(loaded.sectionOrder);
-            }
-            if (loaded.pageBreaks) {
-              setPageBreaks(loaded.pageBreaks);
-            }
-            if (loaded.hiddenSections) {
-              setHiddenSections(loaded.hiddenSections);
-            }
-            setResumeData(loaded);
-            if (data.content.design_config) {
-              setCustomDesign(prev => ({ ...prev, ...data.content.design_config }));
-              if (data.content.design_config.primaryColor) {
-                setAccentColor(data.content.design_config.primaryColor);
-              }
-            }
-          }
-          if (data.template_id) {
-            setSelectedTemplate(data.template_id);
-            if (data.template) {
-              setSelectedTemplateObj(data.template);
-              if (data.template.design_config?.primaryColor && !data.content?.design_config?.primaryColor) {
-                setAccentColor(data.template.design_config.primaryColor);
-              }
-            }
-          }
+  // Helper to apply loaded resume data cleanly into component state
+  const applyResumeToState = useCallback((data) => {
+    if (!data) return;
+    setSavedResumeId(data.id);
+    if (data.title) setResumeTitle(data.title);
+    if (data.content) {
+      const loaded = { ...data.content };
+      if (loaded.projects) {
+        loaded.projects = sanitizeProjectsData(loaded.projects);
+      }
+      if (Array.isArray(loaded.sectionOrder)) {
+        setSectionOrder(loaded.sectionOrder);
+      }
+      if (loaded.pageBreaks) {
+        setPageBreaks(loaded.pageBreaks);
+      }
+      if (loaded.hiddenSections) {
+        setHiddenSections(loaded.hiddenSections);
+      }
+      setResumeData(loaded);
+      if (data.content.design_config) {
+        setCustomDesign((prev) => ({ ...prev, ...data.content.design_config }));
+        if (data.content.design_config.primaryColor) {
+          setAccentColor(data.content.design_config.primaryColor);
         }
-      } catch (err) {
-        console.error('Failed to load saved resume by ID', err);
-        toast.error('Could not load requested resume');
+      }
+    }
+    if (data.template_id) {
+      setSelectedTemplate(data.template_id);
+      if (data.template) {
+        setSelectedTemplateObj(data.template);
+        if (data.template.design_config?.primaryColor && !data.content?.design_config?.primaryColor) {
+          setAccentColor(data.template.design_config.primaryColor);
+        }
+      }
+    }
+  }, []);
+
+  // Refresh resume usage info (count, free limit max 3, isPro)
+  const refreshResumeUsage = useCallback(async () => {
+    if (!isAuthenticated) return;
+    try {
+      const res = await getResumeUsage();
+      if (res.data?.data) {
+        setResumeUsage(res.data.data);
+      }
+    } catch (err) {
+      console.warn('Could not load resume usage statistics', err);
+    }
+  }, [isAuthenticated]);
+
+  // Fetch all user resumes to detect and prevent duplicate titles
+  const refreshUserResumes = useCallback(async () => {
+    if (!isAuthenticated) {
+      setUserResumes([]);
+      return;
+    }
+    try {
+      const res = await getMyResumes({ limit: 50 });
+      const list = res.data?.data || [];
+      setUserResumes(list);
+    } catch (err) {
+      console.warn('Could not load user resumes for duplicate validation', err);
+    }
+  }, [isAuthenticated]);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      refreshResumeUsage();
+      refreshUserResumes();
+    } else {
+      setUserResumes([]);
+    }
+  }, [isAuthenticated, refreshResumeUsage, refreshUserResumes]);
+
+  // Helper to suggest unique resume titles (e.g. "My Professional Resume (Copy)")
+  const getNextAvailableTitle = useCallback((baseTitle, list = []) => {
+    const raw = (baseTitle || 'My Professional Resume').trim();
+    const cleanBase = raw.replace(/\s*\(Copy(\s+\d+)?\)$/i, '').trim() || 'My Professional Resume';
+    const isTaken = (name) => list.some((r) => r.title?.trim().toLowerCase() === name.trim().toLowerCase());
+
+    let candidate = `${cleanBase} (Copy)`;
+    if (!isTaken(candidate)) return candidate;
+    let counter = 2;
+    while (isTaken(`${cleanBase} (Copy ${counter})`)) {
+      counter++;
+    }
+    return `${cleanBase} (Copy ${counter})`;
+  }, []);
+
+  // Title duplicate validations
+  const isDuplicateSaveAsNewTitle = useMemo(() => {
+    const trimmed = newResumeTitle.trim().toLowerCase();
+    if (!trimmed) return false;
+    return userResumes.some((r) => r.title?.trim().toLowerCase() === trimmed);
+  }, [newResumeTitle, userResumes]);
+
+  const isHeaderTitleDuplicate = useMemo(() => {
+    if (!isAuthenticated) return false;
+    const trimmed = (resumeTitle || '').trim().toLowerCase();
+    if (!trimmed) return false;
+    return userResumes.some(
+      (r) => (!savedResumeId || r.id !== savedResumeId) && r.title?.trim().toLowerCase() === trimmed
+    );
+  }, [isAuthenticated, resumeTitle, userResumes, savedResumeId]);
+
+  // Load versions history for the current saved resume
+  const loadVersionHistory = useCallback(async (resumeId) => {
+    if (!resumeId || !isAuthenticated) return;
+    setLoadingVersions(true);
+    try {
+      const res = await getResumeVersions(resumeId);
+      setVersionList(res.data?.data || []);
+    } catch (err) {
+      console.warn('Could not load version history', err);
+    } finally {
+      setLoadingVersions(false);
+    }
+  }, [isAuthenticated]);
+
+  useEffect(() => {
+    if (savedResumeId && isAuthenticated) {
+      loadVersionHistory(savedResumeId);
+    }
+  }, [savedResumeId, isAuthenticated, loadVersionHistory]);
+
+  // Load Resume on page enter:
+  // 1. If explicit resumeId in URL, load it.
+  // 2. If NO ID in URL and user is logged in, show their latest (last edited) resume so they can edit or save as new.
+  // 3. For users without a saved resume or guests, restore draft from localStorage or show default.
+  useEffect(() => {
+    let isMounted = true;
+
+    const initResume = async () => {
+      // Case 1: Specific resume ID requested in URL
+      if (resumeIdParam) {
+        try {
+          const res = await getResumeById(resumeIdParam);
+          const data = res.data?.data;
+          if (data && isMounted) {
+            applyResumeToState(data);
+          }
+        } catch (err) {
+          console.error('Failed to load saved resume by ID', err);
+          toast.error('Could not load requested resume');
+        }
+        return;
+      }
+
+      // Case 2: User is authenticated and opened resume builder without an ID:
+      // Show their latest (last edited one) so they can edit it or save as new.
+      if (isAuthenticated) {
+        try {
+          const res = await getLatestResume();
+          const latest = res.data?.data;
+          if (latest && isMounted) {
+            applyResumeToState(latest);
+            setSearchParams({ id: latest.id }, { replace: true });
+            return;
+          }
+        } catch (err) {
+          console.warn('Could not fetch latest resume, falling back to local draft', err);
+        }
+      }
+
+      // Case 3: Users without a saved resume or guests:
+      // Always show standard clean sample resume and purge any old localStorage drafts
+      try {
+        localStorage.removeItem('extractor_resume_draft');
+      } catch (e) {}
+
+      if (!resumeIdParam) {
+        setSavedResumeId(null);
+        setResumeTitle('My Professional Resume');
+        setResumeData(DEFAULT_RESUME_DATA);
+        setSectionOrder(['summary', 'experience', 'projects', 'skills', 'education']);
+        setPageBreaks({});
+        setHiddenSections({});
       }
     };
-    fetchSavedResume();
+
+    initResume();
     return () => { isMounted = false; };
-  }, [resumeIdParam]);
+  }, [resumeIdParam, isAuthenticated, applyResumeToState, setSearchParams]);
 
-  // Restore draft from localStorage if available (only if not loading an explicit resume ID)
-  useEffect(() => {
-    if (resumeIdParam) return;
-    try {
-      const savedDraft = localStorage.getItem('extractor_resume_draft');
-      if (savedDraft) {
-        const parsed = JSON.parse(savedDraft);
-        if (parsed.resumeData) {
-          const loaded = { ...parsed.resumeData };
-          if (loaded.projects) {
-            loaded.projects = sanitizeProjectsData(loaded.projects);
-          }
-          setResumeData(loaded);
-        }
-        if (parsed.sectionOrder && Array.isArray(parsed.sectionOrder)) setSectionOrder(parsed.sectionOrder);
-        if (parsed.pageBreaks) setPageBreaks(parsed.pageBreaks);
-        if (parsed.hiddenSections) setHiddenSections(parsed.hiddenSections);
-        if (parsed.resumeTitle) setResumeTitle(parsed.resumeTitle);
-        if (parsed.accentColor) setAccentColor(parsed.accentColor);
-        if (parsed.customDesign) setCustomDesign(parsed.customDesign);
-        if (parsed.selectedPalette) setSelectedPalette(parsed.selectedPalette);
-        if (parsed.savedResumeId) setSavedResumeId(parsed.savedResumeId);
-      }
-    } catch (e) {
-      console.warn('Failed to restore draft from localStorage', e);
-    }
-  }, [resumeIdParam]);
-
-  const saveDraftToStorage = (overrideData = null, overrideOrder = null, overrideBreaks = null, overrideHidden = null) => {
-    try {
-      localStorage.setItem('extractor_resume_draft', JSON.stringify({
-        resumeData: overrideData || resumeData,
-        sectionOrder: overrideOrder || sectionOrder,
-        pageBreaks: overrideBreaks || pageBreaks,
-        hiddenSections: overrideHidden || hiddenSections,
-        resumeTitle,
-        selectedTemplate,
-        accentColor,
-        customDesign,
-        selectedPalette,
-        savedResumeId,
-      }));
-    } catch (e) {
-      console.warn('Could not save draft to localStorage', e);
-    }
-  };
+  // No-op helper: drafts are not persisted to localStorage for unauthenticated sessions
+  const saveDraftToStorage = () => {};
 
   const { openAuthModal } = useAuthModalStore();
 
   // Core save to backend API
   const executeSaveToBackend = async (dataToSave = resumeData, titleToSave = resumeTitle) => {
+    if (checkProStylingGate('save')) return null;
     setIsSaving(true);
     try {
+      const trimmedTitle = (titleToSave || '').trim() || `${dataToSave.fullName || 'My'} Resume`;
+
+      // Prevent saving with a duplicate title across user's other resumes
+      if (isAuthenticated) {
+        const hasDuplicate = userResumes.some(
+          (r) => (!savedResumeId || r.id !== savedResumeId) && r.title?.trim().toLowerCase() === trimmedTitle.toLowerCase()
+        );
+        if (hasDuplicate) {
+          toast.error(`You already have a resume named "${trimmedTitle}". Please choose a different name.`);
+          setIsSaving(false);
+          return null;
+        }
+      }
+
       const payload = {
-        title: titleToSave || `${dataToSave.fullName || 'My'} Resume`,
+        title: trimmedTitle,
         template_id: activeTemplate?.id || selectedTemplate,
         content: {
           ...dataToSave,
@@ -1340,18 +1543,36 @@ export default function ResumeBuilderPage() {
       let res;
       if (savedResumeId) {
         res = await updateResume(savedResumeId, payload);
-        toast.success('Resume updated successfully!');
+        toast.success('Resume updated & version saved!');
+        loadVersionHistory(savedResumeId);
+        refreshUserResumes();
       } else {
+        // Enforce max 3 resumes on free plan
+        if (!resumeUsage.isPro && resumeUsage.count >= resumeUsage.limit) {
+          setShowLimitExceededModal(true);
+          return null;
+        }
         res = await saveResume(payload);
-        const newId = res.data?.data?.id;
-        if (newId) setSavedResumeId(newId);
+        const newResume = res.data?.data;
+        const newId = newResume?.id;
+        if (newId) {
+          setSavedResumeId(newId);
+          setSearchParams({ id: newId }, { replace: true });
+          loadVersionHistory(newId);
+        }
         toast.success('Resume saved to your account!');
+        refreshResumeUsage();
+        refreshUserResumes();
       }
       saveDraftToStorage();
       return res.data?.data;
     } catch (err) {
       console.error('Failed to save resume', err);
-      toast.error(err.response?.data?.message || 'Failed to save resume. Please try again.');
+      if (err.response?.status === 403 && (err.response?.data?.name === 'LimitReached' || err.response?.data?.message?.includes('limit'))) {
+        setShowLimitExceededModal(true);
+      } else {
+        toast.error(err.response?.data?.message || 'Failed to save resume. Please try again.');
+      }
       throw err;
     } finally {
       setIsSaving(false);
@@ -1360,6 +1581,7 @@ export default function ResumeBuilderPage() {
 
   // Handle Save Resume Button Click
   const handleSaveClick = () => {
+    if (checkProStylingGate('save')) return;
     saveDraftToStorage();
     if (!isAuthenticated) {
       toast('Please sign in to save this resume to your account.', { icon: '🔒' });
@@ -1376,15 +1598,207 @@ export default function ResumeBuilderPage() {
     executeSaveToBackend();
   };
 
+  // Handle Save As New Resume
+  const handleOpenSaveAsNew = () => {
+    if (checkProStylingGate('save')) return;
+    if (!isAuthenticated) {
+      toast('Please sign in to save a new resume to your account.', { icon: '🔒' });
+      openAuthModal('login');
+      return;
+    }
+    if (!resumeUsage.isPro && resumeUsage.count >= resumeUsage.limit) {
+      setShowLimitExceededModal(true);
+      return;
+    }
+    const suggestedTitle = getNextAvailableTitle(resumeTitle, userResumes);
+    setNewResumeTitle(suggestedTitle);
+    setShowSaveAsNewModal(true);
+  };
+
+  const handleConfirmSaveAsNew = async () => {
+    const trimmedTitle = newResumeTitle.trim();
+    if (!trimmedTitle) {
+      toast.error('Please enter a title for the new resume');
+      return;
+    }
+
+    // Check for duplicate title
+    const hasDuplicate = userResumes.some(
+      (r) => r.title?.trim().toLowerCase() === trimmedTitle.toLowerCase()
+    );
+    if (hasDuplicate) {
+      toast.error(`A resume named "${trimmedTitle}" already exists. Please choose a different name.`);
+      return;
+    }
+
+    setIsSavingAsNew(true);
+    try {
+      const payload = {
+        title: trimmedTitle,
+        template_id: activeTemplate?.id || selectedTemplate,
+        content: {
+          ...resumeData,
+          sectionOrder,
+          pageBreaks,
+          hiddenSections,
+          photo: resumeData.photo || resumeData.photo_url || '',
+          photo_url: resumeData.photo_url || resumeData.photo || '',
+          design_config: customDesign,
+        },
+      };
+
+      const res = await saveResume(payload);
+      const newResume = res.data?.data;
+      if (newResume) {
+        setSavedResumeId(newResume.id);
+        setResumeTitle(newResume.title);
+        setSearchParams({ id: newResume.id }, { replace: true });
+        toast.success(`Saved as new resume: "${newResume.title}"!`);
+        setShowSaveAsNewModal(false);
+        refreshResumeUsage();
+        refreshUserResumes();
+        loadVersionHistory(newResume.id);
+      }
+    } catch (err) {
+      console.error('Failed to save as new resume', err);
+      if (err.response?.status === 403 && (err.response?.data?.name === 'LimitReached' || err.response?.data?.message?.includes('limit'))) {
+        setShowSaveAsNewModal(false);
+        setShowLimitExceededModal(true);
+      } else {
+        toast.error(err.response?.data?.message || 'Failed to create new resume.');
+      }
+    } finally {
+      setIsSavingAsNew(false);
+    }
+  };
+
+  // Handle Version History Modal Open
+  const handleOpenVersionHistory = () => {
+    if (!savedResumeId) {
+      toast('Save your resume first to view and manage its version history.', { icon: 'ℹ️' });
+      return;
+    }
+    setShowVersionHistoryModal(true);
+    loadVersionHistory(savedResumeId);
+  };
+
+  // Handle Restore Specific Version Snapshot
+  const handleRestoreVersion = async (version) => {
+    if (!savedResumeId || !version) return;
+    setRestoringVersionId(version.id);
+    try {
+      const res = await restoreResumeVersion(savedResumeId, version.id);
+      const restored = res.data?.data?.resume || res.data?.data;
+      if (restored) {
+        applyResumeToState(restored);
+        toast.success(`Restored Version ${version.version_number} successfully!`, {
+          icon: '🔄',
+        });
+        loadVersionHistory(savedResumeId);
+        refreshUserResumes();
+        setShowVersionHistoryModal(false);
+      }
+    } catch (err) {
+      console.error('Failed to restore version', err);
+      toast.error(err.response?.data?.message || 'Failed to restore this version');
+    } finally {
+      setRestoringVersionId(null);
+    }
+  };
+
+  // Handle switching to a different saved resume
+  const handleSwitchResume = (targetResume) => {
+    if (!targetResume) return;
+    if (targetResume.id === savedResumeId) {
+      toast('You are already editing this resume.', { icon: 'ℹ️' });
+      return;
+    }
+    setSearchParams({ id: targetResume.id });
+    toast.success(`Switched to "${targetResume.title || 'Resume'}"`);
+  };
+
+  // Handle starting a fresh new resume
+  const handleCreateNewResume = () => {
+    if (!resumeUsage.isPro && resumeUsage.count >= resumeUsage.limit) {
+      setShowLimitExceededModal(true);
+      return;
+    }
+    setSavedResumeId(null);
+    setSearchParams({}, { replace: true });
+    setResumeTitle(getNextAvailableTitle('My Professional Resume', userResumes));
+    setResumeData(DEFAULT_RESUME_DATA);
+    setSectionOrder(['summary', 'experience', 'projects', 'skills', 'education']);
+    setPageBreaks({});
+    setHiddenSections({});
+    setVersionList([]);
+    toast.success('Started a fresh new resume!');
+  };
+
+  // Progress bar management for in-modal downloading (replaces annoying toast popups)
+  const startDownloadProgress = (initialText = 'Connecting to PDF rendering engine...') => {
+    if (progressTimerRef.current) clearInterval(progressTimerRef.current);
+    setShowDownloadChoiceModal(true);
+    setDownloadPhase('generating');
+    setDownloadProgress(14);
+    setDownloadStatusText(initialText);
+    setDownloadErrorMsg('');
+
+    let current = 14;
+    progressTimerRef.current = setInterval(() => {
+      current += Math.max(1, Math.floor((92 - current) * 0.16));
+      if (current >= 92) {
+        current = 92;
+        setDownloadStatusText('Finalizing vector ATS document...');
+      } else if (current > 65) {
+        setDownloadStatusText('Rendering ATS-compliant A4 pages...');
+      } else if (current > 35) {
+        setDownloadStatusText('Compiling custom design, fonts & layout...');
+      } else {
+        setDownloadStatusText(initialText);
+      }
+      setDownloadProgress(current);
+    }, 180);
+  };
+
+  const finishDownloadProgress = () => {
+    if (progressTimerRef.current) {
+      clearInterval(progressTimerRef.current);
+      progressTimerRef.current = null;
+    }
+    setDownloadProgress(100);
+    setDownloadStatusText('PDF generated successfully!');
+    setDownloadPhase('success');
+
+    // Auto-close modal after brief completion animation
+    setTimeout(() => {
+      setShowDownloadChoiceModal(false);
+      setTimeout(() => {
+        setDownloadPhase('idle');
+        setDownloadProgress(0);
+        setDownloadStatusText('');
+      }, 350);
+    }, 1300);
+  };
+
+  const failDownloadProgress = (errMsg) => {
+    if (progressTimerRef.current) {
+      clearInterval(progressTimerRef.current);
+      progressTimerRef.current = null;
+    }
+    setDownloadPhase('error');
+    setDownloadErrorMsg(errMsg || 'Failed to generate PDF. Please try again.');
+  };
+
   // Handle Direct PDF Download from Backend (Puppeteer)
   const handleDirectDownload = async ({ fromSaveAndDownload = false } = {}) => {
+    if (checkProStylingGate('download')) return;
     if (isDownloading || isSaveDownloading) return;
     if (fromSaveAndDownload) {
       setIsSaveDownloading(true);
     } else {
       setIsDownloading(true);
     }
-    const toastId = toast.loading('Generating high-resolution A4 PDF via server...');
+    startDownloadProgress('Preparing high-resolution ATS PDF...');
     try {
       const payload = {
         title: resumeTitle || `${resumeData.fullName || 'Alex_Rivera'}_Resume`,
@@ -1415,11 +1829,10 @@ export default function ResumeBuilderPage() {
       link.remove();
       window.URL.revokeObjectURL(downloadUrl);
 
-      toast.success('PDF downloaded successfully!', { id: toastId });
-      setShowDownloadChoiceModal(false);
+      finishDownloadProgress();
     } catch (err) {
       console.error('Failed to download PDF', err);
-      toast.error('Failed to generate PDF. Please try again.', { id: toastId });
+      failDownloadProgress(err.response?.data?.message || 'Failed to generate PDF. Please try again.');
     } finally {
       setIsDownloading(false);
       setIsSaveDownloading(false);
@@ -1428,6 +1841,7 @@ export default function ResumeBuilderPage() {
 
   // Handle Save & Download Combined
   const handleSaveAndDownload = async () => {
+    if (checkProStylingGate('download')) return;
     if (isSaving || isSaveDownloading) return;
     saveDraftToStorage();
 
@@ -1438,17 +1852,18 @@ export default function ResumeBuilderPage() {
           await executeSaveToBackend();
           await handleDirectDownload({ fromSaveAndDownload: true });
         } catch (e) {
-          // Stop if save failed
+          failDownloadProgress('Save failed. Could not proceed with download.');
         }
       });
       return;
     }
 
     try {
+      startDownloadProgress('Saving changes and preparing PDF...');
       await executeSaveToBackend();
       await handleDirectDownload({ fromSaveAndDownload: true });
     } catch (e) {
-      // Stop if save failed
+      failDownloadProgress(e.response?.data?.message || e.message || 'Failed to save and generate PDF.');
     }
   };
 
@@ -1471,27 +1886,150 @@ export default function ResumeBuilderPage() {
                   <div className="p-1.5 rounded-lg bg-primary/10 text-primary border border-primary/20 shrink-0">
                     <FileText className="h-4 w-4" />
                   </div>
-                  <input
-                    type="text"
-                    value={resumeTitle}
-                    onChange={(e) => setResumeTitle(e.target.value)}
-                    placeholder="My Professional Resume"
-                    className="text-sm sm:text-base font-bold tracking-tight text-foreground bg-transparent border-b border-transparent hover:border-border/70 focus:border-primary focus:outline-none transition-all truncate flex-1"
-                    title="Click to rename your resume document"
-                  />
+                  <div className="flex flex-col flex-1 min-w-0">
+                    <input
+                      type="text"
+                      value={resumeTitle}
+                      onChange={(e) => setResumeTitle(e.target.value)}
+                      placeholder="My Professional Resume"
+                      className={cn(
+                        "text-sm sm:text-base font-bold tracking-tight bg-transparent border-b transition-all truncate flex-1",
+                        isHeaderTitleDuplicate
+                          ? "text-rose-500 border-rose-500/70 focus:border-rose-500 focus:outline-none"
+                          : "text-foreground border-transparent hover:border-border/70 focus:border-primary focus:outline-none"
+                      )}
+                      title={isHeaderTitleDuplicate ? `A resume named "${resumeTitle.trim()}" already exists` : "Click to rename your resume document"}
+                    />
+                    {isHeaderTitleDuplicate && (
+                      <span className="text-[10px] text-rose-500 flex items-center gap-1 mt-0.5 font-medium">
+                        <AlertCircle className="h-3 w-3 shrink-0" />
+                        <span>A resume named &ldquo;{resumeTitle.trim()}&rdquo; already exists</span>
+                      </span>
+                    )}
+                  </div>
                 </div>
-                <Badge variant="outline" className="text-[10px] text-muted-foreground border-border/60 shrink-0 font-normal">
-                  {savedResumeId ? 'Saved' : 'Auto-saved'}
-                </Badge>
+
+                <div className="flex items-center gap-1.5 shrink-0">
+                  {isAuthenticated && (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button
+                          type="button"
+                          className={cn(
+                            "inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-semibold border transition-all cursor-pointer shadow-xs",
+                            resumeUsage.isPro 
+                              ? "border-amber-500/30 text-amber-500 bg-amber-500/10 hover:bg-amber-500/20 font-bold" 
+                              : resumeUsage.count >= resumeUsage.limit
+                              ? "border-rose-500/40 text-rose-500 bg-rose-500/10 hover:bg-rose-500/20 font-bold"
+                              : "border-border/80 text-foreground bg-muted/40 hover:bg-muted"
+                          )}
+                          title="Click to switch between your saved resumes"
+                        >
+                          <FolderOpen className="h-3.5 w-3.5 text-primary shrink-0" />
+                          <span>
+                            {resumeUsage.isPro ? 'Switch Resume' : `Switch (${resumeUsage.count}/${resumeUsage.limit})`}
+                          </span>
+                          <ChevronDown className="h-3 w-3 opacity-70 shrink-0" />
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-80 p-2 rounded-2xl bg-card border-border/80 shadow-2xl">
+                        <div className="px-2.5 py-2 border-b border-border/60 flex items-center justify-between">
+                          <div>
+                            <h5 className="text-xs font-bold text-foreground">Switch Resume</h5>
+                            <p className="text-[10px] text-muted-foreground">Select a saved resume to edit</p>
+                          </div>
+                          <Badge variant="outline" className="text-[10px] px-1.5 py-0.5">
+                            {userResumes.length}/{resumeUsage.limit}
+                          </Badge>
+                        </div>
+
+                        <div className="py-1 max-h-60 overflow-y-auto space-y-1 scrollbar-thin">
+                          {userResumes.length === 0 ? (
+                            <div className="p-4 text-center text-xs text-muted-foreground">
+                              No saved resumes found.
+                            </div>
+                          ) : (
+                            userResumes.map((r, idx) => {
+                              const isCurrent = r.id === savedResumeId;
+                              return (
+                                <DropdownMenuItem
+                                  key={r.id}
+                                  onClick={() => handleSwitchResume(r)}
+                                  className={cn(
+                                    "p-2.5 rounded-xl cursor-pointer flex items-center justify-between gap-2.5 transition-colors",
+                                    isCurrent ? "bg-primary/10 border border-primary/20 text-primary font-bold" : "hover:bg-muted/60"
+                                  )}
+                                >
+                                  <div className="min-w-0 flex-1">
+                                    <div className="flex items-center gap-1.5">
+                                      <span className="text-[10px] font-mono text-muted-foreground px-1.5 py-0.5 rounded bg-muted/60">
+                                        #{idx + 1}
+                                      </span>
+                                      <p className={cn("text-xs truncate", isCurrent ? "font-bold text-primary" : "font-medium text-foreground")}>
+                                        {r.title || 'Untitled Resume'}
+                                      </p>
+                                      {isCurrent && (
+                                        <Badge className="bg-primary text-primary-foreground text-[9px] px-1.5 py-0 font-bold ml-auto shrink-0">
+                                          Current
+                                        </Badge>
+                                      )}
+                                    </div>
+                                    <div className="text-[10px] text-muted-foreground flex items-center gap-2 mt-0.5 pl-6">
+                                      <span>{r.template?.name || 'Standard'}</span>
+                                      <span>•</span>
+                                      <span>{moment(r.updated_at).calendar(null, {
+                                        sameDay: '[Today at] LT',
+                                        lastDay: '[Yesterday at] LT',
+                                        sameElse: 'MMM D, YYYY'
+                                      })}</span>
+                                    </div>
+                                  </div>
+                                </DropdownMenuItem>
+                              );
+                            })
+                          )}
+                        </div>
+
+                        <DropdownMenuSeparator className="my-1 border-border/60" />
+
+                        <div className="pt-1 flex items-center justify-between gap-1">
+                          <button
+                            type="button"
+                            onClick={handleCreateNewResume}
+                            disabled={!resumeUsage.isPro && resumeUsage.count >= resumeUsage.limit}
+                            className={cn(
+                              "text-[11px] px-2.5 py-1 text-primary hover:bg-primary/10 rounded-lg flex items-center gap-1 font-medium transition-colors cursor-pointer",
+                              (!resumeUsage.isPro && resumeUsage.count >= resumeUsage.limit) && "opacity-50 cursor-not-allowed"
+                            )}
+                          >
+                            <Plus className="h-3 w-3" />
+                            <span>New Resume</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => navigate('/dashboard/my-resumes')}
+                            className="text-[11px] px-2.5 py-1 text-muted-foreground hover:bg-muted rounded-lg flex items-center gap-1 font-medium transition-colors ml-auto cursor-pointer"
+                          >
+                            <LayoutDashboard className="h-3 w-3" />
+                            <span>All Resumes</span>
+                          </button>
+                        </div>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  )}
+                  <Badge variant="outline" className="text-[10px] text-muted-foreground border-border/60 shrink-0 font-normal">
+                    {savedResumeId ? 'Saved' : 'Auto-saved'}
+                  </Badge>
+                </div>
               </div>
 
               {/* Actions Row: Save & Download */}
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 flex-wrap sm:flex-nowrap">
                 <Button 
                   variant="outline" 
                   size="sm"
                   onClick={handleSaveClick}
-                  disabled={isSaving}
+                  disabled={isSaving || isHeaderTitleDuplicate}
                   className="flex-1 h-8 rounded-xl text-xs font-semibold gap-1.5 border-border/80 hover:bg-muted"
                 >
                   {isSaving ? (
@@ -1504,10 +2042,46 @@ export default function ResumeBuilderPage() {
                   <span>{isSaving ? 'Saving...' : savedResumeId ? 'Update' : 'Save'}</span>
                 </Button>
 
+                {savedResumeId && (
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={handleOpenSaveAsNew}
+                    disabled={isSaving || isSavingAsNew}
+                    className="h-8 px-2.5 rounded-xl text-xs font-semibold gap-1.5 border-border/80 hover:bg-muted"
+                    title="Save current content as a new resume record"
+                  >
+                    <Copy className="h-3.5 w-3.5 text-indigo-500" />
+                    <span className="hidden sm:inline">Save as New</span>
+                    <span className="sm:hidden">New</span>
+                  </Button>
+                )}
+
+                {savedResumeId && (
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={handleOpenVersionHistory}
+                    className="h-8 px-2.5 rounded-xl text-xs font-semibold gap-1.5 border-border/80 hover:bg-muted"
+                    title="View snapshot versions and restore history"
+                  >
+                    <History className="h-3.5 w-3.5 text-primary" />
+                    <span className="hidden sm:inline">History</span>
+                    {versionList.length > 0 && (
+                      <span className="text-[10px] font-bold px-1.5 py-0.2 rounded-full bg-primary/10 text-primary">
+                        v{versionList[0]?.version_number || 1}
+                      </span>
+                    )}
+                  </Button>
+                )}
+
                 <Button 
                   variant="gradient" 
                   size="sm"
-                  onClick={() => setShowDownloadChoiceModal(true)}
+                  onClick={() => {
+                    if (checkProStylingGate('download')) return;
+                    setShowDownloadChoiceModal(true);
+                  }}
                   disabled={isDownloading}
                   className="flex-1 h-8 rounded-xl text-xs font-bold gap-1.5 shadow-md shadow-indigo-500/20"
                 >
@@ -1516,7 +2090,7 @@ export default function ResumeBuilderPage() {
                   ) : (
                     <Download className="h-3.5 w-3.5" />
                   )}
-                  <span>{isDownloading ? 'Generating...' : 'Download PDF'}</span>
+                  <span>{isDownloading ? 'Exporting...' : 'Download PDF'}</span>
                 </Button>
 
                 {/* Mobile Preview Button */}
@@ -1779,11 +2353,12 @@ export default function ResumeBuilderPage() {
                             key={preset.name}
                             type="button"
                             onClick={() => handleSelectPalette(preset)}
-                            className={`group relative flex items-center gap-2 p-2 rounded-xl border text-left transition-all ${
+                            className={`group relative flex items-center gap-2 p-2 rounded-xl border text-left transition-all cursor-pointer ${
                               isSelected
                                 ? 'border-primary bg-primary/10 ring-1 ring-primary shadow-xs'
                                 : 'border-border/80 bg-card/60 hover:border-primary/40 hover:bg-card'
                             }`}
+                            title={isLocked ? `${preset.name} (Pro theme · Click to preview on resume)` : preset.name}
                           >
                             <div className="flex -space-x-1 shrink-0">
                               <span
@@ -1806,10 +2381,7 @@ export default function ResumeBuilderPage() {
                             </div>
 
                             {isLocked ? (
-                              <span className="shrink-0 flex items-center gap-0.5 text-[9px] font-bold text-amber-500 bg-amber-500/10 px-1 py-0.5 rounded border border-amber-500/20">
-                                <Lock className="w-2.5 h-2.5" />
-                                <span>PRO</span>
-                              </span>
+                              <Lock className={cn("w-3.5 h-3.5 shrink-0", isSelected ? "text-primary" : "text-muted-foreground/70")} />
                             ) : isSelected ? (
                               <Check className="h-3.5 w-3.5 text-primary shrink-0" />
                             ) : null}
@@ -1819,105 +2391,439 @@ export default function ResumeBuilderPage() {
                     </div>
                   </div>
 
-                  {/* Typography & Font Family with Pro Locks */}
+                  {/* Typography & Font Family with 50+ Fonts */}
                   <div className="space-y-3 pt-3 border-t border-border/60">
                     <div className="flex items-center justify-between">
                       <div>
-                        <Label className="text-xs font-bold text-foreground">Font Family & Typography</Label>
-                        <p className="text-[11px] text-muted-foreground">Select professional fonts tailored for tech, executive, or creative roles</p>
+                        <div className="flex items-center gap-2">
+                          <Label className="text-xs font-bold text-foreground">Font Family & Typography</Label>
+                          <span className="text-[10px] font-bold text-primary bg-primary/10 border border-primary/20 px-1.5 py-0.2 rounded-md font-mono">
+                            {FONT_OPTIONS.length}+ Fonts
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-muted-foreground mt-0.5">Recruiter-tested fonts for tech, executive & creative roles</p>
                       </div>
-                      <Type className="h-4 w-4 text-muted-foreground" />
+                      <Button
+                        type="button"
+                        variant={isFontBrowserExpanded ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setIsFontBrowserExpanded(prev => !prev)}
+                        className={cn(
+                          "h-7 text-[11px] font-semibold gap-1.5 px-2.5 rounded-lg shadow-xs cursor-pointer transition-all",
+                          isFontBrowserExpanded
+                            ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                            : "border-primary/30 text-primary hover:bg-primary/10 hover:border-primary/50"
+                        )}
+                        title={isFontBrowserExpanded ? "Collapse font list" : "Browse all 54 fonts with live resume preview"}
+                      >
+                        <Type className="h-3.5 w-3.5" />
+                        <span>{isFontBrowserExpanded ? "Collapse" : "Browse All (54)"}</span>
+                        {isFontBrowserExpanded ? (
+                          <ChevronUp className="h-3 w-3" />
+                        ) : (
+                          <ChevronDown className="h-3 w-3" />
+                        )}
+                      </Button>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                      {FONT_OPTIONS.map((f) => {
-                        const isSelected = (customDesign.fontFamily || "'Inter', sans-serif") === f.value;
-                        const isLocked = f.isPro && !isProUser;
+                    {isFontBrowserExpanded ? (
+                      /* INLINE FONT BROWSER (Live side-by-side auditioning, zero screen-blocking modal) */
+                      <div className="rounded-2xl border-2 border-primary/30 bg-card/90 shadow-lg p-3 space-y-2.5 animate-in fade-in-50 duration-200">
+                        {/* Status bar */}
+                        <div className="flex items-center justify-between gap-2 pb-2 border-b border-border/60">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <span 
+                              className="w-6 h-6 rounded-md bg-primary/15 text-primary border border-primary/25 flex items-center justify-center font-bold text-xs shrink-0"
+                              style={{ fontFamily: activeFont?.value }}
+                            >
+                              Aa
+                            </span>
+                            <span className="text-xs font-bold text-foreground truncate" style={{ fontFamily: activeFont?.value }}>
+                              {activeFont?.name || 'Inter'}
+                            </span>
+                            <span className="text-[10px] text-emerald-500 font-semibold flex items-center gap-1 shrink-0 bg-emerald-500/10 px-1.5 py-0.2 rounded border border-emerald-500/20">
+                              <Eye className="h-2.5 w-2.5" />
+                              <span>Live on Resume</span>
+                            </span>
+                          </div>
 
-                        return (
                           <button
-                            key={f.label}
                             type="button"
-                            onClick={() => handleSelectFontFamily(f)}
-                            style={{ fontFamily: f.value }}
-                            className={`flex items-center justify-between p-2.5 rounded-xl border text-left transition-all ${
-                              isSelected
-                                ? 'border-primary bg-primary/10 ring-1 ring-primary shadow-xs'
-                                : 'border-border/80 bg-card/60 hover:border-primary/40 hover:bg-card'
-                            }`}
+                            onClick={() => setIsFontBrowserExpanded(false)}
+                            className="text-[11px] font-semibold text-muted-foreground hover:text-foreground px-2 py-0.5 rounded-md hover:bg-muted/60 transition-colors cursor-pointer"
                           >
-                            <div className="min-w-0 flex-1 pr-2">
-                              <span className="text-xs font-semibold text-foreground block truncate">
-                                {f.label}
-                              </span>
-                              <span className="text-[10px] text-muted-foreground opacity-85 block font-normal">
-                                Clean, ATS-optimized text
-                              </span>
+                            Done
+                          </button>
+                        </div>
+
+                        {/* Search Input */}
+                        <div className="relative">
+                          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+                          <Input
+                            type="text"
+                            value={fontSearch}
+                            onChange={(e) => setFontSearch(e.target.value)}
+                            placeholder="Search 50+ fonts (e.g. Garamond, Outfit, Mono)..."
+                            className="pl-8 pr-8 h-8 text-xs rounded-xl bg-background border-border/80 focus:border-primary shadow-xs"
+                          />
+                          {fontSearch && (
+                            <button
+                              type="button"
+                              onClick={() => setFontSearch('')}
+                              className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-0.5"
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          )}
+                        </div>
+
+                        {/* Category filter pills */}
+                        <div className="flex items-center gap-1 overflow-x-auto pb-0.5 scrollbar-none">
+                          {FONT_CATEGORIES.map((cat) => {
+                            const isSelected = fontCategoryFilter === cat;
+                            const count = 
+                              cat === 'All' ? FONT_OPTIONS.length :
+                              cat === 'Free' ? FONT_OPTIONS.filter(f => !f.isPro).length :
+                              FONT_OPTIONS.filter(f => f.category.toLowerCase() === cat.toLowerCase()).length;
+
+                            return (
+                              <button
+                                key={cat}
+                                type="button"
+                                onClick={() => setFontCategoryFilter(cat)}
+                                className={cn(
+                                  "px-2 py-0.5 rounded-lg text-[10.5px] font-semibold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1 shadow-xs shrink-0",
+                                  isSelected
+                                    ? "bg-primary text-primary-foreground font-bold shadow-xs"
+                                    : "bg-background border border-border/70 text-muted-foreground hover:text-foreground hover:bg-muted/60"
+                                )}
+                              >
+                                <span>{cat}</span>
+                                <span className={cn(
+                                  "text-[9px] px-1 py-0 rounded font-mono",
+                                  isSelected ? "bg-white/20 text-white" : "bg-muted text-muted-foreground"
+                                )}>
+                                  {count}
+                                </span>
+                              </button>
+                            );
+                          })}
+                        </div>
+
+                        {/* Downward Vertical List of All 54 Fonts */}
+                        <div className="overflow-y-auto max-h-72 scrollbar-thin space-y-1 pr-0.5">
+                          {filteredFonts.length === 0 ? (
+                            <div className="py-6 text-center space-y-1 border border-dashed border-border/80 rounded-xl bg-muted/10">
+                              <Type className="h-5 w-5 mx-auto text-muted-foreground/40 mb-1" />
+                              <p className="text-xs font-semibold text-foreground">No fonts match &ldquo;{fontSearch}&rdquo;</p>
+                              <button
+                                type="button"
+                                onClick={() => { setFontSearch(''); setFontCategoryFilter('All'); }}
+                                className="text-[11px] text-primary font-semibold hover:underline"
+                              >
+                                Show all {FONT_OPTIONS.length} fonts
+                              </button>
+                            </div>
+                          ) : (
+                            filteredFonts.map((font) => {
+                              const isSelected = (customDesign.fontFamily || "'Inter', sans-serif") === font.value;
+
+                              return (
+                                <button
+                                  key={font.id}
+                                  type="button"
+                                  onClick={() => {
+                                    handleSelectFontFamily(font);
+                                    loadGoogleFont(font.value);
+                                  }}
+                                  className={cn(
+                                    "w-full px-2.5 py-1.5 rounded-xl text-left transition-all cursor-pointer flex items-center justify-between gap-2 border group",
+                                    isSelected
+                                      ? "border-primary bg-primary/10 ring-1 ring-primary"
+                                      : "border-transparent bg-transparent hover:bg-muted/60 hover:border-border/60"
+                                  )}
+                                >
+                                  <div className="min-w-0 flex-1 flex items-center gap-2">
+                                    <span
+                                      className={cn(
+                                        "w-6 h-6 rounded-md flex items-center justify-center font-bold text-xs shrink-0 border",
+                                        isSelected
+                                          ? "bg-primary/20 text-primary border-primary/30"
+                                          : "bg-muted/70 text-muted-foreground border-border/50 group-hover:bg-card"
+                                      )}
+                                      style={{ fontFamily: font.value }}
+                                    >
+                                      Aa
+                                    </span>
+                                    <div className="min-w-0 flex-1">
+                                      <div className="flex items-center gap-1.5">
+                                        <span
+                                          className={cn(
+                                            "text-xs truncate",
+                                            isSelected ? "font-bold text-primary" : "font-semibold text-foreground"
+                                          )}
+                                          style={{ fontFamily: font.value }}
+                                        >
+                                          {font.name}
+                                        </span>
+                                        <span className="text-[9px] text-muted-foreground/70 font-sans px-1 py-0 rounded bg-muted/60 shrink-0">
+                                          {font.category}
+                                        </span>
+                                      </div>
+                                      <p className="text-[10px] text-muted-foreground font-sans truncate">
+                                        {font.subLabel}
+                                      </p>
+                                    </div>
+                                  </div>
+
+                                  <div className="shrink-0 flex items-center gap-1">
+                                    {font.isPro && (
+                                      <Badge variant="outline" className="text-[8px] px-1 py-0 font-sans border-amber-500/30 text-amber-500 bg-amber-500/10 font-bold gap-0.5 shrink-0">
+                                        <Lock className="h-2 w-2" />
+                                        <span>PRO</span>
+                                      </Badge>
+                                    )}
+                                    {isSelected && (
+                                      <Check className="h-3.5 w-3.5 text-primary shrink-0 ml-1" />
+                                    )}
+                                  </div>
+                                </button>
+                              );
+                            })
+                          )}
+                        </div>
+
+                        {/* Inline Footer */}
+                        <div className="pt-2 border-t border-border/60 flex items-center justify-between">
+                          <span className="text-[10px] text-muted-foreground">
+                            {filteredFonts.length} of {FONT_OPTIONS.length} fonts shown
+                          </span>
+                          <Button
+                            type="button"
+                            size="sm"
+                            onClick={() => setIsFontBrowserExpanded(false)}
+                            className="h-6 px-3 text-[10px] rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 font-bold shadow-xs cursor-pointer"
+                          >
+                            Done
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      /* COMPACT VIEW (Active Font Card + 6 Quick Picks) */
+                      <>
+                        {/* Active Selected Font Card (Click to expand 50+ fonts inline) */}
+                        <div
+                          role="button"
+                          tabIndex={0}
+                          onClick={() => setIsFontBrowserExpanded(true)}
+                          onKeyDown={(e) => e.key === 'Enter' && setIsFontBrowserExpanded(true)}
+                          className="p-3 rounded-2xl border-2 border-primary/40 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent hover:border-primary transition-all cursor-pointer shadow-xs group"
+                          title="Click to expand the 50+ Font Family Picker"
+                        >
+                          <div className="flex items-center justify-between gap-3">
+                            <div className="flex items-center gap-3 min-w-0 flex-1">
+                              <div 
+                                className="h-10 w-10 rounded-xl bg-card border border-border/80 flex items-center justify-center font-bold text-lg text-primary shadow-xs shrink-0 group-hover:scale-105 transition-transform"
+                                style={{ fontFamily: activeFont?.value || "'Inter', sans-serif" }}
+                              >
+                                Aa
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-center gap-2">
+                                  <h4 
+                                    className="text-xs sm:text-sm font-bold text-foreground truncate"
+                                    style={{ fontFamily: activeFont?.value || "'Inter', sans-serif" }}
+                                  >
+                                    {activeFont?.name || 'Inter'}
+                                  </h4>
+                                  <Badge variant="outline" className="text-[9px] px-1.5 py-0 font-medium shrink-0">
+                                    {activeFont?.category || 'Sans-Serif'}
+                                  </Badge>
+                                  {activeFont?.isPro && !isProUser && (
+                                    <Lock className="h-3 w-3 text-amber-500 shrink-0" title="Pro Font (Click to preview on resume)" />
+                                  )}
+                                </div>
+                                <p 
+                                  className="text-[11px] text-muted-foreground truncate mt-0.5"
+                                  style={{ fontFamily: activeFont?.value || "'Inter', sans-serif" }}
+                                >
+                                  {activeFont?.sample || 'Alex Rivera — Lead Software Architect'}
+                                </p>
+                              </div>
                             </div>
 
-                            {isLocked ? (
-                              <span className="shrink-0 flex items-center gap-0.5 text-[9px] font-bold text-amber-500 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20">
-                                <Lock className="w-2.5 h-2.5" />
-                                <span>PRO</span>
-                              </span>
-                            ) : isSelected ? (
-                              <Check className="h-3.5 w-3.5 text-primary shrink-0" />
-                            ) : null}
-                          </button>
-                        );
-                      })}
-                    </div>
+                            <div className="shrink-0 flex items-center gap-1 text-[11px] font-semibold text-primary group-hover:translate-x-0.5 transition-transform">
+                              <span className="hidden sm:inline">Change Font</span>
+                              <ChevronDown className="h-3.5 w-3.5" />
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Quick Pick Popular Fonts (Top Recruiter Favorites) */}
+                        <div className="space-y-1.5">
+                          <div className="flex items-center justify-between">
+                            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                              Popular Quick Picks
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => setIsFontBrowserExpanded(true)}
+                              className="text-[10px] font-semibold text-primary hover:underline cursor-pointer"
+                            >
+                              View all 54 →
+                            </button>
+                          </div>
+                          <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
+                            {FEATURED_FONTS.map((fontName) => {
+                              const fontObj = FONT_OPTIONS.find(f => f.name === fontName);
+                              if (!fontObj) return null;
+                              const isSelected = (customDesign.fontFamily || "'Inter', sans-serif") === fontObj.value;
+                              const isLocked = fontObj.isPro && !isProUser;
+
+                              return (
+                                <button
+                                  key={fontObj.name}
+                                  type="button"
+                                  onClick={() => handleSelectFontFamily(fontObj)}
+                                  style={{ fontFamily: fontObj.value }}
+                                  className={cn(
+                                    "p-2 rounded-xl border text-left transition-all cursor-pointer flex items-center justify-between gap-1.5 text-xs shadow-xs",
+                                    isSelected 
+                                      ? "border-primary bg-primary/10 text-primary font-bold ring-1 ring-primary" 
+                                      : "border-border/80 bg-card/60 hover:bg-card hover:border-primary/40 text-foreground"
+                                  )}
+                                  title={fontObj.subLabel}
+                                >
+                                  <span className="truncate">{fontObj.name}</span>
+                                  {isLocked ? (
+                                    <Lock className="h-3 w-3 text-muted-foreground/70 shrink-0" />
+                                  ) : isSelected ? (
+                                    <Check className="h-3 w-3 text-primary shrink-0" />
+                                  ) : null}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      </>
+                    )}
                   </div>
 
-                  {/* Base Font Scale */}
-                  <div className="space-y-2.5 pt-3 border-t border-border/60">
+                  {/* Base Font Scale — Tactile Range Slider & Presets */}
+                  <div className="space-y-3 pt-3 border-t border-border/60">
                     <div className="flex items-center justify-between">
                       <div>
-                        <Label className="text-xs font-bold text-foreground">Base Font Scale</Label>
-                        <p className="text-[11px] text-muted-foreground">
-                          Density: <span className="font-semibold text-primary">{customDesign.fontSize || '10pt'}</span> {FONT_SIZE_OPTIONS.find(fs => fs.id === (customDesign.fontSize || '10pt'))?.desc ? `· ${FONT_SIZE_OPTIONS.find(fs => fs.id === (customDesign.fontSize || '10pt'))?.desc}` : ''}
+                        <div className="flex items-center gap-2">
+                          <Label className="text-xs font-bold text-foreground">Base Font Scale</Label>
+                          {currentSize?.id === '10pt' && (
+                            <Badge variant="outline" className="text-[9px] px-1.5 py-0 font-bold border-emerald-500/30 text-emerald-500 bg-emerald-500/10">
+                              ★ ATS Default
+                            </Badge>
+                          )}
+                        </div>
+                        <p className="text-[11px] text-muted-foreground mt-0.5">
+                          Density: <span className="font-semibold text-primary">{currentSize?.label || '10pt'}</span> {currentSize?.desc ? `· ${currentSize.desc}` : ''}
                         </p>
                       </div>
+
+                      {/* Stepper with Micro-Adjustment */}
                       <div className="flex items-center gap-1 bg-muted/40 p-1 rounded-xl border border-border/80">
                         <button
                           type="button"
                           onClick={handleDecreaseFontSize}
-                          disabled={currentSizeIndex <= 0}
-                          className="h-6 w-6 rounded-lg bg-background text-foreground hover:bg-muted disabled:opacity-30 disabled:pointer-events-none flex items-center justify-center text-xs font-bold transition-colors shadow-xs"
-                          title="Decrease font scale"
+                          disabled={safeSizeIndex <= 0}
+                          className="h-6 w-6 rounded-lg bg-background text-foreground hover:bg-muted disabled:opacity-30 disabled:pointer-events-none flex items-center justify-center text-xs font-bold transition-colors shadow-xs cursor-pointer"
+                          title="Decrease font scale (0.5pt)"
                         >
                           -
                         </button>
-                        <span className="text-[11px] font-mono font-semibold px-2 min-w-[42px] text-center">
-                          {customDesign.fontSize || '10pt'}
+                        <span className="text-[11px] font-mono font-bold px-2 min-w-[42px] text-center text-foreground">
+                          {currentSize?.label || '10pt'}
                         </span>
                         <button
                           type="button"
                           onClick={handleIncreaseFontSize}
-                          disabled={currentSizeIndex >= FONT_SIZE_OPTIONS.length - 1}
-                          className="h-6 w-6 rounded-lg bg-background text-foreground hover:bg-muted disabled:opacity-30 disabled:pointer-events-none flex items-center justify-center text-xs font-bold transition-colors shadow-xs"
-                          title="Increase font scale"
+                          disabled={safeSizeIndex >= FONT_SIZE_OPTIONS.length - 1}
+                          className="h-6 w-6 rounded-lg bg-background text-foreground hover:bg-muted disabled:opacity-30 disabled:pointer-events-none flex items-center justify-center text-xs font-bold transition-colors shadow-xs cursor-pointer"
+                          title="Increase font scale (0.5pt)"
                         >
                           +
                         </button>
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-1.5 overflow-x-auto py-1 scrollbar-thin">
-                      {FONT_SIZE_OPTIONS.map((fs) => {
-                        const isSelected = (customDesign.fontSize || '10pt') === fs.id;
+                    {/* Smooth Range Slider Track */}
+                    <div className="space-y-1.5 px-0.5">
+                      <div className="relative flex items-center pt-1">
+                        <input
+                          type="range"
+                          min={0}
+                          max={FONT_SIZE_OPTIONS.length - 1}
+                          step={1}
+                          value={safeSizeIndex}
+                          onChange={(e) => handleSelectFontSize(FONT_SIZE_OPTIONS[Number(e.target.value)].id)}
+                          className="custom-range-slider"
+                          style={{
+                            background: `linear-gradient(to right, hsl(var(--primary)) 0%, hsl(var(--primary)) ${(safeSizeIndex / (FONT_SIZE_OPTIONS.length - 1)) * 100}%, hsl(var(--muted)) ${(safeSizeIndex / (FONT_SIZE_OPTIONS.length - 1)) * 100}%, hsl(var(--muted)) 100%)`
+                          }}
+                          aria-label="Font scale range slider"
+                        />
+                      </div>
+
+                      {/* Landmark labels under slider */}
+                      <div className="flex items-center justify-between text-[10px] text-muted-foreground/80 font-medium px-0.5">
+                        <button
+                          type="button"
+                          onClick={() => handleSelectFontSize('7pt')}
+                          className="hover:text-foreground transition-colors cursor-pointer"
+                        >
+                          7pt (Compact)
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleSelectFontSize('10pt')}
+                          className={cn(
+                            "transition-colors cursor-pointer font-semibold",
+                            safeSizeIndex === 6 ? "text-primary font-bold underline underline-offset-2" : "hover:text-foreground"
+                          )}
+                        >
+                          10pt (Standard ATS)
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleSelectFontSize('13pt')}
+                          className="hover:text-foreground transition-colors cursor-pointer"
+                        >
+                          13pt (Spacious)
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* 4 Curated Quick Density Presets */}
+                    <div className="grid grid-cols-4 gap-1.5 pt-0.5">
+                      {[
+                        { id: '8.5pt', label: 'Compact', pt: '8.5pt' },
+                        { id: '10pt', label: 'Standard', pt: '10pt' },
+                        { id: '11pt', label: 'Comfort', pt: '11pt' },
+                        { id: '12pt', label: 'Spacious', pt: '12pt' },
+                      ].map((preset) => {
+                        const isSelected = (customDesign.fontSize || '10pt') === preset.id;
                         return (
                           <button
-                            key={fs.id}
+                            key={preset.id}
                             type="button"
-                            onClick={() => handleSelectFontSize(fs.id)}
-                            className={`text-xs px-2.5 py-1 rounded-xl border transition-all shrink-0 ${
+                            onClick={() => handleSelectFontSize(preset.id)}
+                            className={cn(
+                              "py-1.5 px-1 rounded-xl text-center border transition-all cursor-pointer flex flex-col items-center justify-center gap-0.5 shadow-xs",
                               isSelected
-                                ? 'bg-primary text-primary-foreground border-primary font-bold shadow-xs'
-                                : 'bg-muted/40 border-border/80 text-muted-foreground hover:text-foreground hover:bg-muted'
-                            }`}
+                                ? "bg-primary text-primary-foreground border-primary font-bold ring-1 ring-primary"
+                                : "bg-card border-border/80 text-muted-foreground hover:text-foreground hover:bg-muted/60"
+                            )}
                           >
-                            {fs.label}
+                            <span className="text-[11px] font-semibold leading-tight">{preset.label}</span>
+                            <span className={cn("text-[9px] font-mono leading-none opacity-80", isSelected ? "text-white/90" : "text-muted-foreground")}>
+                              {preset.pt}
+                            </span>
                           </button>
                         );
                       })}
@@ -2846,11 +3752,11 @@ export default function ResumeBuilderPage() {
 
         {/* Right Column: Live Printable Resume Preview (Expansive Canvas in Rounded Card, Independent Scroll) */}
         <div className={cn(
-          "lg:col-span-7 xl:col-span-7 h-full flex flex-col min-h-0 rounded-2xl border border-border/80 bg-slate-950/70 dark:bg-slate-950 shadow-xl overflow-hidden relative",
+          "lg:col-span-7 xl:col-span-7 h-full flex flex-col min-h-0 rounded-2xl border border-border/80 bg-slate-100/90 dark:bg-slate-950 shadow-xl overflow-hidden relative",
           mobileStudioView === 'editor' && "hidden lg:flex"
         )}>
           {/* Canvas Sub-Header */}
-          <div className="h-11 sm:h-12 shrink-0 border-b border-border/60 px-2.5 sm:px-4 flex items-center justify-between gap-1.5 text-xs text-muted-foreground z-10 bg-card/40 backdrop-blur-md">
+          <div className="h-11 sm:h-12 shrink-0 border-b border-border/70 px-2.5 sm:px-4 flex items-center justify-between gap-1.5 text-xs text-foreground z-10 bg-card/95 dark:bg-card/60 backdrop-blur-md shadow-2xs">
             <div className="flex items-center gap-1.5 min-w-0">
               {/* Mobile Back to Edit Button */}
               <button
@@ -2869,10 +3775,10 @@ export default function ResumeBuilderPage() {
                 <span className="font-bold text-foreground text-xs truncate sm:hidden">Preview</span>
                 <Badge 
                   variant="outline" 
-                  className={`text-[10px] shrink-0 font-mono whitespace-nowrap px-1.5 py-0.5 ${
+                  className={`text-[10px] shrink-0 font-mono font-bold whitespace-nowrap px-1.5 py-0.5 ${
                     totalPages === 1 
-                      ? 'text-emerald-500 border-emerald-500/30 bg-emerald-500/10' 
-                      : 'text-indigo-400 border-indigo-500/30 bg-indigo-500/10'
+                      ? 'text-emerald-600 dark:text-emerald-400 border-emerald-500/30 bg-emerald-500/10' 
+                      : 'text-indigo-600 dark:text-indigo-400 border-indigo-500/30 bg-indigo-500/10'
                   }`}
                 >
                   {totalPages}p
@@ -2882,7 +3788,7 @@ export default function ResumeBuilderPage() {
 
             <div className="flex items-center gap-1 sm:gap-2 shrink-0">
               {/* Mobile Quick Zoom Pill (Fit & 100% toggle) */}
-              <div className="flex sm:hidden items-center gap-1 bg-muted/60 px-1 py-0.5 rounded-lg border border-border/70 text-[11px]">
+              <div className="flex sm:hidden items-center gap-1 bg-muted/70 px-1 py-0.5 rounded-lg border border-border/80 text-[11px]">
                 <button
                   type="button"
                   onClick={handleFitZoom}
@@ -2910,14 +3816,14 @@ export default function ResumeBuilderPage() {
               </div>
 
               {/* Desktop Zoom Controls */}
-              <div className="hidden sm:flex items-center gap-1 bg-muted/60 px-1.5 py-0.5 rounded-lg border border-border/70 text-[11px]">
+              <div className="hidden sm:flex items-center gap-1 bg-muted/60 dark:bg-muted/40 px-1.5 py-0.5 rounded-lg border border-border/80 text-[11px]">
                 <button
                   type="button"
                   onClick={() => {
                     setIsAutoFit(false);
                     setZoomLevel((z) => Math.max(0.35, +(z - 0.05).toFixed(2)));
                   }}
-                  className="p-1 rounded text-muted-foreground hover:text-foreground transition-colors"
+                  className="p-1 rounded text-foreground/70 hover:text-foreground hover:bg-card/80 transition-colors"
                   title="Zoom Out"
                 >
                   <ZoomOut className="h-3 w-3" />
@@ -2935,7 +3841,7 @@ export default function ResumeBuilderPage() {
                     className={`px-1.5 py-0.5 rounded transition-all ${
                       !isAutoFit && Math.abs(zoomLevel - zp.val) < 0.04
                         ? 'bg-primary text-primary-foreground font-semibold shadow-2xs'
-                        : 'text-muted-foreground hover:text-foreground'
+                        : 'text-foreground/70 hover:text-foreground hover:bg-card/80 font-medium'
                     }`}
                   >
                     {zp.label}
@@ -2949,14 +3855,14 @@ export default function ResumeBuilderPage() {
                   className={`px-1.5 py-0.5 rounded transition-all font-semibold ${
                     isAutoFit
                       ? 'bg-primary text-primary-foreground shadow-2xs font-bold'
-                      : 'text-muted-foreground hover:text-foreground'
+                      : 'text-foreground/70 hover:text-foreground hover:bg-card/80 font-medium'
                   }`}
                   title="Fit entire A4 page to screen height"
                 >
                   Fit
                 </button>
 
-                <span className="text-[10px] text-muted-foreground px-1 font-mono hidden sm:inline-block">
+                <span className="text-[10px] text-foreground/80 px-1 font-mono font-medium hidden sm:inline-block">
                   {Math.round(zoomLevel * 100)}%
                 </span>
 
@@ -2966,7 +3872,7 @@ export default function ResumeBuilderPage() {
                     setIsAutoFit(false);
                     setZoomLevel((z) => Math.min(1.25, +(z + 0.05).toFixed(2)));
                   }}
-                  className="p-1 rounded text-muted-foreground hover:text-foreground transition-colors"
+                  className="p-1 rounded text-foreground/70 hover:text-foreground hover:bg-card/80 transition-colors"
                   title="Zoom In"
                 >
                   <ZoomIn className="h-3 w-3" />
@@ -2977,7 +3883,7 @@ export default function ResumeBuilderPage() {
               <button
                 type="button"
                 onClick={() => setIsFullScreen(true)}
-                className="p-1.5 rounded-lg border border-border/70 text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors shrink-0"
+                className="p-1.5 rounded-lg border border-border/80 text-foreground/70 hover:text-foreground hover:bg-muted bg-card/60 transition-colors shrink-0"
                 title="Fullscreen Preview"
               >
                 <Maximize2 className="h-3.5 w-3.5" />
@@ -2988,6 +3894,33 @@ export default function ResumeBuilderPage() {
               </span>
             </div>
           </div>
+
+          {/* Pro Style Preview Notice Banner */}
+          {isUsingProStyling && (
+            <div className="px-3 sm:px-4 py-2 border-b border-amber-500/25 bg-amber-500/10 backdrop-blur-md flex items-center justify-between gap-2 text-xs shrink-0">
+              <div className="flex items-center gap-2 text-amber-500 font-medium min-w-0">
+                <Lock className="h-3.5 w-3.5 shrink-0" />
+                <span className="truncate">
+                  Previewing Pro Style ({proStylingTitle}). Upgrade to Pro to export or save.
+                </span>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  type="button"
+                  onClick={handleRevertFreeStyling}
+                  className="text-[11px] underline font-semibold text-amber-500 hover:text-amber-400 cursor-pointer"
+                >
+                  Revert to Free
+                </button>
+                <Link to="/pricing">
+                  <Button size="sm" variant="gradient" className="h-6 text-[10px] px-2.5 rounded-lg font-bold gap-1 shadow-xs">
+                    <Sparkles className="h-3 w-3" />
+                    <span>Upgrade</span>
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          )}
 
               {/* Document Viewport Canvas (Independent Smooth Scroll) */}
               <div 
@@ -3114,7 +4047,7 @@ export default function ResumeBuilderPage() {
                 </button>
               </div>
             </div>
-            <div className="flex-1 overflow-auto p-6 sm:p-10 flex justify-center items-start bg-slate-950/60">
+            <div className="flex-1 overflow-auto p-6 sm:p-10 flex justify-center items-start bg-slate-100/90 dark:bg-slate-950">
               <div
                 style={{ width: `${a4Width * 0.9}px` }}
                 className="flex flex-col items-center gap-8 transition-all duration-150 py-4"
@@ -3280,101 +4213,423 @@ export default function ResumeBuilderPage() {
           </DialogContent>
         </Dialog>
 
-        {/* Download Options Dialog */}
-        <Dialog open={showDownloadChoiceModal} onOpenChange={setShowDownloadChoiceModal}>
-          <DialogContent className="sm:max-w-md bg-card border-border/80">
-            <DialogHeader>
-              <DialogTitle className="text-lg font-bold flex items-center gap-2">
-                <ArrowDownToLine className="h-5 w-5 text-primary" />
-                Export & Download Options
-              </DialogTitle>
-              <DialogDescription className="text-xs text-muted-foreground">
-                Generate a recruiter-ready A4 PDF formatted specifically for automated ATS screeners.
-              </DialogDescription>
-            </DialogHeader>
-
-            <div className="grid grid-cols-1 gap-3 py-3">
-              {/* Option A: Direct Download */}
-              <div 
-                onClick={!(isDownloading || isSaveDownloading || isSaving) ? () => handleDirectDownload() : undefined}
-                className={`group relative flex flex-col p-4 rounded-2xl border border-border/80 bg-muted/40 transition-all ${
-                  isDownloading || isSaveDownloading || isSaving
-                    ? 'opacity-60 cursor-not-allowed'
-                    : 'hover:bg-primary/5 hover:border-primary/40 cursor-pointer'
-                }`}
-              >
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2.5 rounded-xl bg-primary/10 text-primary group-hover:scale-105 transition-transform">
-                      <FileDown className="h-5 w-5" />
-                    </div>
-                    <div>
-                      <h4 className="text-sm font-bold text-foreground">Just Download PDF</h4>
-                      <p className="text-xs text-muted-foreground mt-0.5">
-                        Direct high-speed download. No account or save required.
-                      </p>
-                    </div>
+        {/* Small Modal: Typography & Font Family Picker */}
+        <Dialog open={showFontModal} onOpenChange={setShowFontModal}>
+          <DialogContent className="sm:max-w-md max-h-[82vh] flex flex-col p-0 overflow-hidden bg-card border-border/80 rounded-3xl shadow-2xl">
+            <DialogHeader className="p-4 pb-3 border-b border-border/70">
+              <div className="flex items-center justify-between pr-6">
+                <div className="flex items-center gap-2.5">
+                  <div className="p-2 rounded-xl bg-primary/10 text-primary border border-primary/20">
+                    <Type className="h-4 w-4" />
                   </div>
-                  <Button 
-                    size="sm" 
-                    variant="outline" 
-                    disabled={isDownloading || isSaveDownloading || isSaving}
-                    className="h-8 text-xs font-semibold gap-1.5 pointer-events-none"
-                  >
-                    {isDownloading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : 'Download'}
-                  </Button>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <DialogTitle className="text-base font-bold text-foreground">
+                        Typography
+                      </DialogTitle>
+                      <Badge className="bg-primary/10 text-primary border border-primary/20 text-[10px] font-bold px-1.5 py-0 font-mono">
+                        {FONT_OPTIONS.length} Fonts
+                      </Badge>
+                    </div>
+                    <DialogDescription className="text-[11px] text-muted-foreground">
+                      Click any font to preview instantly on your resume
+                    </DialogDescription>
+                  </div>
                 </div>
               </div>
+            </DialogHeader>
 
-              {/* Option B: Save & Download */}
-              <div 
-                onClick={!(isDownloading || isSaveDownloading || isSaving) ? handleSaveAndDownload : undefined}
-                className={`group relative flex flex-col p-4 rounded-2xl border border-indigo-500/30 bg-gradient-to-br from-indigo-500/5 to-purple-500/5 transition-all ${
-                  isDownloading || isSaveDownloading || isSaving
-                    ? 'opacity-60 cursor-not-allowed'
-                    : 'hover:border-indigo-500/60 cursor-pointer'
-                }`}
-              >
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2.5 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-xs group-hover:scale-105 transition-transform">
-                      <FolderCheck className="h-5 w-5" />
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h4 className="text-sm font-bold text-foreground">Save & Download</h4>
-                        <Badge variant="secondary" className="text-[10px] px-1.5 py-0 bg-primary/15 text-primary border-primary/20">
-                          Recommended
-                        </Badge>
-                      </div>
-                      <p className="text-xs text-muted-foreground mt-0.5">
-                        {isAuthenticated 
-                          ? 'Saves this resume to your dashboard and delivers your PDF.'
-                          : 'Sign in to save this resume against your account & download.'}
-                      </p>
-                    </div>
-                  </div>
-                  <Button 
-                    size="sm" 
-                    variant="gradient" 
-                    disabled={isSaving || isSaveDownloading || isDownloading}
-                    className="h-8 text-xs font-semibold gap-1.5 pointer-events-none"
+            {/* Filter & Search inside Font Modal */}
+            <div className="p-3 border-b border-border/60 bg-muted/20 space-y-2.5">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+                <Input
+                  type="text"
+                  value={fontSearch}
+                  onChange={(e) => setFontSearch(e.target.value)}
+                  placeholder="Search fonts (e.g. Garamond, Roboto, Mono)..."
+                  className="pl-8 pr-8 h-9 text-xs rounded-xl bg-card border-border/80 focus:border-primary shadow-xs"
+                />
+                {fontSearch && (
+                  <button
+                    type="button"
+                    onClick={() => setFontSearch('')}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-0.5"
                   >
-                    {isSaving || isSaveDownloading ? (
-                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                    ) : (
-                      'Save & Download'
-                    )}
-                  </Button>
-                </div>
+                    <X className="h-3 w-3" />
+                  </button>
+                )}
+              </div>
+
+              <div className="flex items-center gap-1 overflow-x-auto pb-0.5 scrollbar-none">
+                {FONT_CATEGORIES.map((cat) => {
+                  const isSelected = fontCategoryFilter === cat;
+                  const count = 
+                    cat === 'All' ? FONT_OPTIONS.length :
+                    cat === 'Free' ? FONT_OPTIONS.filter(f => !f.isPro).length :
+                    FONT_OPTIONS.filter(f => f.category.toLowerCase() === cat.toLowerCase()).length;
+
+                  return (
+                    <button
+                      key={cat}
+                      type="button"
+                      onClick={() => setFontCategoryFilter(cat)}
+                      className={cn(
+                        "px-2.5 py-1 rounded-lg text-[11px] font-semibold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 shadow-xs shrink-0",
+                        isSelected
+                          ? "bg-primary text-primary-foreground font-bold shadow-xs"
+                          : "bg-card border border-border/80 text-muted-foreground hover:text-foreground hover:bg-muted/60"
+                      )}
+                    >
+                      <span>{cat}</span>
+                      <span className={cn(
+                        "text-[9px] px-1 py-0 rounded font-mono",
+                        isSelected ? "bg-white/20 text-white" : "bg-muted text-muted-foreground"
+                      )}>
+                        {count}
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
-            <DialogFooter className="sm:justify-start items-center pt-2 border-t border-border/60">
-              <span className="text-[11px] text-muted-foreground">
-                All PDFs rendered in native vector A4 standard.
-              </span>
+            {/* Scrollable Downward Vertical Font List */}
+            <div className="p-2 sm:p-2.5 overflow-y-auto max-h-[50vh] scrollbar-thin">
+              {filteredFonts.length === 0 ? (
+                <div className="py-8 text-center space-y-1.5 border border-dashed border-border/80 rounded-xl bg-muted/10">
+                  <Type className="h-6 w-6 mx-auto text-muted-foreground/40 mb-1" />
+                  <p className="text-xs font-semibold text-foreground">No fonts match &ldquo;{fontSearch}&rdquo;</p>
+                  <button
+                    type="button"
+                    onClick={() => { setFontSearch(''); setFontCategoryFilter('All'); }}
+                    className="text-xs text-primary font-semibold hover:underline"
+                  >
+                    Show all {FONT_OPTIONS.length} fonts
+                  </button>
+                </div>
+              ) : (
+                <div className="flex flex-col space-y-1">
+                  {filteredFonts.map((font) => {
+                    const isSelected = (customDesign.fontFamily || "'Inter', sans-serif") === font.value;
+
+                    return (
+                      <button
+                        key={font.id}
+                        type="button"
+                        onClick={() => {
+                          handleSelectFontFamily(font);
+                          loadGoogleFont(font.value);
+                        }}
+                        className={cn(
+                          "w-full px-2.5 py-2 rounded-xl text-left transition-all cursor-pointer flex items-center justify-between gap-2.5 border group",
+                          isSelected
+                            ? "border-primary bg-primary/10 ring-1 ring-primary"
+                            : "border-transparent bg-transparent hover:bg-muted/60 hover:border-border/60"
+                        )}
+                      >
+                        <div className="min-w-0 flex-1 flex items-center gap-2.5">
+                          <span
+                            className={cn(
+                              "w-7 h-7 rounded-lg flex items-center justify-center font-bold text-xs shrink-0 border",
+                              isSelected
+                                ? "bg-primary/20 text-primary border-primary/30"
+                                : "bg-muted/70 text-muted-foreground border-border/50 group-hover:bg-card"
+                            )}
+                            style={{ fontFamily: font.value }}
+                          >
+                            Aa
+                          </span>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-1.5">
+                              <span
+                                className={cn(
+                                  "text-xs sm:text-sm truncate",
+                                  isSelected ? "font-bold text-primary" : "font-semibold text-foreground"
+                                )}
+                                style={{ fontFamily: font.value }}
+                              >
+                                {font.name}
+                              </span>
+                              <span className="text-[10px] text-muted-foreground/70 font-sans px-1.5 py-0.2 rounded bg-muted/60 shrink-0">
+                                {font.category}
+                              </span>
+                            </div>
+                            <p className="text-[11px] text-muted-foreground font-sans truncate mt-0.5">
+                              {font.subLabel}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="shrink-0 flex items-center gap-1.5">
+                          {font.isPro && (
+                            <Badge variant="outline" className="text-[9px] px-1.5 py-0 font-sans border-amber-500/30 text-amber-500 bg-amber-500/10 font-bold gap-0.5 shrink-0">
+                              <Lock className="h-2.5 w-2.5" />
+                              <span>PRO</span>
+                            </Badge>
+                          )}
+                          {isSelected && (
+                            <Check className="h-4 w-4 text-primary shrink-0 ml-1" />
+                          )}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Dialog Footer */}
+            <DialogFooter className="p-3 border-t border-border/70 flex items-center justify-between sm:justify-between bg-card">
+              <div className="flex items-center gap-1.5 text-xs truncate mr-2">
+                <span className="text-muted-foreground text-[11px]">Selected:</span>
+                <span className="text-foreground font-semibold text-xs truncate" style={{ fontFamily: activeFont?.value }}>
+                  {activeFont?.name || 'Inter'}
+                </span>
+                <span className="text-[10px] text-primary flex items-center gap-1 font-medium ml-1">
+                  <Eye className="h-3 w-3" />
+                  <span>Preview updated</span>
+                </span>
+              </div>
+
+              <Button
+                type="button"
+                size="sm"
+                onClick={() => setShowFontModal(false)}
+                className="h-8 rounded-xl px-4 text-xs font-bold bg-primary text-primary-foreground hover:bg-primary/90 shadow-xs cursor-pointer shrink-0"
+              >
+                Done
+              </Button>
             </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Download Options Dialog with In-Modal Progress Bar */}
+        <Dialog 
+          open={showDownloadChoiceModal} 
+          onOpenChange={(open) => {
+            if (downloadPhase === 'generating') return; // Prevent accidental exit while generating
+            setShowDownloadChoiceModal(open);
+            if (!open) {
+              setDownloadPhase('idle');
+              setDownloadProgress(0);
+            }
+          }}
+        >
+          <DialogContent className="sm:max-w-lg bg-card border-border/80 overflow-hidden">
+            {downloadPhase !== 'idle' ? (
+              /* Downloading State with Animated Fill Progress Bar (No Toaster!) */
+              <div className="py-6 px-1 flex flex-col items-center text-center space-y-5 animate-in fade-in zoom-in-95 duration-200">
+                {/* Visual Icon Badge */}
+                <div className="relative">
+                  {downloadPhase === 'generating' && (
+                    <div className="relative flex items-center justify-center">
+                      <div className="absolute inset-0 rounded-3xl bg-primary/20 blur-xl animate-pulse" />
+                      <div className="relative w-20 h-20 rounded-2xl bg-gradient-to-br from-primary/20 via-primary/10 to-transparent border border-primary/30 flex items-center justify-center text-primary shadow-lg shadow-primary/10">
+                        <FileDown className="h-9 w-9 animate-bounce duration-1000" />
+                      </div>
+                    </div>
+                  )}
+                  {downloadPhase === 'success' && (
+                    <div className="relative flex items-center justify-center animate-in zoom-in-75 duration-300">
+                      <div className="absolute inset-0 rounded-3xl bg-emerald-500/20 blur-xl animate-pulse" />
+                      <div className="relative w-20 h-20 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-500 shadow-lg shadow-emerald-500/10">
+                        <CheckCircle2 className="h-10 w-10 animate-in zoom-in duration-200" />
+                      </div>
+                    </div>
+                  )}
+                  {downloadPhase === 'error' && (
+                    <div className="relative flex items-center justify-center animate-in zoom-in-75 duration-300">
+                      <div className="absolute inset-0 rounded-3xl bg-destructive/20 blur-xl" />
+                      <div className="relative w-20 h-20 rounded-2xl bg-destructive/10 border border-destructive/30 flex items-center justify-center text-destructive shadow-lg shadow-destructive/10">
+                        <AlertCircle className="h-10 w-10" />
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Status Heading and Dynamic Text */}
+                <div className="space-y-1.5 max-w-sm">
+                  <h3 className="text-lg font-bold text-foreground">
+                    {downloadPhase === 'generating' && 'Generating Your Resume PDF'}
+                    {downloadPhase === 'success' && 'Download Complete!'}
+                    {downloadPhase === 'error' && 'Export Failed'}
+                  </h3>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    {downloadPhase === 'generating' && downloadStatusText}
+                    {downloadPhase === 'success' && 'Your recruiter-ready vector A4 PDF has been generated and saved to your device.'}
+                    {downloadPhase === 'error' && downloadErrorMsg}
+                  </p>
+                </div>
+
+                {/* Progress Bar with Percentage */}
+                {(downloadPhase === 'generating' || downloadPhase === 'success') && (
+                  <div className="w-full space-y-2 pt-1">
+                    <div className="flex items-center justify-between text-[11px] text-muted-foreground font-medium px-1">
+                      <span>{downloadProgress === 100 ? 'Completed' : 'Rendering PDF...'}</span>
+                      <span className="font-mono font-bold text-foreground">{downloadProgress}%</span>
+                    </div>
+                    <div className="w-full h-3 rounded-full bg-muted/60 border border-border/70 overflow-hidden p-0.5">
+                      <div 
+                        className={cn(
+                          "h-full rounded-full transition-all duration-300 ease-out shadow-xs",
+                          downloadPhase === 'success'
+                            ? "bg-gradient-to-r from-emerald-500 to-teal-400"
+                            : "bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600"
+                        )}
+                        style={{ width: `${downloadProgress}%` }}
+                      />
+                    </div>
+                    <div className="flex items-center justify-center gap-1.5 text-[10.5px] text-muted-foreground pt-1">
+                      <Sparkles className="h-3 w-3 text-primary" />
+                      <span>ATS 100% Vector Layout · High-Resolution Print Ready</span>
+                    </div>
+                  </div>
+                )}
+
+                {/* Error Action Buttons */}
+                {downloadPhase === 'error' && (
+                  <div className="flex items-center gap-2 pt-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setDownloadPhase('idle')}
+                      className="rounded-xl text-xs"
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="gradient"
+                      onClick={() => handleDirectDownload()}
+                      className="rounded-xl text-xs font-bold gap-1.5"
+                    >
+                      <RotateCcw className="h-3.5 w-3.5" />
+                      <span>Try Again</span>
+                    </Button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              /* Initial Selection State: Enhanced File Styles */
+              <>
+                <DialogHeader>
+                  <DialogTitle className="text-lg font-bold flex items-center gap-2">
+                    <ArrowDownToLine className="h-5 w-5 text-primary" />
+                    Export & Download Options
+                  </DialogTitle>
+                  <DialogDescription className="text-xs text-muted-foreground">
+                    Generate a recruiter-ready A4 PDF formatted specifically for automated ATS screeners.
+                  </DialogDescription>
+                </DialogHeader>
+
+                <div className="grid grid-cols-1 gap-3 py-3">
+                  {/* Option A: Direct Download */}
+                  <div 
+                    onClick={!(isDownloading || isSaveDownloading || isSaving) ? () => handleDirectDownload() : undefined}
+                    className={`group relative flex flex-col p-4 rounded-2xl border border-border/80 bg-muted/30 transition-all ${
+                      isDownloading || isSaveDownloading || isSaving
+                        ? 'opacity-60 cursor-not-allowed'
+                        : 'hover:bg-primary/5 hover:border-primary/40 cursor-pointer'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex items-start gap-3 min-w-0 flex-1">
+                        <div className="p-2.5 rounded-xl bg-primary/10 text-primary border border-primary/20 group-hover:scale-105 transition-transform shrink-0 mt-0.5">
+                          <FileDown className="h-5 w-5" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2">
+                            <h4 className="text-sm font-bold text-foreground whitespace-nowrap">Just Download PDF</h4>
+                            <span className="px-1.5 py-0.2 rounded text-[9.5px] font-mono font-bold bg-rose-500/10 text-rose-500 border border-rose-500/20 shrink-0">PDF</span>
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-0.5">
+                            Direct high-speed download. No account or save required.
+                          </p>
+                          <div className="flex items-center gap-2 mt-2 text-[10.5px] text-muted-foreground">
+                            <span>Standard A4</span>
+                            <span>•</span>
+                            <span>Vector ATS Layout</span>
+                          </div>
+                        </div>
+                      </div>
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        disabled={isDownloading || isSaveDownloading || isSaving}
+                        className="h-8 px-3.5 text-xs font-semibold gap-1.5 pointer-events-none shrink-0"
+                      >
+                        {isDownloading ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <>
+                            <Download className="h-3.5 w-3.5" />
+                            <span>Download</span>
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Option B: Save & Download */}
+                  <div 
+                    onClick={!(isDownloading || isSaveDownloading || isSaving) ? handleSaveAndDownload : undefined}
+                    className={`group relative flex flex-col p-4 rounded-2xl border border-indigo-500/35 bg-gradient-to-br from-indigo-500/10 via-purple-500/5 to-transparent transition-all ${
+                      isDownloading || isSaveDownloading || isSaving
+                        ? 'opacity-60 cursor-not-allowed'
+                        : 'hover:border-indigo-500/70 hover:shadow-lg hover:shadow-indigo-500/10 cursor-pointer'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex items-start gap-3 min-w-0 flex-1">
+                        <div className="p-2.5 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-xs group-hover:scale-105 transition-transform shrink-0 mt-0.5">
+                          <FolderCheck className="h-5 w-5" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <h4 className="text-sm font-bold text-foreground whitespace-nowrap">Save & Download</h4>
+                            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 shrink-0 whitespace-nowrap">
+                              Recommended
+                            </span>
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-0.5">
+                            {isAuthenticated 
+                              ? 'Saves this resume to your dashboard and delivers your PDF.'
+                              : 'Sign in to save this resume against your account & download.'}
+                          </p>
+                          <div className="flex items-center gap-2 mt-2 text-[10.5px] text-muted-foreground">
+                            <span className="text-indigo-400 font-medium">Cloud Saved</span>
+                            <span>•</span>
+                            <span>Versioned Snapshot</span>
+                          </div>
+                        </div>
+                      </div>
+                      <Button 
+                        size="sm" 
+                        variant="gradient" 
+                        disabled={isSaving || isSaveDownloading || isDownloading}
+                        className="h-8 px-3.5 text-xs font-semibold gap-1.5 pointer-events-none shrink-0 shadow-md shadow-indigo-500/20"
+                      >
+                        {isSaving || isSaveDownloading ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <>
+                            <Download className="h-3.5 w-3.5" />
+                            <span>Download</span>
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+
+                <DialogFooter className="sm:justify-start items-center pt-2 border-t border-border/60">
+                  <span className="text-[11px] text-muted-foreground">
+                    All PDFs rendered in native vector A4 standard.
+                  </span>
+                </DialogFooter>
+              </>
+            )}
           </DialogContent>
         </Dialog>
 
@@ -3390,7 +4645,7 @@ export default function ResumeBuilderPage() {
                 <Badge variant="secondary" className="bg-amber-500/15 text-amber-500 border-amber-500/30 text-[10px] font-bold">PRO</Badge>
               </DialogTitle>
               <DialogDescription className="text-xs text-muted-foreground leading-relaxed pt-1">
-                <span className="font-semibold text-foreground">{lockedModal.title}</span> is an exclusive style reserved for Pro and Premium members. Upgrade to get full unlimited access to all designer fonts, executive color schemes, and AI enhancements.
+                Your resume currently uses <span className="font-semibold text-foreground">{lockedModal.title}</span>, which is a Pro styling feature. Upgrade to Pro to {lockedModal.type === 'save' ? 'save this design' : 'download high-resolution ATS PDFs'}, or revert to standard free styling to proceed for free.
               </DialogDescription>
             </DialogHeader>
 
@@ -3411,21 +4666,321 @@ export default function ResumeBuilderPage() {
 
             <DialogFooter className="sm:justify-between items-center gap-2 pt-2 border-t border-border/60">
               <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => {
+                  handleRevertFreeStyling();
+                  setLockedModal(prev => ({ ...prev, open: false }));
+                }} 
+                className="text-xs font-medium"
+              >
+                Revert to Free Styling
+              </Button>
+              <div className="flex items-center gap-2">
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => setLockedModal(prev => ({ ...prev, open: false }))} 
+                  className="text-xs"
+                >
+                  Keep Previewing
+                </Button>
+                <Link to="/pricing">
+                  <Button 
+                    variant="gradient" 
+                    size="sm" 
+                    className="text-xs font-bold gap-1.5 shadow-md shadow-indigo-500/20"
+                  >
+                    <Sparkles className="h-3.5 w-3.5" />
+                    <span>View Pricing & Upgrade</span>
+                  </Button>
+                </Link>
+              </div>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Resume Version History Modal */}
+        <Dialog open={showVersionHistoryModal} onOpenChange={setShowVersionHistoryModal}>
+          <DialogContent className="sm:max-w-xl max-h-[85vh] flex flex-col p-0 overflow-hidden bg-card border-border/80">
+            <DialogHeader className="p-5 pb-3 border-b border-border/70">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-xl bg-primary/10 text-primary border border-primary/20">
+                  <History className="h-5 w-5" />
+                </div>
+                <div>
+                  <DialogTitle className="text-base font-bold text-foreground">
+                    Resume Version History
+                  </DialogTitle>
+                  <DialogDescription className="text-xs text-muted-foreground mt-0.5">
+                    Revision checkpoints for &ldquo;{resumeTitle}&rdquo; (Max 3 versions saved)
+                  </DialogDescription>
+                </div>
+              </div>
+            </DialogHeader>
+
+            <div className="p-5 overflow-y-auto space-y-3.5 max-h-[58vh] scrollbar-thin">
+              {/* Current Active Resume Card */}
+              <div className="p-4 rounded-2xl border-2 border-primary/40 bg-gradient-to-br from-primary/5 to-transparent space-y-2 shadow-xs">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <h4 className="font-bold text-sm text-foreground">
+                        {resumeTitle || 'Current Resume'}
+                      </h4>
+                      <Badge className="bg-primary text-primary-foreground text-[10px] px-2 py-0.5 font-bold shadow-xs">
+                        Current
+                      </Badge>
+                    </div>
+                    <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+                      <Clock className="h-3 w-3 text-primary" />
+                      <span>Current version · Updated today</span>
+                    </p>
+                  </div>
+                  <span className="text-xs font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-lg border border-primary/20">
+                    v{versionList[0]?.version_number || 1}
+                  </span>
+                </div>
+
+                <div className="text-[11px] text-muted-foreground pt-1 flex items-center gap-2 flex-wrap border-t border-border/60">
+                  <span>Template: <strong className="text-foreground">{selectedTemplateObj?.name || 'Standard'}</strong></span>
+                  <span>•</span>
+                  <span><strong>{resumeData.experiences?.length || 0}</strong> Experiences</span>
+                  <span>•</span>
+                  <span><strong>{resumeData.skills?.length || 0}</strong> Skills</span>
+                </div>
+              </div>
+
+              {/* Version History List Header */}
+              <div className="pt-2 flex items-center justify-between">
+                <h5 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                  Archived Snapshots ({Math.max(0, versionList.length - 1)})
+                </h5>
+                <span className="text-[11px] text-muted-foreground font-medium">
+                  Max 3 versions saved (v1 – v3)
+                </span>
+              </div>
+
+              {loadingVersions ? (
+                <div className="py-10 text-center space-y-2">
+                  <Loader2 className="h-6 w-6 animate-spin mx-auto text-primary" />
+                  <p className="text-xs text-muted-foreground">Loading versions...</p>
+                </div>
+              ) : versionList.length <= 1 ? (
+                <div className="py-8 text-center border border-dashed border-border/80 rounded-2xl space-y-1 bg-muted/20">
+                  <Clock className="h-8 w-8 mx-auto text-muted-foreground/40 mb-2" />
+                  <p className="text-xs font-semibold text-foreground">No previous snapshots yet</p>
+                  <p className="text-[11px] text-muted-foreground max-w-sm mx-auto px-4">
+                    Every time you update this resume with new content, a snapshot is automatically archived so you can undo changes anytime.
+                  </p>
+                </div>
+              ) : (
+                versionList.slice(1).map((ver) => (
+                  <div
+                    key={ver.id}
+                    className="p-3.5 rounded-xl border border-border/80 bg-card hover:bg-muted/40 transition-all flex items-center justify-between gap-3 shadow-xs"
+                  >
+                    <div className="min-w-0 flex-1 space-y-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-bold text-xs text-foreground">
+                          Version {ver.version_number}
+                        </span>
+                        <span className="text-[11px] text-muted-foreground">
+                          · {moment(ver.created_at).calendar(null, {
+                            sameDay: '[Updated today]',
+                            lastDay: '[Updated yesterday]',
+                            lastWeek: '[Saved last week]',
+                            sameElse: 'MMM D, YYYY'
+                          })}
+                        </span>
+                        {ver.title && ver.title !== resumeTitle && (
+                          <Badge variant="outline" className="text-[10px] truncate max-w-[140px] border-border/70">
+                            {ver.title}
+                          </Badge>
+                        )}
+                      </div>
+                      <p className="text-[11px] text-muted-foreground">
+                        Saved {moment(ver.created_at).format('MMM D, YYYY · h:mm A')}
+                        {ver.template?.name ? ` · ${ver.template.name}` : ''}
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-2 shrink-0">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleRestoreVersion(ver)}
+                        disabled={restoringVersionId === ver.id}
+                        className="h-8 px-3 text-xs font-semibold gap-1.5 rounded-xl border-primary/30 text-primary hover:bg-primary/10 hover:border-primary cursor-pointer shadow-2xs"
+                      >
+                        {restoringVersionId === ver.id ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <RotateCcw className="h-3.5 w-3.5" />
+                        )}
+                        <span>Restore</span>
+                      </Button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+
+            <DialogFooter className="p-4 border-t border-border/70 bg-muted/20 sm:justify-end">
+              <Button variant="ghost" size="sm" onClick={() => setShowVersionHistoryModal(false)} className="rounded-xl text-xs">
+                Close
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Save as New Resume Modal */}
+        <Dialog open={showSaveAsNewModal} onOpenChange={setShowSaveAsNewModal}>
+          <DialogContent className="sm:max-w-md bg-card border-border/80">
+            <DialogHeader>
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-xl bg-indigo-500/10 text-indigo-500 border border-indigo-500/20">
+                  <Copy className="h-5 w-5" />
+                </div>
+                <div>
+                  <DialogTitle className="text-base font-bold text-foreground">
+                    Save as New Resume
+                  </DialogTitle>
+                  <DialogDescription className="text-xs text-muted-foreground mt-0.5">
+                    Create an independent resume copy tailored for a specific job application.
+                  </DialogDescription>
+                </div>
+              </div>
+            </DialogHeader>
+
+            <div className="space-y-4 py-2">
+              {!resumeUsage.isPro && (
+                <div className={cn(
+                  "p-3 rounded-xl border text-xs flex items-start gap-2.5",
+                  resumeUsage.count >= resumeUsage.limit
+                    ? "border-rose-500/30 bg-rose-500/10 text-foreground"
+                    : "border-primary/20 bg-primary/5 text-muted-foreground"
+                )}>
+                  <Info className="h-4 w-4 shrink-0 mt-0.5 text-primary" />
+                  <div className="space-y-1">
+                    <p className="font-semibold text-foreground">
+                      Free Plan: {resumeUsage.count} of {resumeUsage.limit} resumes used
+                    </p>
+                    {resumeUsage.count >= resumeUsage.limit ? (
+                      <p className="text-[11px] text-rose-500 font-medium">
+                        You have reached the maximum limit of 3 resumes on the Free plan. Upgrade to Pro for unlimited resumes or update your existing resume.
+                      </p>
+                    ) : (
+                      <p className="text-[11px]">
+                        Free accounts can save up to {resumeUsage.limit} separate resumes simultaneously.
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              <div className="space-y-1.5">
+                <Label htmlFor="new-resume-title-input" className="text-xs font-semibold text-foreground">
+                  New Resume Document Title
+                </Label>
+                <Input
+                  id="new-resume-title-input"
+                  value={newResumeTitle}
+                  onChange={(e) => setNewResumeTitle(e.target.value)}
+                  placeholder="e.g. Node.js Developer Resume"
+                  className={cn(
+                    "h-9 text-xs rounded-xl",
+                    isDuplicateSaveAsNewTitle && "border-destructive focus-visible:ring-destructive text-destructive"
+                  )}
+                  autoFocus
+                />
+                {isDuplicateSaveAsNewTitle && (
+                  <p className="text-[11px] text-destructive flex items-center gap-1.5 mt-1 font-medium">
+                    <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+                    <span>A resume named &ldquo;{newResumeTitle.trim()}&rdquo; already exists. Please choose a different name.</span>
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <DialogFooter className="gap-2 sm:gap-0 pt-2 border-t border-border/70">
+              <Button variant="ghost" size="sm" onClick={() => setShowSaveAsNewModal(false)} className="rounded-xl text-xs">
+                Cancel
+              </Button>
+              {resumeUsage.count >= resumeUsage.limit && !resumeUsage.isPro ? (
+                <Link to="/pricing">
+                  <Button size="sm" variant="gradient" className="rounded-xl text-xs font-bold gap-1.5">
+                    <Sparkles className="h-3.5 w-3.5" />
+                    <span>Upgrade to Pro</span>
+                  </Button>
+                </Link>
+              ) : (
+                <Button
+                  size="sm"
+                  variant="gradient"
+                  onClick={handleConfirmSaveAsNew}
+                  disabled={isSavingAsNew || !newResumeTitle.trim() || isDuplicateSaveAsNewTitle}
+                  className="rounded-xl text-xs font-bold gap-1.5 shadow-md shadow-indigo-500/20 disabled:opacity-50"
+                >
+                  {isSavingAsNew ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <Copy className="h-3.5 w-3.5" />
+                  )}
+                  <span>Create & Save</span>
+                </Button>
+              )}
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Free Tier Resume Limit Exceeded Modal (Max 3 resumes) */}
+        <Dialog open={showLimitExceededModal} onOpenChange={setShowLimitExceededModal}>
+          <DialogContent className="sm:max-w-md bg-card border-border/80">
+            <DialogHeader>
+              <div className="w-12 h-12 rounded-2xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center mb-2 text-rose-500">
+                <Lock className="h-6 w-6" />
+              </div>
+              <DialogTitle className="text-base font-bold flex items-center gap-2 text-foreground">
+                <span>Free Plan Limit Reached (3 Resumes)</span>
+                <Badge variant="outline" className="text-rose-500 border-rose-500/30 text-[10px] font-bold">
+                  3 / 3 Used
+                </Badge>
+              </DialogTitle>
+              <DialogDescription className="text-xs text-muted-foreground leading-relaxed pt-1">
+                The Free plan allows you to maintain up to <strong>3 separate resumes</strong> in your account. You have reached this limit.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="p-3.5 rounded-2xl bg-muted/40 border border-border/60 text-xs text-muted-foreground space-y-2 my-2">
+              <p className="text-foreground font-medium">What can you do?</p>
+              <div className="flex items-start gap-2">
+                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0 mt-0.5" />
+                <span>You can continue editing and updating your current resume with unlimited version history snapshots.</span>
+              </div>
+              <div className="flex items-start gap-2">
+                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0 mt-0.5" />
+                <span>Upgrade to Pro for unlimited resumes, premium templates, executive themes, and AI enhancements.</span>
+              </div>
+            </div>
+
+            <DialogFooter className="sm:justify-between items-center gap-2 pt-2 border-t border-border/60">
+              <Button 
                 variant="ghost" 
                 size="sm" 
-                onClick={() => setLockedModal(prev => ({ ...prev, open: false }))} 
-                className="text-xs"
+                onClick={() => setShowLimitExceededModal(false)} 
+                className="text-xs rounded-xl"
               >
-                Continue with Free
+                Keep Current
               </Button>
               <Link to="/pricing">
                 <Button 
                   variant="gradient" 
                   size="sm" 
-                  className="text-xs font-bold gap-1.5 shadow-md shadow-indigo-500/20"
+                  className="text-xs font-bold gap-1.5 shadow-md shadow-indigo-500/20 rounded-xl"
                 >
                   <Sparkles className="h-3.5 w-3.5" />
-                  <span>View Pricing & Upgrade</span>
+                  <span>Upgrade to Pro</span>
                 </Button>
               </Link>
             </DialogFooter>

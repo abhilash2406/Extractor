@@ -3,25 +3,26 @@ import User from '../models/user.js';
 import Plan from '../models/plan.js';
 import Subscription from '../models/subscription.js';
 import Payment from '../models/payment.js';
+import { logger } from '../config/winston-config.js';
 
 const syncAndSeed = async () => {
   try {
     await sequelize.authenticate();
-    console.log('Connected to DB');
+    logger.info('Connected to DB');
 
     // Add last_login_at to users table if not present
     await sequelize.query('ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "last_login_at" TIMESTAMP WITH TIME ZONE;');
-    console.log('Column last_login_at verified on users table');
+    logger.info('Column last_login_at verified on users table');
 
     // Sync models
     await Plan.sync({ alter: true });
-    console.log('Plan table synced');
+    logger.info('Plan table synced');
 
     await Subscription.sync({ alter: true });
-    console.log('Subscription table synced');
+    logger.info('Subscription table synced');
 
     await Payment.sync({ alter: true });
-    console.log('Payment table synced');
+    logger.info('Payment table synced');
 
     // Seed default FREE plan only
     const defaultPlans = [
@@ -31,7 +32,7 @@ const syncAndSeed = async () => {
         price: 0.00,
         currency: 'INR',
         billing_interval: 'MONTHLY',
-        resume_limit: 1,
+        resume_limit: 3,
         ai_analyses_limit: 3,
         cover_letters_limit: 1,
         is_active: true,
@@ -49,16 +50,17 @@ const syncAndSeed = async () => {
       const existing = await Plan.findOne({ where: { code: plan.code } });
       if (!existing) {
         await Plan.create(plan);
-        console.log(`Created plan: ${plan.name}`);
+        logger.info(`Created plan: ${plan.name}`);
       } else {
-        console.log(`Plan already exists: ${plan.name}`);
+        await existing.update({ resume_limit: 3 });
+        logger.info(`Plan already exists, updated resume_limit: ${plan.name}`);
       }
     }
 
-    console.log('✅ FREE Plan and tables setup successfully!');
+    logger.info('✅ FREE Plan and tables setup successfully!');
     process.exit(0);
   } catch (err) {
-    console.error('❌ Error during sync/seed:', err);
+    logger.error(`❌ Error during sync/seed: ${err.message || err}`);
     process.exit(1);
   }
 };

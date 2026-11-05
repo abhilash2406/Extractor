@@ -55,6 +55,9 @@ Resume.associate = (models) => {
   if (models.Template) {
     Resume.belongsTo(models.Template, { foreignKey: 'template_id', as: 'template' });
   }
+  if (models.ResumeVersion) {
+    Resume.hasMany(models.ResumeVersion, { foreignKey: 'resume_id', as: 'versions' });
+  }
 };
 
 export default Resume;

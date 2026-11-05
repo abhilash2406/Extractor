@@ -28,6 +28,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { useAuthStore } from '@/store/authStore';
 import { useAuthModalStore } from '@/store/authModalStore';
 import { useProfile } from '@/hooks/useUsers';
@@ -62,6 +63,7 @@ export default function ProfilePage() {
   const [loadingResumes, setLoadingResumes] = useState(true);
   const [downloadingResumeId, setDownloadingResumeId] = useState(null);
   const [deletingResumeId, setDeletingResumeId] = useState(null);
+  const [deleteModal, setDeleteModal] = useState({ open: false, resume: null });
 
   const { data: profileData } = useProfile({
     enabled: isAuthenticated,
@@ -178,15 +180,21 @@ export default function ProfilePage() {
     }
   };
 
-  const handleDeleteResume = async (resumeId, resumeTitle) => {
-    if (!window.confirm(`Are you sure you want to delete "${resumeTitle || 'this resume'}"?`)) {
-      return;
-    }
-    setDeletingResumeId(resumeId);
+  // Prompt modern confirmation modal before deleting
+  const handlePromptDelete = (resume) => {
+    setDeleteModal({ open: true, resume });
+  };
+
+  // Execute deletion after modal confirmation
+  const handleConfirmDelete = async () => {
+    const targetResume = deleteModal.resume;
+    if (!targetResume?.id) return;
+    setDeletingResumeId(targetResume.id);
     try {
-      await deleteResume(resumeId);
-      setResumes((prev) => prev.filter((r) => r.id !== resumeId));
-      toast.success('Resume deleted successfully');
+      await deleteResume(targetResume.id);
+      setResumes((prev) => prev.filter((r) => r.id !== targetResume.id));
+      toast.success(`"${targetResume.title || 'Resume'}" deleted successfully`);
+      setDeleteModal({ open: false, resume: null });
     } catch (err) {
       console.error('Failed to delete resume', err);
       toast.error('Failed to delete resume');
@@ -248,8 +256,8 @@ export default function ProfilePage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
-          {user?.role === 'ADMIN' && (
+        {user?.role === 'ADMIN' && (
+          <div className="flex items-center gap-3">
             <Button asChild variant="outline" className="h-10 text-xs font-semibold gap-2 border-indigo-500/30 bg-indigo-500/5 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-500/10 rounded-xl">
               <a href={import.meta.env.VITE_ADMIN_URL || 'http://localhost:5174'} target="_blank" rel="noreferrer">
                 <ShieldCheck className="h-4 w-4" />
@@ -257,15 +265,8 @@ export default function ProfilePage() {
                 <ExternalLink className="h-3.5 w-3.5 opacity-70" />
               </a>
             </Button>
-          )}
-
-          <Button asChild variant="gradient" className="h-10 text-xs font-bold gap-2 rounded-xl shadow-md shadow-indigo-500/20">
-            <Link to="/resume-builder">
-              <Plus className="h-4 w-4" />
-              <span>Create New Resume</span>
-            </Link>
-          </Button>
-        </div>
+          </div>
+        )}
       </div>
 
       {/* Main Grid: Left Column (Profile Summary) + Right Column (Tabs: Resumes / Info) */}
@@ -500,9 +501,9 @@ export default function ProfilePage() {
                         <Button
                           size="sm"
                           variant="ghost"
-                          onClick={() => handleDeleteResume(item.id, item.title)}
+                          onClick={() => handlePromptDelete(item)}
                           disabled={deletingResumeId === item.id}
-                          className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg"
+                          className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg cursor-pointer transition-colors"
                           title="Delete Resume"
                         >
                           {deletingResumeId === item.id ? (
@@ -617,6 +618,61 @@ export default function ProfilePage() {
         </div>
 
       </div>
+
+      {/* Modern Delete Confirmation Modal (Replaces browser alert) */}
+      <Dialog 
+        open={deleteModal.open} 
+        onOpenChange={(open) => !open && setDeleteModal({ open: false, resume: null })}
+      >
+        <DialogContent className="sm:max-w-md p-6 bg-card border-border/80 rounded-3xl shadow-2xl space-y-4">
+          <div className="flex items-start gap-3.5">
+            <div className="p-3 rounded-2xl bg-destructive/10 text-destructive border border-destructive/20 shrink-0">
+              <Trash2 className="h-5 w-5" />
+            </div>
+            <div className="space-y-1.5 min-w-0 flex-1">
+              <DialogTitle className="text-base font-bold text-foreground">
+                Delete Resume?
+              </DialogTitle>
+              <DialogDescription className="text-xs text-muted-foreground leading-relaxed">
+                Are you sure you want to permanently delete <strong className="text-foreground">&ldquo;{deleteModal.resume?.title || 'this resume'}&rdquo;</strong>? This will remove its data and all saved version checkpoints. This action cannot be undone.
+              </DialogDescription>
+            </div>
+          </div>
+
+          <DialogFooter className="pt-3 flex items-center justify-end gap-2.5 sm:gap-2.5 border-t border-border/60">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={deletingResumeId === deleteModal.resume?.id}
+              onClick={() => setDeleteModal({ open: false, resume: null })}
+              className="rounded-xl border-border/80 hover:bg-muted text-xs font-semibold px-4 cursor-pointer"
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              size="sm"
+              disabled={deletingResumeId === deleteModal.resume?.id}
+              onClick={handleConfirmDelete}
+              className="rounded-xl text-xs font-bold gap-1.5 px-4 bg-destructive hover:bg-destructive/90 text-destructive-foreground shadow-xs cursor-pointer"
+            >
+              {deletingResumeId === deleteModal.resume?.id ? (
+                <>
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  <span>Deleting...</span>
+                </>
+              ) : (
+                <>
+                  <Trash2 className="h-3.5 w-3.5" />
+                  <span>Delete Resume</span>
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
     </div>
   );

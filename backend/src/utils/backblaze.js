@@ -1,4 +1,4 @@
-import { S3Client, PutObjectCommand, DeleteObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
+import { S3Client, PutObjectCommand, DeleteObjectCommand, GetObjectCommand, HeadObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
 /**
@@ -81,9 +81,47 @@ export const generateB2PresignedUrl = async (key, expiresIn = 3600) => {
   return await getSignedUrl(b2Client, command, { expiresIn });
 };
 
+/**
+ * Retrieves a file buffer directly from Backblaze B2.
+ * @param {string} key - The key/path of the file
+ * @returns {Promise<Buffer>}
+ */
+export const getFileBufferFromB2 = async (key) => {
+  const command = new GetObjectCommand({
+    Bucket: bucketName,
+    Key: key,
+  });
+  const response = await b2Client.send(command);
+  const byteArray = await response.Body.transformToByteArray();
+  return Buffer.from(byteArray);
+};
+
+/**
+ * Checks if a file exists in Backblaze B2.
+ * @param {string} key - The key/path of the file
+ * @returns {Promise<boolean>}
+ */
+export const checkFileExistsInB2 = async (key) => {
+  try {
+    const command = new HeadObjectCommand({
+      Bucket: bucketName,
+      Key: key,
+    });
+    await b2Client.send(command);
+    return true;
+  } catch (err) {
+    if (err.name === 'NotFound' || err.$metadata?.httpStatusCode === 404) {
+      return false;
+    }
+    throw err;
+  }
+};
+
 export default {
   uploadToB2,
   deleteFromB2,
+  getFileBufferFromB2,
+  checkFileExistsInB2,
   generateB2PublicUrl,
   generateB2PresignedUrl,
   b2Client

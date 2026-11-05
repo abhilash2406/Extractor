@@ -154,6 +154,16 @@
 div[role="status"] {
   font-family: inherit !important;
   letter-spacing: -0.01em !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  max-width: 380px !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+div[role="status"] > div:first-child {
+  transform: scale(0.85);
+  margin-right: -2px;
 }
 
 /* ============================================
@@ -211,6 +221,59 @@ input:-webkit-autofill:active {
     box-shadow: none !important;
     border: none !important;
   }
+}
+
+/* ============================================
+   SLEEK RANGE SLIDER STYLING
+   ============================================ */
+.custom-range-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 6px;
+  border-radius: 9999px;
+  outline: none;
+  cursor: pointer;
+}
+
+.custom-range-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: hsl(var(--primary));
+  border: 2px solid hsl(var(--background));
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35), 0 0 0 1px hsl(var(--primary) / 0.4);
+  cursor: grab;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.custom-range-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.18);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4), 0 0 0 3px hsl(var(--primary) / 0.25);
+}
+
+.custom-range-slider::-webkit-slider-thumb:active {
+  cursor: grabbing;
+  transform: scale(1.25);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5), 0 0 0 4px hsl(var(--primary) / 0.35);
+}
+
+.custom-range-slider::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: hsl(var(--primary));
+  border: 2px solid hsl(var(--background));
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35), 0 0 0 1px hsl(var(--primary) / 0.4);
+  cursor: grab;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.custom-range-slider::-moz-range-thumb:hover {
+  transform: scale(1.18);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4), 0 0 0 3px hsl(var(--primary) / 0.25);
 }
 
 
