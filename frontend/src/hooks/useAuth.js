@@ -17,7 +17,7 @@ export const useLogin = () => {
       }
       const user = res.data?.user || res.data;
       login(user);
-      toast.success('Welcome back!');
+      // silent login transition without popup toast
       if (user?.role === 'ADMIN') {
         navigate('/admin');
       } else {
