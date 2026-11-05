@@ -9,44 +9,54 @@ export default function App() {
     <QueryClientProvider client={queryClient}>
       <AppRouter />
       <Toaster 
-        position="top-right" 
-        gutter={10}
+        position="bottom-right" 
+        gutter={8}
         containerStyle={{
-          top: 24,
+          bottom: 24,
           right: 24,
+          zIndex: 99999,
         }}
         toastOptions={{ 
-          duration: 3500,
+          duration: 3000,
           style: {
-            background: 'hsl(var(--card))',
-            color: 'hsl(var(--card-foreground))',
-            border: '1px solid hsl(var(--border))',
-            borderRadius: '14px',
-            padding: '12px 18px',
-            fontSize: '13px',
-            fontWeight: '600',
+            background: 'rgba(15, 23, 42, 0.94)',
+            color: '#f8fafc',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            borderRadius: '12px',
+            padding: '9px 14px',
+            fontSize: '12.5px',
+            fontWeight: '500',
             lineHeight: '1.4',
-            boxShadow: '0 20px 30px -10px rgba(0, 0, 0, 0.2), 0 8px 10px -6px rgba(0, 0, 0, 0.1)',
+            letterSpacing: '-0.01em',
+            boxShadow: '0 12px 32px -8px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.06)',
             backdropFilter: 'blur(16px)',
             WebkitBackdropFilter: 'blur(16px)',
           },
           success: {
-            duration: 3000,
+            duration: 2600,
             iconTheme: {
-              primary: '#10B981',
-              secondary: '#FFFFFF',
+              primary: '#10b981',
+              secondary: '#0f172a',
+            },
+            style: {
+              border: '1px solid rgba(16, 185, 129, 0.25)',
+              background: 'rgba(15, 23, 42, 0.95)',
             },
           },
           error: {
             duration: 4000,
             iconTheme: {
-              primary: '#EF4444',
-              secondary: '#FFFFFF',
+              primary: '#f43f5e',
+              secondary: '#0f172a',
+            },
+            style: {
+              border: '1px solid rgba(244, 63, 94, 0.3)',
+              background: 'rgba(15, 23, 42, 0.95)',
             },
           },
           loading: {
             iconTheme: {
-              primary: '#6366F1',
+              primary: '#6366f1',
               secondary: 'rgba(99, 102, 241, 0.2)',
             },
           },

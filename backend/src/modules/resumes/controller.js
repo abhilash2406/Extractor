@@ -6,6 +6,11 @@ import {
   getResumeByIdService,
   deleteResumeService,
   generateResumePdfService,
+  getResumeVersionsService,
+  getResumeVersionByIdService,
+  restoreResumeVersionService,
+  getLatestResumeService,
+  getUserResumeUsageService,
 } from './service.js';
 
 export const createResume = async (req, res) => {
@@ -39,6 +44,26 @@ export const getMyResumes = async (req, res) => {
   }
 };
 
+export const getLatestResume = async (req, res) => {
+  try {
+    const resume = await getLatestResumeService(req.user.id);
+    return res.json(goodResponse({ data: resume }, 'Latest resume retrieved successfully'));
+  } catch (e) {
+    const status = e.statusCode || e.status || 400;
+    return res.status(status).json(failedResponse(e.message, status, e.name || 'BadRequest'));
+  }
+};
+
+export const getUserResumeUsage = async (req, res) => {
+  try {
+    const usage = await getUserResumeUsageService(req.user.id);
+    return res.json(goodResponse({ data: usage }, 'Resume usage retrieved successfully'));
+  } catch (e) {
+    const status = e.statusCode || e.status || 400;
+    return res.status(status).json(failedResponse(e.message, status, e.name || 'BadRequest'));
+  }
+};
+
 export const getResumeById = async (req, res) => {
   try {
     const { id } = req.params;
@@ -63,13 +88,47 @@ export const deleteResume = async (req, res) => {
 
 export const downloadResumePdf = async (req, res) => {
   try {
-    const { buffer, filename } = await generateResumePdfService(req.body, req.user);
+    const { buffer, filename, fromCache } = await generateResumePdfService(req.body, req.user);
 
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
     res.setHeader('Content-Length', buffer.length);
+    res.setHeader('X-PDF-Source', fromCache ? 'cache' : 'generated');
 
     return res.send(buffer);
+  } catch (e) {
+    const status = e.statusCode || e.status || 400;
+    return res.status(status).json(failedResponse(e.message, status, e.name || 'BadRequest'));
+  }
+};
+
+export const getResumeVersions = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const versions = await getResumeVersionsService(req.user.id, id);
+    return res.json(goodResponse({ data: versions }, 'Resume versions retrieved successfully'));
+  } catch (e) {
+    const status = e.statusCode || e.status || 400;
+    return res.status(status).json(failedResponse(e.message, status, e.name || 'BadRequest'));
+  }
+};
+
+export const getResumeVersionById = async (req, res) => {
+  try {
+    const { id, versionId } = req.params;
+    const version = await getResumeVersionByIdService(req.user.id, id, versionId);
+    return res.json(goodResponse({ data: version }, 'Resume version retrieved successfully'));
+  } catch (e) {
+    const status = e.statusCode || e.status || 400;
+    return res.status(status).json(failedResponse(e.message, status, e.name || 'BadRequest'));
+  }
+};
+
+export const restoreResumeVersion = async (req, res) => {
+  try {
+    const { id, versionId } = req.params;
+    const result = await restoreResumeVersionService(req.user.id, id, versionId);
+    return res.json(goodResponse(result, 'Resume version restored successfully'));
   } catch (e) {
     const status = e.statusCode || e.status || 400;
     return res.status(status).json(failedResponse(e.message, status, e.name || 'BadRequest'));
