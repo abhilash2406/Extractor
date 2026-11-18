@@ -74,38 +74,6 @@ const subscriptionDistribution = [
 
 const SUB_COLORS = ['#6366F1', '#3B82F6', '#10B981', '#F59E0B'];
 
-// Data for AI Usage Categories
-const aiUsageBreakdown = [
-  { 
-    name: 'Resume Analysis', 
-    count: '4,210 requests', 
-    percentage: 85, 
-    color: 'bg-indigo-600',
-    description: 'Parsing skills, experience, education schemas'
-  },
-  { 
-    name: 'Optimization', 
-    count: '2,680 requests', 
-    percentage: 54, 
-    color: 'bg-purple-600',
-    description: 'ATS keyword matching and gap score optimization'
-  },
-  { 
-    name: 'Cover Letter', 
-    count: '1,890 requests', 
-    percentage: 38, 
-    color: 'bg-violet-600',
-    description: 'Custom personalized letter generation'
-  },
-  { 
-    name: 'Interview Prep', 
-    count: '1,240 requests', 
-    percentage: 25, 
-    color: 'bg-amber-600',
-    description: 'AI question answering and technical interview simulations'
-  },
-];
-
 // Recent Transactions Data
 const recentTransactions = [
   { user: 'Alex Johnson', email: 'alex@enterprise.io', plan: 'Pro Plan', amount: '₹1,499', status: 'COMPLETED' },
@@ -126,6 +94,42 @@ const DashboardPage = () => {
 
   const userGrowth = growthDataResponse?.growthData || [];
   const mtdGrowth = growthDataResponse?.mtdPercent || '+0.0% MTD';
+
+  const resumeAnalysesCount = stats?.totalAnalyses ?? 0;
+  const coverLettersCount = stats?.coverLettersGenerated ?? 0;
+  const totalAiRequests = stats?.totalAiUsage ?? (resumeAnalysesCount + coverLettersCount);
+  const aiMax = Math.max(resumeAnalysesCount, coverLettersCount, 1);
+
+  const aiUsageBreakdown = [
+    {
+      name: 'Cover Letter',
+      count: `${coverLettersCount.toLocaleString()} generated`,
+      percentage: coverLettersCount > 0 ? Math.round((coverLettersCount / aiMax) * 100) : 0,
+      color: 'bg-violet-600',
+      description: 'Custom personalized AI cover letters generated',
+    },
+    {
+      name: 'Resume Analysis',
+      count: `${resumeAnalysesCount.toLocaleString()} requests`,
+      percentage: resumeAnalysesCount > 0 ? Math.round((resumeAnalysesCount / aiMax) * 100) : 0,
+      color: 'bg-indigo-600',
+      description: 'Parsing skills, experience, education schemas',
+    },
+    {
+      name: 'Optimization',
+      count: '0 requests',
+      percentage: 0,
+      color: 'bg-purple-600',
+      description: 'ATS keyword matching and gap score optimization',
+    },
+    {
+      name: 'Interview Prep',
+      count: '0 requests',
+      percentage: 0,
+      color: 'bg-amber-600',
+      description: 'AI question answering and technical interview simulations',
+    },
+  ];
 
   // Top metric cards with live counts and month-over-month growth deltas
   const metrics = [
@@ -159,10 +163,9 @@ const DashboardPage = () => {
     },
     {
       title: 'AI Usage',
-      value: stats?.totalAnalyses !== undefined && stats.totalAnalyses > 0
-        ? stats.totalAnalyses.toLocaleString()
-        : '0',
-      growth: '+0.0%',
+      value: totalAiRequests.toLocaleString(),
+      growth: `${coverLettersCount.toLocaleString()} letters`,
+      hideVsLastMo: true,
       icon: Bot,
       iconBg: 'bg-purple-500/10 text-purple-400 border-purple-500/20',
     },
@@ -212,7 +215,9 @@ const DashboardPage = () => {
                       <TrendingUp className="h-3 w-3 mr-0.5" />
                       {metric.growth}
                     </span>
-                    <span className="text-[11px] text-muted-foreground">vs last mo</span>
+                    {!metric.hideVsLastMo && (
+                      <span className="text-[11px] text-muted-foreground">vs last mo</span>
+                    )}
                   </div>
                 </div>
               </CardContent>

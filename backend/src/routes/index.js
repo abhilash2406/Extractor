@@ -6,6 +6,7 @@ import dashboardRoutes from '../modules/dashboard/index.js';
 import templatesRoutes from '../modules/templates/index.js';
 import resumesRoutes from '../modules/resumes/index.js';
 import feedbackRoutes from '../modules/feedback/index.js';
+import coverLetterRoutes from '../modules/coverLetters/index.js';
 import auth from '../middlewares/auth.js';
 
 const router = express.Router();
@@ -30,5 +31,8 @@ router.use('/resumes', resumesRoutes);
 
 // Feedback (public submission & admin management)
 router.use('/feedback', feedbackRoutes);
+
+// Cover Letters (free stateless AI streaming & admin count)
+router.use('/cover-letters', coverLetterRoutes);
 
 export default router;
