@@ -5,6 +5,10 @@ import Template from '../../models/template.js';
 import Subscription from '../../models/subscription.js';
 import Plan from '../../models/plan.js';
 import Test from '../../models/test.js';
+import {
+  FEATURE_COUNTER_KEYS,
+  getFeatureCounter,
+} from '../../models/featureCounter.js';
 import { UserType } from '../../common/enum/usertype-enum.js';
 import { EntityType } from '../../common/enum/activity-enum.js';
 import { Op, fn, col, literal } from 'sequelize';
@@ -75,6 +79,7 @@ export const getDashboardStatsService = async () => {
     activePrev,
     resumesThisMonth,
     resumesLastMonth,
+    coverLettersGenerated,
   ] = await Promise.all([
     User.count({ where: { role: UserType.USER, status: { [Op.ne]: EntityType.DELETED } } }),
     Resume.count(),
@@ -122,6 +127,8 @@ export const getDashboardStatsService = async () => {
     Resume.count({
       where: { uploaded_at: { [Op.between]: [lastMonthStart, lastMonthEnd] } },
     }),
+    // Total cover letters generated (stateless counter)
+    getFeatureCounter(FEATURE_COUNTER_KEYS.COVER_LETTER_GENERATED),
   ]);
 
   return {
@@ -129,6 +136,8 @@ export const getDashboardStatsService = async () => {
     totalResumes,
     totalTemplates,
     totalAnalyses,
+    coverLettersGenerated,
+    totalAiUsage: totalAnalyses + coverLettersGenerated,
     activeUsers,
     usersGrowth: calcMoMPercent(usersThisMonth, usersLastMonth),
     activeGrowth: calcMoMPercent(activeNow, activePrev),

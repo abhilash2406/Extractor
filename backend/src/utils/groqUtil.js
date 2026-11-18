@@ -237,3 +237,156 @@ The JSON schema must be exactly as follows:
     throw error;
   }
 };
+
+export const COVER_LETTER_LENGTH_TARGETS = {
+  short: { label: 'Short (~90-120 words)', targetWords: 105, wordRange: '90 to 120', paragraphs: '2 concise paragraphs', maxTokens: 320 },
+  standard: { label: 'Standard (~150-190 words)', targetWords: 170, wordRange: '150 to 190', paragraphs: '3 crisp paragraphs', maxTokens: 460 },
+  detailed: { label: 'Detailed (~230-280 words)', targetWords: 255, wordRange: '230 to 280', paragraphs: '4 focused paragraphs', maxTokens: 650 },
+};
+
+/**
+ * Streams a tailored, human-sounding cover letter using Groq LPU API.
+ * Calls `onChunk({ chunk, fullText, wordCount, targetWords })` for every streamed token delta.
+ */
+export const streamCoverLetterWithGroq = async (params = {}, onChunk) => {
+  const {
+    jobTitle,
+    companyName,
+    hiringManager = 'Hiring Team',
+    keySkills = '',
+    tone = 'Confident & Impact-Driven',
+    length = 'standard',
+    jobDescription = '',
+    candidateName = '',
+    candidateEmail = '',
+    candidatePhone = '',
+    experienceSummary = '',
+    resumeContext = null,
+  } = params;
+
+  const lengthKey = COVER_LETTER_LENGTH_TARGETS[length] ? length : 'standard';
+  const { targetWords, wordRange, paragraphs, maxTokens } = COVER_LETTER_LENGTH_TARGETS[lengthKey];
+
+  const cleanRecipient = (hiringManager || 'Hiring Team').trim();
+  const hasGreeting = /^(dear|hi|hello|hey)\b/i.test(cleanRecipient);
+  const greetingPrefix = tone === 'Warm & Collaborative' ? 'Hi' : 'Dear';
+  const exactSalutation = hasGreeting
+    ? `${cleanRecipient.replace(/,+$/, '')},`
+    : `${greetingPrefix} ${cleanRecipient.replace(/,+$/, '')},`;
+
+  // Build structured candidate context if a saved resume was linked
+  let resumeBlock = '';
+  if (resumeContext) {
+    const parts = [];
+    if (resumeContext.summary) parts.push(`Professional Summary: ${resumeContext.summary}`);
+    if (Array.isArray(resumeContext.experience) && resumeContext.experience.length > 0) {
+      const expText = resumeContext.experience
+        .slice(0, 4)
+        .map((e) => {
+          const role = e.role || e.title || '';
+          const comp = e.company || '';
+          const period = e.period || e.duration || '';
+          const desc = Array.isArray(e.bullets)
+            ? e.bullets.slice(0, 3).join('; ')
+            : e.description || '';
+          return `- ${role}${comp ? ` at ${comp}` : ''}${period ? ` (${period})` : ''}: ${desc}`;
+        })
+        .join('\n');
+      parts.push(`Work Experience:\n${expText}`);
+    }
+    if (Array.isArray(resumeContext.projects) && resumeContext.projects.length > 0) {
+      const projText = resumeContext.projects
+        .slice(0, 3)
+        .map((p) => `- ${p.name || p.title || 'Project'}: ${p.description || ''}`)
+        .join('\n');
+      parts.push(`Key Projects:\n${projText}`);
+    }
+    if (resumeContext.skills) {
+      const skillsText = Array.isArray(resumeContext.skills)
+        ? resumeContext.skills.join(', ')
+        : String(resumeContext.skills);
+      if (skillsText.trim()) parts.push(`Resume Skills: ${skillsText}`);
+    }
+    if (parts.length > 0) {
+      resumeBlock = `\nCandidate Resume Context:\n${parts.join('\n')}\n`;
+    }
+  }
+
+  const signOffLines = [];
+  if (candidateName) signOffLines.push(candidateName);
+  const contactBits = [candidateEmail, candidatePhone].filter(Boolean);
+  if (contactBits.length > 0) signOffLines.push(contactBits.join(' • '));
+
+  const systemPrompt = `You are an elite executive career coach and copywriter who writes crisp, authentic, recruiter-ready cover letters.
+Strict Rules:
+- Write ONLY the cover letter itself (no preamble, no "Here is your cover letter:", no markdown bolding or headings).
+- ALWAYS start the very first line with the exact salutation: "${exactSalutation}" followed by a blank line.
+- Keep it tight and scannable: strictly ${wordRange} words total across ${paragraphs} (never exceed the upper word limit).
+- Never invent fake employer names, fake years of experience, or fabricated metrics that were not provided in the input or resume context.
+- Use natural, human phrasing with specific impact — avoid generic AI clichés like "I am thrilled to apply", "tapestry", "delve", "testament", or "synergy".
+- NEVER leave bracket placeholders like [Your Name], [Company], [Skill], or [Date]. If a contact detail isn't provided, omit it cleanly.
+- Match the requested tone: "${tone}".`;
+
+  const userPrompt = `Write a tight, tailored cover letter (${wordRange} words, ${paragraphs}) with these details:
+- Opening Salutation (use verbatim on line 1): ${exactSalutation}
+- Target Role: ${jobTitle}
+- Company Name: ${companyName}
+${keySkills ? `- Highlighted Skills / Focus Areas: ${keySkills}` : ''}
+${experienceSummary ? `- Candidate Background / Achievements: ${experienceSummary}` : ''}
+${jobDescription ? `- Target Job Description:\n"""\n${jobDescription.slice(0, 2500)}\n"""` : ''}
+${resumeBlock}
+${signOffLines.length > 0 ? `- Sign-off to use at the end:\nSincerely,\n${signOffLines.join('\n')}` : '- End cleanly with "Sincerely," followed by the candidate name if known, or just "Best regards," if no name was supplied.'}`;
+
+  const modelsToTry = [
+    ...(process.env.GROQ_MODEL ? [process.env.GROQ_MODEL] : []),
+    'openai/gpt-oss-120b',
+    'openai/gpt-oss-20b',
+    'qwen/qwen3.8-27b',
+  ];
+  let lastError = null;
+
+  for (const model of modelsToTry) {
+    try {
+      const requestParams = {
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt },
+        ],
+        model,
+        temperature: 0.65,
+        max_completion_tokens: 2048,
+        stream: true,
+      };
+      if (model.startsWith('openai/gpt-oss')) {
+        requestParams.reasoning_effort = 'low';
+      }
+
+      const stream = await groq.chat.completions.create(requestParams);
+
+      let fullText = '';
+      for await (const part of stream) {
+        const delta = part.choices?.[0]?.delta?.content || '';
+        if (!delta) continue;
+        fullText += delta;
+        const wordCount = fullText.trim() ? fullText.trim().split(/\s+/).length : 0;
+        if (onChunk) {
+          onChunk({ chunk: delta, fullText, wordCount, targetWords, model });
+        }
+      }
+
+      if (!fullText.trim()) {
+        throw new Error('Groq returned an empty cover letter stream');
+      }
+
+      return {
+        text: fullText.trim(),
+        wordCount: fullText.trim().split(/\s+/).length,
+        model,
+      };
+    } catch (err) {
+      lastError = err;
+    }
+  }
+
+  throw lastError || new Error('Failed to generate cover letter');
+};
