@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search } from 'lucide-react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { useUsers, useUser, useUpdateUserStatus, useUserResume } from '@/hooks/api/useUsers';
+import { useUsers, useUser, useUpdateUserStatus } from '@/hooks/api/useUsers';
 import { useUserFilters } from '@/hooks/custom/useUserFilters';
 
 import {
@@ -21,7 +21,6 @@ const UsersPage = () => {
   // Modal & Selection States
   const [viewUser, setViewUser] = useState(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState(null);
-  const [showResume, setShowResume] = useState(false);
 
   // Queries & Mutations
   const { data: response, isLoading } = useUsers(filters.queryParams);
@@ -29,26 +28,6 @@ const UsersPage = () => {
 
   // Fetch detailed user profile for modal
   const { data: detailedUser, isLoading: isDetailedUserLoading } = useUser(viewUser?.id);
-
-  // Resume fetching query for modal
-  const {
-    data: resumeUrl,
-    isLoading: isResumeLoading,
-    isError: isResumeError,
-    refetch: fetchResume,
-  } = useUserResume(viewUser?.id);
-
-  useEffect(() => {
-    if (!viewUser) {
-      setShowResume(false);
-    }
-  }, [viewUser]);
-
-  useEffect(() => {
-    if (showResume && viewUser) {
-      fetchResume();
-    }
-  }, [showResume, viewUser, fetchResume]);
 
   const users = response?.data || [];
   const meta = response?.meta || { totalPages: 1, page: 1, total: 0 };
@@ -139,18 +118,12 @@ const UsersPage = () => {
         </CardContent>
       </Card>
 
-      {/* User Details / Resume Modal */}
+      {/* User Details Modal */}
       <UserDetailsModal
         isOpen={Boolean(viewUser)}
         onClose={() => setViewUser(null)}
         detailedUser={detailedUser}
         isLoading={isDetailedUserLoading}
-        showResume={showResume}
-        setShowResume={setShowResume}
-        resumeUrl={resumeUrl}
-        isResumeLoading={isResumeLoading}
-        isResumeError={isResumeError}
-        fetchResume={fetchResume}
         onStatusChange={handleStatusChange}
         isUpdating={isUpdating}
         onNavigateToSubscriptions={() => {

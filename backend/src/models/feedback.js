@@ -1,5 +1,6 @@
 import { DataTypes } from 'sequelize';
 import sequelize from '../config/sequelize-config.js';
+import { FeedbackStatus, FeedbackCategory } from '../common/enum/feedback-enum.js';
 
 const Feedback = sequelize.define(
   'Feedback',
@@ -26,8 +27,8 @@ const Feedback = sequelize.define(
       allowNull: false,
     },
     category: {
-      type: DataTypes.ENUM('general', 'bug', 'feature_request', 'pricing', 'support'),
-      defaultValue: 'general',
+      type: DataTypes.ENUM(...Object.values(FeedbackCategory)),
+      defaultValue: FeedbackCategory.GENERAL,
       allowNull: false,
     },
     subject: {
@@ -43,8 +44,8 @@ const Feedback = sequelize.define(
       allowNull: true,
     },
     status: {
-      type: DataTypes.ENUM('NEW', 'IN_REVIEW', 'RESOLVED', 'CLOSED'),
-      defaultValue: 'NEW',
+      type: DataTypes.ENUM(...Object.values(FeedbackStatus)),
+      defaultValue: FeedbackStatus.NEW,
       allowNull: false,
     },
     admin_notes: {

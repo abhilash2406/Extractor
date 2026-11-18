@@ -1,8 +1,8 @@
 import axiosInstance from './axiosInstance';
 
 /**
- * Get templates with pagination and filtering
- * @param {Object} params - { page, limit, search, category, status, sortBy, sortOrder }
+ * Get templates with cursor-based pagination and filtering
+ * @param {Object} params - { cursor, limit, search, category, status, sortOrder }
  */
 export const getTemplates = (params) => axiosInstance.get('/templates', { params });
 
