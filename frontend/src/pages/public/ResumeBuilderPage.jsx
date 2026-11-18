@@ -109,10 +109,50 @@ import {
   restoreResumeVersion,
   getMyResumes
 } from '@/api/resumes.api';
-import moment from 'moment';
 import toast from 'react-hot-toast';
 import ResumeRenderer from '@/components/resume/ResumeRenderer';
 import MonthYearPicker from '@/components/ui/MonthYearPicker';
+
+// Lightweight, zero-dependency date formatting replacing heavy moment.js
+const formatRelativeDate = (dateStr) => {
+  if (!dateStr) return '';
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return '';
+  const now = new Date();
+  const isToday = d.toDateString() === now.toDateString();
+  const yesterday = new Date(now);
+  yesterday.setDate(yesterday.getDate() - 1);
+  const isYesterday = d.toDateString() === yesterday.toDateString();
+  const timeStr = d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+  if (isToday) return `Today at ${timeStr}`;
+  if (isYesterday) return `Yesterday at ${timeStr}`;
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+};
+
+const formatVersionRelativeDate = (dateStr) => {
+  if (!dateStr) return '';
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return '';
+  const now = new Date();
+  const isToday = d.toDateString() === now.toDateString();
+  const yesterday = new Date(now);
+  yesterday.setDate(yesterday.getDate() - 1);
+  const isYesterday = d.toDateString() === yesterday.toDateString();
+  const diffDays = Math.floor((now - d) / (1000 * 60 * 60 * 24));
+  if (isToday) return 'Updated today';
+  if (isYesterday) return 'Updated yesterday';
+  if (diffDays <= 7) return 'Saved last week';
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+};
+
+const formatFullDateTime = (dateStr) => {
+  if (!dateStr) return '';
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return '';
+  const dateFormatted = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  const timeFormatted = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+  return `${dateFormatted} · ${timeFormatted}`;
+};
 
 // Color presets matching Admin template builder (with Free vs Pro tier tagging)
 export const COLOR_PRESETS = [
@@ -1977,11 +2017,7 @@ export default function ResumeBuilderPage() {
                                     <div className="text-[10px] text-muted-foreground flex items-center gap-2 mt-0.5 pl-6">
                                       <span>{r.template?.name || 'Standard'}</span>
                                       <span>•</span>
-                                      <span>{moment(r.updated_at).calendar(null, {
-                                        sameDay: '[Today at] LT',
-                                        lastDay: '[Yesterday at] LT',
-                                        sameElse: 'MMM D, YYYY'
-                                      })}</span>
+                                      <span>{formatRelativeDate(r.updated_at)}</span>
                                     </div>
                                   </div>
                                 </DropdownMenuItem>
@@ -4786,12 +4822,7 @@ export default function ResumeBuilderPage() {
                           Version {ver.version_number}
                         </span>
                         <span className="text-[11px] text-muted-foreground">
-                          · {moment(ver.created_at).calendar(null, {
-                            sameDay: '[Updated today]',
-                            lastDay: '[Updated yesterday]',
-                            lastWeek: '[Saved last week]',
-                            sameElse: 'MMM D, YYYY'
-                          })}
+                          · {formatVersionRelativeDate(ver.created_at)}
                         </span>
                         {ver.title && ver.title !== resumeTitle && (
                           <Badge variant="outline" className="text-[10px] truncate max-w-[140px] border-border/70">
@@ -4800,7 +4831,7 @@ export default function ResumeBuilderPage() {
                         )}
                       </div>
                       <p className="text-[11px] text-muted-foreground">
-                        Saved {moment(ver.created_at).format('MMM D, YYYY · h:mm A')}
+                        Saved {formatFullDateTime(ver.created_at)}
                         {ver.template?.name ? ` · ${ver.template.name}` : ''}
                       </p>
                     </div>

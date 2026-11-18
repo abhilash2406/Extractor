@@ -21,7 +21,9 @@ import {
   BrainCircuit,
   User,
   KeyRound,
-  ExternalLink
+  ExternalLink,
+  MessageSquarePlus,
+  Bug
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { Button } from '@/components/ui/button';
@@ -39,6 +41,7 @@ import {
 import { useAuthStore } from '@/store/authStore';
 import { useAuthModalStore } from '@/store/authModalStore';
 import AuthModal from '@/components/auth/AuthModal';
+import FeedbackModal from '@/components/layout/FeedbackModal';
 import { useProfile } from '@/hooks/useUsers';
 import { cn } from '@/lib/utils';
 
@@ -496,98 +499,216 @@ export const PublicNavbar = () => {
 
 export const PublicFooter = () => {
   const { openAuthModal } = useAuthModalStore();
-  
+  const { isAuthenticated } = useAuthStore();
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const [feedbackCategory, setFeedbackCategory] = useState('general');
+
+  const openFeedback = (cat = 'general') => {
+    setFeedbackCategory(cat);
+    setFeedbackOpen(true);
+  };
+
   return (
-    <footer className="w-full border-t border-border/70 bg-card/60 backdrop-blur-xl relative z-10">
-      <div className="w-full max-w-[1460px] mx-auto px-5 sm:px-8 lg:px-10 py-12 lg:py-16">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 lg:gap-12 pb-12 border-b border-border/60">
-          
-          {/* Brand Info */}
-          <div className="lg:col-span-2 space-y-4">
-            <Link to="/" className="flex items-center gap-2.5">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-r from-indigo-600 via-purple-600 to-violet-600 text-white shadow-md shadow-indigo-500/25">
-                <Zap className="h-5 w-5 fill-current" />
-              </div>
-              <span className="font-heading text-xl font-bold tracking-tight text-foreground">
-                Extractor
-              </span>
-            </Link>
-            <p className="text-sm text-muted-foreground leading-relaxed max-w-sm">
-              The all-in-one AI career intelligence platform. Build ATS-optimized resumes, run deep diagnostic scans, and match job descriptions with sub-second Groq LPU speed.
-            </p>
-            <div className="flex items-center gap-2 text-xs text-muted-foreground pt-1">
-              <ShieldCheck className="h-4 w-4 text-emerald-500" />
-              <span>Enterprise-Grade Encryption • 99.8% ATS Precision</span>
+    <footer className="w-full border-t border-border/70 bg-gradient-to-b from-card/50 to-background relative z-10 overflow-hidden">
+      {/* Subtle top glow hairline */}
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
+
+      <div className="w-full max-w-[1460px] mx-auto px-5 sm:px-8 lg:px-10 pt-12 pb-8 lg:pt-14">
+        {/* Feedback Spotlight Strip */}
+        <div className="mb-12 rounded-2xl border border-border/70 bg-card/80 backdrop-blur-xl p-5 sm:p-6 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-sm">
+          <div className="flex items-start sm:items-center gap-3.5">
+            <div className="h-11 w-11 rounded-2xl bg-gradient-to-br from-indigo-500/15 via-purple-500/15 to-violet-500/15 border border-primary/25 flex items-center justify-center text-primary shrink-0">
+              <MessageSquarePlus className="h-5 w-5" />
+            </div>
+            <div className="space-y-0.5">
+              <h3 className="font-heading text-sm sm:text-base font-bold text-foreground">
+                Help shape the future of Extractor
+              </h3>
+              <p className="text-xs sm:text-sm text-muted-foreground">
+                Have a feature idea, spotted a bug, or want a new resume template? Tell our team directly.
+              </p>
             </div>
           </div>
 
-          {/* Column 1: Tools */}
-          <div className="space-y-3">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-foreground">
+          <div className="flex flex-wrap items-center gap-2 shrink-0">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => openFeedback('bug')}
+              className="h-9 rounded-xl text-xs font-semibold gap-1.5 border-border/80 bg-background/60 hover:bg-muted/70"
+            >
+              <Bug className="h-3.5 w-3.5 text-rose-500" />
+              <span>Report Bug</span>
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              onClick={() => openFeedback('feature_request')}
+              className="h-9 px-4 rounded-xl text-xs font-semibold gap-1.5 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white shadow-sm shadow-indigo-500/20"
+            >
+              <MessageSquarePlus className="h-3.5 w-3.5" />
+              <span>Send Feedback</span>
+            </Button>
+          </div>
+        </div>
+
+        {/* Main Footer Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-8 lg:gap-10 pb-10 border-b border-border/60">
+          {/* Brand Column */}
+          <div className="sm:col-span-2 lg:col-span-4 space-y-4">
+            <Link to="/" className="inline-flex items-center gap-2.5 group">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-r from-indigo-600 via-purple-600 to-violet-600 text-white shadow-md shadow-indigo-500/25 transition-transform group-hover:scale-105">
+                <Zap className="h-5 w-5 fill-current" />
+              </div>
+              <div className="flex flex-col">
+                <span className="font-heading text-lg font-bold tracking-tight text-foreground leading-none">
+                  Extractor
+                </span>
+                <span className="text-[10px] font-medium text-muted-foreground mt-0.5">
+                  AI Career Intelligence Suite
+                </span>
+              </div>
+            </Link>
+
+            <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed max-w-sm">
+              Build ATS-engineered resumes, run deep diagnostic scans, and match job descriptions with sub-second Groq LPU speed.
+            </p>
+
+            <div className="flex flex-wrap items-center gap-2 pt-1">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
+                <ShieldCheck className="h-3.5 w-3.5" />
+                <span>Encrypted & Private</span>
+              </span>
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-primary/10 border border-primary/20 text-[11px] font-semibold text-primary">
+                <Sparkles className="h-3.5 w-3.5" />
+                <span>99.8% ATS Precision</span>
+              </span>
+            </div>
+          </div>
+
+          {/* Column 1: AI Tools */}
+          <div className="lg:col-span-3 space-y-3">
+            <h4 className="text-[11px] font-bold uppercase tracking-widest text-foreground/90">
               AI Tools
             </h4>
-            <ul className="space-y-2 text-sm text-muted-foreground">
-              <li><Link to="/resume-builder" className="hover:text-primary transition-colors">Resume Builder</Link></li>
+            <ul className="space-y-2.5 text-sm text-muted-foreground">
+              <li>
+                <Link to="/resume-builder" className="hover:text-primary transition-colors inline-flex items-center gap-1.5">
+                  <span>Resume Builder</span>
+                  <span className="text-[10px] font-semibold px-1.5 py-0.2 rounded bg-primary/10 text-primary">Live</span>
+                </Link>
+              </li>
               <li><Link to="/analyze" className="hover:text-primary transition-colors">AI Resume Analyzer</Link></li>
               <li><Link to="/ats-checker" className="hover:text-primary transition-colors">ATS Resume Checker</Link></li>
               <li><Link to="/interview-prep" className="hover:text-primary transition-colors">AI Interview Prep & Mock</Link></li>
               <li><Link to="/cover-letter" className="hover:text-primary transition-colors">Cover Letter AI</Link></li>
-              <li><Link to="/templates" className="hover:text-primary transition-colors">ATS Resume Templates</Link></li>
             </ul>
           </div>
 
-          {/* Column 2: Resources */}
-          <div className="space-y-3">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-foreground">
+          {/* Column 2: Templates */}
+          <div className="lg:col-span-2 space-y-3">
+            <h4 className="text-[11px] font-bold uppercase tracking-widest text-foreground/90">
               Templates
             </h4>
-            <ul className="space-y-2 text-sm text-muted-foreground">
-              <li><Link to="/templates?category=modern" className="hover:text-primary transition-colors">Modern Tech Resume</Link></li>
-              <li><Link to="/templates?category=executive" className="hover:text-primary transition-colors">Executive Leadership</Link></li>
-              <li><Link to="/templates?category=minimal" className="hover:text-primary transition-colors">Clean Minimalist</Link></li>
-              <li><Link to="/templates?category=professional" className="hover:text-primary transition-colors">Corporate Standard</Link></li>
+            <ul className="space-y-2.5 text-sm text-muted-foreground">
+              <li><Link to="/templates" className="hover:text-primary transition-colors">All Templates</Link></li>
+              <li><Link to="/templates?category=Modern" className="hover:text-primary transition-colors">Modern Tech</Link></li>
+              <li><Link to="/templates?category=Executive" className="hover:text-primary transition-colors">Executive Leadership</Link></li>
+              <li><Link to="/templates?category=Minimalist" className="hover:text-primary transition-colors">Clean Minimalist</Link></li>
+              <li><Link to="/pricing" className="hover:text-primary transition-colors">Plans & Pricing</Link></li>
             </ul>
           </div>
 
-          {/* Column 3: Platform & Access */}
-          <div className="space-y-3">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-foreground">
-              Account
+          {/* Column 3: Account & Support */}
+          <div className="lg:col-span-3 space-y-3">
+            <h4 className="text-[11px] font-bold uppercase tracking-widest text-foreground/90">
+              Account & Support
             </h4>
-            <ul className="space-y-2 text-sm text-muted-foreground">
+            <ul className="space-y-2.5 text-sm text-muted-foreground">
+              {isAuthenticated ? (
+                <li>
+                  <Link to="/profile" className="hover:text-primary transition-colors">
+                    My Profile & Resumes
+                  </Link>
+                </li>
+              ) : (
+                <>
+                  <li>
+                    <button
+                      type="button"
+                      onClick={() => openAuthModal('login')}
+                      className="hover:text-primary transition-colors text-left cursor-pointer"
+                    >
+                      Sign In
+                    </button>
+                  </li>
+                  <li>
+                    <button
+                      type="button"
+                      onClick={() => openAuthModal('register')}
+                      className="hover:text-primary transition-colors text-left cursor-pointer"
+                    >
+                      Create Free Account
+                    </button>
+                  </li>
+                </>
+              )}
               <li>
-                <button 
-                  type="button" 
-                  onClick={() => openAuthModal('login')} 
-                  className="hover:text-primary transition-colors text-left"
+                <button
+                  type="button"
+                  onClick={() => openFeedback('general')}
+                  className="hover:text-primary transition-colors text-left cursor-pointer"
                 >
-                  Sign In
+                  Share Feedback
                 </button>
               </li>
               <li>
-                <button 
-                  type="button" 
-                  onClick={() => openAuthModal('register')} 
-                  className="hover:text-primary transition-colors text-left"
+                <button
+                  type="button"
+                  onClick={() => openFeedback('feature_request')}
+                  className="hover:text-primary transition-colors text-left cursor-pointer"
                 >
-                  Create Free Account
+                  Request a Feature
                 </button>
               </li>
-              <li><a href="http://localhost:5174/admin" target="_blank" rel="noreferrer" className="hover:text-primary transition-colors flex items-center gap-1">Admin Portal</a></li>
+              <li>
+                <button
+                  type="button"
+                  onClick={() => openFeedback('support')}
+                  className="hover:text-primary transition-colors text-left cursor-pointer"
+                >
+                  Contact Support
+                </button>
+              </li>
             </ul>
           </div>
-
         </div>
 
-        <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-muted-foreground">
-          <p>© 2026 AI Resume SaaS Platform. Intelligent Document Automation. All rights reserved.</p>
-          <div className="flex items-center gap-6">
+        {/* Bottom Legal Bar */}
+        <div className="pt-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-muted-foreground">
+          <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3">
+            <p>© {new Date().getFullYear()} Extractor. All rights reserved.</p>
+            <span className="hidden sm:inline text-border">•</span>
+            <span className="inline-flex items-center gap-1.5 text-[11px]">
+              <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span>All Systems Operational</span>
+            </span>
+          </div>
+          <div className="flex items-center gap-5">
             <span className="hover:text-foreground transition-colors cursor-pointer">Privacy Policy</span>
             <span className="hover:text-foreground transition-colors cursor-pointer">Terms of Service</span>
-            <span className="hover:text-foreground transition-colors cursor-pointer">Security Overview</span>
+            <span className="hover:text-foreground transition-colors cursor-pointer">Security</span>
           </div>
         </div>
       </div>
+
+      {/* Feedback Modal */}
+      <FeedbackModal
+        isOpen={feedbackOpen}
+        onClose={() => setFeedbackOpen(false)}
+        initialCategory={feedbackCategory}
+      />
     </footer>
   );
 };

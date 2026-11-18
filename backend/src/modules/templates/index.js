@@ -33,20 +33,19 @@ const upload = multer({
  *   get:
  *     tags: [Templates]
  *     summary: List resume templates
- *     description: Retrieve templates with pagination and filtering. Regular users only receive published templates; admins can view drafts and archived templates.
+ *     description: Retrieve templates with cursor-based pagination and filtering. Regular users only receive published templates; admins can view drafts and archived templates.
  *     parameters:
  *       - in: query
- *         name: page
+ *         name: cursor
  *         schema:
- *           type: integer
- *           default: 1
- *         description: Page number
+ *           type: string
+ *         description: Opaque base64url cursor returned by previous response (meta.nextCursor)
  *       - in: query
  *         name: limit
  *         schema:
  *           type: integer
- *           default: 20
- *         description: Items per page
+ *           default: 9
+ *         description: Number of items to fetch per batch
  *       - in: query
  *         name: search
  *         schema:
@@ -64,11 +63,6 @@ const upload = multer({
  *           enum: [all, published, draft, archived]
  *         description: Filter by publication status (Admin only)
  *       - in: query
- *         name: sortBy
- *         schema:
- *           type: string
- *           default: created_at
- *       - in: query
  *         name: sortOrder
  *         schema:
  *           type: string
@@ -76,7 +70,7 @@ const upload = multer({
  *           default: DESC
  *     responses:
  *       200:
- *         description: Paginated list of resume templates
+ *         description: Cursor-paginated list of resume templates
  */
 router.get('/', optionalAuth, getTemplates);
 

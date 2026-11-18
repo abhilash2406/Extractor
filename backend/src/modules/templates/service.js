@@ -4,7 +4,7 @@ import User from '../../models/user.js';
 import Resume from '../../models/resume.js';
 import { UserType } from '../../common/enum/usertype-enum.js';
 import { TemplateStatus } from '../../common/enum/template-status-enum.js';
-import { parsePagination, paginatedResponse } from '../../utils/pagination.js';
+import { decodeCursor, cursorPaginatedResponse } from '../../utils/pagination.js';
 import { uploadToB2, generateB2PublicUrl } from '../../utils/backblaze.js';
 import { createTemplateSchema, updateTemplateSchema, updateStatusSchema } from './validator.js';
 import { DEFAULT_LAYOUT, DEFAULT_DESIGN, DEFAULT_SECTIONS, UUID_REGEX } from './constants.js';
@@ -20,10 +20,13 @@ const slugify = (text) =>
     .replace(/(^-|-$)/g, '');
 
 /**
- * Get templates list with filtering, searching, and pagination
+ * Get templates list with filtering, searching, and cursor-based pagination (no offset)
  */
 export const getTemplatesService = async (query = {}, currentUser = null) => {
-  const { page, limit, offset, sortBy, sortOrder, search } = parsePagination(query, 'created_at');
+  const limit = Math.min(150, Math.max(1, parseInt(query.limit, 10) || 9));
+  const sortOrder = (query.sortOrder || 'DESC').toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
+  const search = query.search?.trim() || null;
+  const decodedCursor = decodeCursor(query.cursor);
   const isAdmin = currentUser?.role === UserType.ADMIN;
 
   // Base condition: Deleted templates are NEVER returned to anyone
@@ -54,18 +57,43 @@ export const getTemplatesService = async (query = {}, currentUser = null) => {
 
   // Search Filter (by name, code, or description)
   if (search) {
-    where[Op.or] = [
-      { name: { [Op.iLike]: `%${search}%` } },
-      { code: { [Op.iLike]: `%${search}%` } },
-      { description: { [Op.iLike]: `%${search}%` } },
+    where[Op.and] = [
+      ...(where[Op.and] || []),
+      {
+        [Op.or]: [
+          { name: { [Op.iLike]: `%${search}%` } },
+          { code: { [Op.iLike]: `%${search}%` } },
+          { description: { [Op.iLike]: `%${search}%` } },
+        ],
+      },
     ];
   }
 
-  const { rows, count } = await Template.findAndCountAll({
+  // Keyset Cursor Condition (created_at, id) — eliminates OFFSET scans
+  if (decodedCursor) {
+    const cmpOp = sortOrder === 'ASC' ? Op.gt : Op.lt;
+    where[Op.and] = [
+      ...(where[Op.and] || []),
+      {
+        [Op.or]: [
+          { created_at: { [cmpOp]: decodedCursor.created_at } },
+          {
+            created_at: decodedCursor.created_at,
+            id: { [cmpOp]: decodedCursor.id },
+          },
+        ],
+      },
+    ];
+  }
+
+  // Fetch limit + 1 rows to determine if another page exists
+  const rowsPromise = Template.findAll({
     where,
-    limit,
-    offset,
-    order: [[sortBy, sortOrder]],
+    limit: limit + 1,
+    order: [
+      ['created_at', sortOrder],
+      ['id', sortOrder],
+    ],
     include: [
       {
         model: User,
@@ -76,7 +104,19 @@ export const getTemplatesService = async (query = {}, currentUser = null) => {
     ],
   });
 
-  return paginatedResponse(rows, count, page, limit);
+  // Compute global catalog summary stats on initial page for admins
+  const statsPromise =
+    isAdmin && !decodedCursor
+      ? Promise.all([
+          Template.count({ where: { status: { [Op.ne]: TemplateStatus.DELETED } } }),
+          Template.count({ where: { status: TemplateStatus.PUBLISHED } }),
+          Template.count({ where: { status: TemplateStatus.DRAFT } }),
+        ]).then(([total, published, draft]) => ({ total, published, draft }))
+      : Promise.resolve(undefined);
+
+  const [rows, stats] = await Promise.all([rowsPromise, statsPromise]);
+
+  return cursorPaginatedResponse(rows, limit, stats ? { stats } : {});
 };
 
 /**
