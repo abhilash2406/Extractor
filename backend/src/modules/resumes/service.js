@@ -141,7 +141,8 @@ export const createResumeService = async (userId, body) => {
     throw error;
   }
 
-  const templateId = await resolveTemplateId(body.template_id);
+  const rawTemplate = body.template_id || body.templateId || (body.design_config && (body.design_config.template_id || body.design_config.templateId));
+  const templateId = await resolveTemplateId(rawTemplate);
   const resumeTitle = (body.title && body.title.trim()) || 'Untitled Resume';
 
   // Check for duplicate resume name for this user (case-insensitive)
@@ -202,7 +203,8 @@ export const updateResumeService = async (userId, resumeId, body) => {
   }
 
   const newTitle = body.title !== undefined ? (body.title.trim() || 'Untitled Resume') : resume.title;
-  const newTemplateId = body.template_id !== undefined ? await resolveTemplateId(body.template_id) : resume.template_id;
+  const incomingTemplate = body.template_id !== undefined ? body.template_id : body.templateId;
+  const newTemplateId = incomingTemplate !== undefined ? await resolveTemplateId(incomingTemplate) : resume.template_id;
   const newContent = body.content !== undefined ? body.content : resume.content;
 
   // If title is changing, verify that no other resume owned by this user has the same name

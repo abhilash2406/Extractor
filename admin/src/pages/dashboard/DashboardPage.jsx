@@ -1,6 +1,11 @@
 import React from 'react';
 import { useAuthStore } from '../../store/authStore';
-import { useDashboardStats } from '@/hooks/api/useDashboard';
+import { 
+  useDashboardStats, 
+  useUserGrowth, 
+  useTopTemplates, 
+  useRecentUsers 
+} from '@/hooks/api/useDashboard';
 import { 
   Users, 
   Activity, 
@@ -45,20 +50,6 @@ import {
   Legend 
 } from 'recharts';
 
-// Data for User Growth Chart
-const userGrowthData = [
-  { month: 'Jan', users: 850, active: 620 },
-  { month: 'Feb', users: 1100, active: 890 },
-  { month: 'Mar', users: 1350, active: 1050 },
-  { month: 'Apr', users: 1580, active: 1210 },
-  { month: 'May', users: 1820, active: 1400 },
-  { month: 'Jun', users: 1950, active: 1530 },
-  { month: 'Jul', users: 2120, active: 1640 },
-  { month: 'Aug', users: 2280, active: 1720 },
-  { month: 'Sep', users: 2350, active: 1780 },
-  { month: 'Oct', users: 2431, active: 1842 },
-];
-
 // Data for Revenue Chart (in ₹ thousands)
 const revenueData = [
   { month: 'Jan', revenue: 32.5 },
@@ -83,47 +74,6 @@ const subscriptionDistribution = [
 
 const SUB_COLORS = ['#6366F1', '#3B82F6', '#10B981', '#F59E0B'];
 
-// Data for Template Usage
-const templateUsageData = [
-  { name: 'Modern Resume', extractions: 2450, percentage: 88 },
-  { name: 'Executive CV', extractions: 1820, percentage: 65 },
-  { name: 'Technical Schema', extractions: 1240, percentage: 44 },
-  { name: 'Invoice Parser', extractions: 890, percentage: 32 },
-  { name: 'ID Document OCR', extractions: 423, percentage: 15 },
-];
-
-// Data for AI Usage Categories
-const aiUsageBreakdown = [
-  { 
-    name: 'Resume Analysis', 
-    count: '4,210 requests', 
-    percentage: 85, 
-    color: 'bg-indigo-600',
-    description: 'Parsing skills, experience, education schemas'
-  },
-  { 
-    name: 'Optimization', 
-    count: '2,680 requests', 
-    percentage: 54, 
-    color: 'bg-purple-600',
-    description: 'ATS keyword matching and gap score optimization'
-  },
-  { 
-    name: 'Cover Letter', 
-    count: '1,890 requests', 
-    percentage: 38, 
-    color: 'bg-violet-600',
-    description: 'Custom personalized letter generation'
-  },
-  { 
-    name: 'Interview Prep', 
-    count: '1,240 requests', 
-    percentage: 25, 
-    color: 'bg-amber-600',
-    description: 'AI question answering and technical interview simulations'
-  },
-];
-
 // Recent Transactions Data
 const recentTransactions = [
   { user: 'Alex Johnson', email: 'alex@enterprise.io', plan: 'Pro Plan', amount: '₹1,499', status: 'COMPLETED' },
@@ -133,39 +83,74 @@ const recentTransactions = [
   { user: 'David Brown', email: 'david@corp.in', plan: 'Enterprise', amount: '₹4,999', status: 'COMPLETED' },
 ];
 
-// Recent Users Data
-const recentUsers = [
-  { name: 'Priya Sharma', email: 'priya@tech.in', plan: 'Pro', joined: '2 hours ago', initials: 'PS' },
-  { name: 'Rohan Verma', email: 'rohan@code.org', plan: 'Starter', joined: '5 hours ago', initials: 'RV' },
-  { name: 'Ananya Iyer', email: 'ananya@startup.io', plan: 'Enterprise', joined: '1 day ago', initials: 'AI' },
-  { name: 'Vikram Patel', email: 'vikram@ai.in', plan: 'Free', joined: '2 days ago', initials: 'VP' },
-  { name: 'Neha Gupta', email: 'neha@growth.co', plan: 'Pro', joined: '3 days ago', initials: 'NG' },
-];
-
 const DashboardPage = () => {
   const { user } = useAuthStore();
-  const { data: stats } = useDashboardStats();
 
-  // Top metric cards
+  // Integrated live dashboard queries
+  const { data: stats, isLoading: loadingStats } = useDashboardStats();
+  const { data: growthDataResponse, isLoading: loadingGrowth } = useUserGrowth(10);
+  const { data: topTemplates = [], isLoading: loadingTemplates } = useTopTemplates(5);
+  const { data: recentUsers = [], isLoading: loadingUsers } = useRecentUsers(5);
+
+  const userGrowth = growthDataResponse?.growthData || [];
+  const mtdGrowth = growthDataResponse?.mtdPercent || '+0.0% MTD';
+
+  const resumeAnalysesCount = stats?.totalAnalyses ?? 0;
+  const coverLettersCount = stats?.coverLettersGenerated ?? 0;
+  const totalAiRequests = stats?.totalAiUsage ?? (resumeAnalysesCount + coverLettersCount);
+  const aiMax = Math.max(resumeAnalysesCount, coverLettersCount, 1);
+
+  const aiUsageBreakdown = [
+    {
+      name: 'Cover Letter',
+      count: `${coverLettersCount.toLocaleString()} generated`,
+      percentage: coverLettersCount > 0 ? Math.round((coverLettersCount / aiMax) * 100) : 0,
+      color: 'bg-violet-600',
+      description: 'Custom personalized AI cover letters generated',
+    },
+    {
+      name: 'Resume Analysis',
+      count: `${resumeAnalysesCount.toLocaleString()} requests`,
+      percentage: resumeAnalysesCount > 0 ? Math.round((resumeAnalysesCount / aiMax) * 100) : 0,
+      color: 'bg-indigo-600',
+      description: 'Parsing skills, experience, education schemas',
+    },
+    {
+      name: 'Optimization',
+      count: '0 requests',
+      percentage: 0,
+      color: 'bg-purple-600',
+      description: 'ATS keyword matching and gap score optimization',
+    },
+    {
+      name: 'Interview Prep',
+      count: '0 requests',
+      percentage: 0,
+      color: 'bg-amber-600',
+      description: 'AI question answering and technical interview simulations',
+    },
+  ];
+
+  // Top metric cards with live counts and month-over-month growth deltas
   const metrics = [
     {
       title: 'Users',
-      value: stats?.totalUsers ? stats.totalUsers.toLocaleString() : '2,431',
-      growth: '+12.5%',
+      value: stats?.totalUsers !== undefined ? stats.totalUsers.toLocaleString() : '0',
+      growth: stats?.usersGrowth || '+0.0%',
       icon: Users,
       iconBg: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20',
     },
     {
       title: 'Active',
-      value: '1,842',
-      growth: '+8.2%',
+      value: stats?.activeUsers !== undefined ? stats.activeUsers.toLocaleString() : '0',
+      growth: stats?.activeGrowth || '+0.0%',
       icon: Activity,
       iconBg: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
     },
     {
       title: 'Resumes',
-      value: '5,823',
-      growth: '+15.4%',
+      value: stats?.totalResumes !== undefined ? stats.totalResumes.toLocaleString() : '0',
+      growth: stats?.resumesGrowth || '+0.0%',
       icon: FileText,
       iconBg: 'bg-purple-500/10 text-purple-400 border-purple-500/20',
     },
@@ -178,8 +163,9 @@ const DashboardPage = () => {
     },
     {
       title: 'AI Usage',
-      value: '8,923',
-      growth: '+21.4%',
+      value: totalAiRequests.toLocaleString(),
+      growth: `${coverLettersCount.toLocaleString()} letters`,
+      hideVsLastMo: true,
       icon: Bot,
       iconBg: 'bg-purple-500/10 text-purple-400 border-purple-500/20',
     },
@@ -222,14 +208,16 @@ const DashboardPage = () => {
                 </div>
                 <div>
                   <div className="font-heading text-2xl font-bold tracking-tight text-foreground">
-                    {metric.value}
+                    {loadingStats ? '...' : metric.value}
                   </div>
                   <div className="flex items-center gap-1 mt-1.5">
                     <span className="inline-flex items-center text-xs font-semibold text-emerald-600 dark:text-emerald-400">
                       <TrendingUp className="h-3 w-3 mr-0.5" />
                       {metric.growth}
                     </span>
-                    <span className="text-[11px] text-muted-foreground">vs last mo</span>
+                    {!metric.hideVsLastMo && (
+                      <span className="text-[11px] text-muted-foreground">vs last mo</span>
+                    )}
                   </div>
                 </div>
               </CardContent>
@@ -248,40 +236,50 @@ const DashboardPage = () => {
               <CardDescription>Monthly registered vs active users</CardDescription>
             </div>
             <Badge variant="secondary" className="text-xs font-normal">
-              +12.5% MTD
+              {mtdGrowth.includes('MTD') ? mtdGrowth : `${mtdGrowth} MTD`}
             </Badge>
           </CardHeader>
           <CardContent className="p-6 pt-2">
             <div className="h-[260px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={userGrowthData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                  <defs>
-                    <linearGradient id="userGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#6366F1" stopOpacity={0.35}/>
-                      <stop offset="95%" stopColor="#6366F1" stopOpacity={0}/>
-                    </linearGradient>
-                    <linearGradient id="activeGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#10B981" stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor="#10B981" stopOpacity={0}/>
-                    </linearGradient>
-                  </defs>
-                  <XAxis dataKey="month" tick={{fontSize: 11}} stroke="#94a3b8" axisLine={false} tickLine={false} />
-                  <YAxis tick={{fontSize: 11}} stroke="#94a3b8" axisLine={false} tickLine={false} />
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="currentColor" className="text-border/60" />
-                  <RechartsTooltip 
-                    contentStyle={{ 
-                      backgroundColor: 'var(--card)', 
-                      borderColor: 'var(--border)', 
-                      borderRadius: '12px', 
-                      boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
-                      fontSize: '12px',
-                    }} 
-                  />
-                  <Area type="monotone" dataKey="users" name="Total Users" stroke="#6366F1" strokeWidth={2.5} fillOpacity={1} fill="url(#userGrad)" />
-                  <Area type="monotone" dataKey="active" name="Active Users" stroke="#10B981" strokeWidth={2} fillOpacity={1} fill="url(#activeGrad)" />
-                  <Legend verticalAlign="top" height={30} iconType="circle" wrapperStyle={{ fontSize: '12px' }} />
-                </AreaChart>
-              </ResponsiveContainer>
+              {loadingGrowth ? (
+                <div className="flex items-center justify-center h-full">
+                  <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                </div>
+              ) : userGrowth.length === 0 ? (
+                <div className="flex items-center justify-center h-full text-xs text-muted-foreground">
+                  No user growth records yet.
+                </div>
+              ) : (
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={userGrowth} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="userGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#6366F1" stopOpacity={0.35}/>
+                        <stop offset="95%" stopColor="#6366F1" stopOpacity={0}/>
+                      </linearGradient>
+                      <linearGradient id="activeGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#10B981" stopOpacity={0.3}/>
+                        <stop offset="95%" stopColor="#10B981" stopOpacity={0}/>
+                      </linearGradient>
+                    </defs>
+                    <XAxis dataKey="month" tick={{fontSize: 11}} stroke="#94a3b8" axisLine={false} tickLine={false} />
+                    <YAxis tick={{fontSize: 11}} stroke="#94a3b8" axisLine={false} tickLine={false} />
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="currentColor" className="text-border/60" />
+                    <RechartsTooltip 
+                      contentStyle={{ 
+                        backgroundColor: 'var(--card)', 
+                        borderColor: 'var(--border)', 
+                        borderRadius: '12px', 
+                        boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
+                        fontSize: '12px',
+                      }} 
+                    />
+                    <Area type="monotone" dataKey="users" name="Total Users" stroke="#6366F1" strokeWidth={2.5} fillOpacity={1} fill="url(#userGrad)" />
+                    <Area type="monotone" dataKey="active" name="Active Users" stroke="#10B981" strokeWidth={2} fillOpacity={1} fill="url(#activeGrad)" />
+                    <Legend verticalAlign="top" height={30} iconType="circle" wrapperStyle={{ fontSize: '12px' }} />
+                  </AreaChart>
+                </ResponsiveContainer>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -382,20 +380,32 @@ const DashboardPage = () => {
             <CardDescription>Top extraction schemas by volume</CardDescription>
           </CardHeader>
           <CardContent className="p-6 pt-4 space-y-4">
-            {templateUsageData.map((tpl, i) => (
-              <div key={i} className="space-y-1.5">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="font-semibold text-foreground">{tpl.name}</span>
-                  <span className="text-muted-foreground font-mono">{tpl.extractions.toLocaleString()} extractions</span>
-                </div>
-                <div className="h-2 w-full rounded-full bg-muted/60 overflow-hidden">
-                  <div 
-                    className="h-full rounded-full bg-primary transition-all duration-500" 
-                    style={{ width: `${tpl.percentage}%` }}
-                  />
-                </div>
+            {loadingTemplates ? (
+              <div className="flex items-center justify-center py-10">
+                <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
               </div>
-            ))}
+            ) : topTemplates.length === 0 ? (
+              <div className="text-center py-8 text-xs text-muted-foreground">
+                No templates or extraction data recorded yet.
+              </div>
+            ) : (
+              topTemplates.map((tpl, i) => (
+                <div key={tpl.id || i} className="space-y-1.5">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-semibold text-foreground">{tpl.name}</span>
+                    <span className="text-muted-foreground font-mono">
+                      {(tpl.extractions !== undefined ? tpl.extractions : tpl.count || 0).toLocaleString()} extractions
+                    </span>
+                  </div>
+                  <div className="h-2 w-full rounded-full bg-muted/60 overflow-hidden">
+                    <div 
+                      className="h-full rounded-full bg-primary transition-all duration-500" 
+                      style={{ width: `${tpl.percentage}%` }}
+                    />
+                  </div>
+                </div>
+              ))
+            )}
           </CardContent>
         </Card>
       </div>
@@ -517,31 +527,45 @@ const DashboardPage = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {recentUsers.map((u, idx) => (
-                    <TableRow key={idx}>
-                      <TableCell>
-                        <div className="flex items-center gap-2.5">
-                          <Avatar className="h-7 w-7 border border-primary/20 shrink-0">
-                            <AvatarFallback className="bg-primary/10 text-primary font-bold text-[10px]">
-                              {u.initials}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <div className="font-medium text-foreground text-xs">{u.name}</div>
-                            <div className="text-[11px] text-muted-foreground truncate max-w-[120px]">{u.email}</div>
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="secondary" className="text-[10px]">
-                          {u.plan}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right text-xs text-muted-foreground whitespace-nowrap">
-                        {u.joined}
+                  {loadingUsers ? (
+                    <TableRow>
+                      <TableCell colSpan={3} className="text-center py-6 text-xs text-muted-foreground">
+                        Loading recent users...
                       </TableCell>
                     </TableRow>
-                  ))}
+                  ) : recentUsers.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={3} className="text-center py-6 text-xs text-muted-foreground">
+                        No registered users yet.
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    recentUsers.map((u, idx) => (
+                      <TableRow key={u.id || idx}>
+                        <TableCell>
+                          <div className="flex items-center gap-2.5">
+                            <Avatar className="h-7 w-7 border border-primary/20 shrink-0">
+                              <AvatarFallback className="bg-primary/10 text-primary font-bold text-[10px]">
+                                {u.initials || 'U'}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <div className="font-medium text-foreground text-xs">{u.name}</div>
+                              <div className="text-[11px] text-muted-foreground truncate max-w-[120px]">{u.email}</div>
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="secondary" className="text-[10px]">
+                            {u.plan || 'Free'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right text-xs text-muted-foreground whitespace-nowrap">
+                          {u.joined || 'Recently'}
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
                 </TableBody>
               </Table>
             </div>
